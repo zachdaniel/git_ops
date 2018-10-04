@@ -53,9 +53,9 @@ defmodule GitOps.Changelog do
       path,
       [
         head,
-        "\n",
+        "\n\n<!-- changelog -->\n\n",
         version_header,
-        "\n\n\n",
+        "\n",
         breaking_changes_contents,
         "\n\n",
         contents_to_insert,
