@@ -1,3 +1,4 @@
 %{
   "git_cli": {:hex, :git_cli, "0.2.5", "40673235d088d2784d4e03511e62cac2ef520495cb6cc459f00b4e13aaf0fbf4", [:mix], [], "hexpm"},
+  "nimble_parsec": {:hex, :nimble_parsec, "0.4.0", "ee261bb53214943679422be70f1658fff573c5d0b0a1ecd0f18738944f818efe", [:mix], [], "hexpm"},
 }

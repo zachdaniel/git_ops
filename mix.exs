@@ -21,7 +21,8 @@ defmodule GitOps.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:git_cli, "~> 0.2"}
+      {:git_cli, "~> 0.2"},
+      {:nimble_parsec, "~> 0.2"}
     ]
   end
 end
