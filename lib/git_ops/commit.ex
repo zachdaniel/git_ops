@@ -62,7 +62,14 @@ defmodule GitOps.Commit do
         "\n\n" <> footer
       end
 
-    "* #{breaking_indicator}#{scope}: #{message}#{body_text}#{footer_text}"
+    scope_text =
+      if scope && String.trim(scope) != "" do
+        "#{scope}: "
+      else
+        ""
+      end
+
+    "* #{breaking_indicator}#{scope_text}#{message}#{body_text}#{footer_text}"
   end
 
   def parse(text) do
@@ -81,7 +88,7 @@ defmodule GitOps.Commit do
          %__MODULE__{
            type: Enum.at(result[:type], 0),
            scope: scopes(result[:scope]),
-           message: result[:message],
+           message: Enum.at(result[:message], 0),
            body: body,
            footer: footer,
            breaking?: breaking?(result[:breaking?], body, footer)
