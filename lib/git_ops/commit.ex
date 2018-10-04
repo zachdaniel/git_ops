@@ -84,7 +84,7 @@ defmodule GitOps.Commit do
            message: Enum.at(result[:message], 0),
            body: body,
            footer: footer,
-           breaking?: breaking?(result[:breaking?], body, footer)
+           breaking?: is_breaking?(result[:breaking?], body, footer)
          }}
 
       error = {:error, _message, _remaining, _state, _dunno, _also_dunno} ->
@@ -92,11 +92,21 @@ defmodule GitOps.Commit do
     end
   end
 
+  def breaking?(%GitOps.Commit{breaking?: breaking?}), do: breaking?
+
+  def feature?(%GitOps.Commit{type: type}) do
+    String.downcase(type) == "feat"
+  end
+
+  def fix?(%GitOps.Commit{type: type}) do
+    String.downcase(type) == "fix"
+  end
+
   defp scopes([value]) when is_bitstring(value), do: String.split(value, ",")
   defp scopes(_), do: nil
 
-  defp breaking?(breaking, _, _) when not is_nil(breaking), do: true
-  defp breaking?(_, "BREAKING CHANGE:" <> _, _), do: true
-  defp breaking?(_, _, "BREAKING CHANGE:" <> _), do: true
-  defp breaking?(_, _, _), do: false
+  defp is_breaking?(breaking, _, _) when not is_nil(breaking), do: true
+  defp is_breaking?(_, "BREAKING CHANGE:" <> _, _), do: true
+  defp is_breaking?(_, _, "BREAKING CHANGE:" <> _), do: true
+  defp is_breaking?(_, _, _), do: false
 end

@@ -41,27 +41,29 @@ defmodule Mix.Tasks.GitOps.Release do
 
     config_types = GitOps.Config.types()
 
-    commit_messages
-    |> Enum.flat_map(fn text ->
-      case GitOps.Commit.parse(text) do
-        {:ok, commit} ->
-          if Map.has_key?(config_types, String.downcase(commit.type)) do
-            [commit]
-          else
-            Mix.shell().error("Commit with unknown type: #{text}")
+    commits =
+      commit_messages
+      |> Enum.flat_map(fn text ->
+        case GitOps.Commit.parse(text) do
+          {:ok, commit} ->
+            if Map.has_key?(config_types, String.downcase(commit.type)) do
+              [commit]
+            else
+              Mix.shell().error("Commit with unknown type: #{text}")
+              []
+            end
+
+          _ ->
+            Mix.shell().error("Unparseable commit: #{text}")
             []
-          end
+        end
+      end)
 
-        _ ->
-          Mix.shell().error("Unparseable commit: #{text}")
-          []
-      end
-    end)
-    |> write_to_changelog(path, current_version)
+    new_version = GitOps.Version.determine_new_version(current_version, commits)
 
-    if opts[:initial] do
-      GitOps.Git.tag!(repo, current_version)
-    end
+    GitOps.Changelog.write(path, commits, current_version, new_version)
+
+    GitOps.Git.tag!(repo, new_version)
 
     :ok
   end
@@ -70,9 +72,5 @@ defmodule Mix.Tasks.GitOps.Release do
     {opts, _} = OptionParser.parse!(args, strict: [initial: :boolean], aliases: [i: :initial])
 
     opts
-  end
-
-  defp write_to_changelog(commits, path, current_version) do
-    GitOps.Changelog.write(path, commits, current_version)
   end
 end

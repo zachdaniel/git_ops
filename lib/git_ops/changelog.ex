@@ -1,13 +1,12 @@
 defmodule GitOps.Changelog do
-  def write(path, commits, last_version) do
-    current_version = determine_new_version(last_version, commits)
+  def write(path, commits, last_version, current_version) do
     original_file_contents = File.read!(path)
 
     [head | rest] = String.split(original_file_contents, "<!-- changelog -->")
 
     config_types = GitOps.Config.types()
 
-    breaking_changes = Enum.filter(commits, &breaking?/1)
+    breaking_changes = Enum.filter(commits, &GitOps.Commit.breaking?/1)
 
     breaking_changes_contents =
       if Enum.empty?(breaking_changes) do
@@ -80,38 +79,6 @@ defmodule GitOps.Changelog do
     end
 
     File.write!(path, String.trim_leading(contents))
-  end
-
-  defp determine_new_version(old_version, commits) do
-    parsed = Version.parse!(old_version)
-
-    new_version =
-      cond do
-        Enum.any?(commits, &breaking?/1) ->
-          # major
-          %{parsed | major: parsed.major + 1, minor: 0, patch: 0, pre: [], build: nil}
-
-        Enum.any?(commits, &feature?/1) ->
-          %{parsed | minor: parsed.minor + 1, patch: 0, pre: [], build: nil}
-
-        Enum.any?(commits, &fix?/1) ->
-          %{parsed | patch: parsed.patch + 1, pre: [], build: nil}
-
-        true ->
-          parsed
-      end
-
-    to_string(new_version)
-  end
-
-  defp breaking?(%GitOps.Commit{breaking?: breaking?}), do: breaking?
-
-  defp feature?(%GitOps.Commit{type: type}) do
-    String.downcase(type) == "feat"
-  end
-
-  defp fix?(%GitOps.Commit{type: type}) do
-    String.downcase(type) == "fix"
   end
 
   defp compare_link(url, branch, last_version, current_version) do
