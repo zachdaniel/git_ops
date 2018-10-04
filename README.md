@@ -41,6 +41,34 @@ def deps do
 end
 ```
 
+## Configuration
+
+``` elixir
+config :git_ops,
+  mix_project: MyApp.MixProject,
+  changelog_file: "CHANGELOG.md",
+  repository_url: "https://github.com/my_user/my_repo",
+  primary_branch: "master",
+  types: [
+    # Makes an allowed commit type called `tidbit` that is not
+    # shown in the changelog
+    tidbit: [
+      hidden?: true 
+    ],
+    # Makes an allowed commit type called `important` that gets
+    # a section in the changelog with the header "Important Changes"
+    important: [
+      header: "Important Changes"
+    ]
+  ],
+  # Instructs the tool to manage your mix version in your `mix.exs` file
+  # See below for more information
+  manage_mix_version?: true,
+  # Instructs the tool to manage the version in your README.md
+  # Pass in `true` to use `"README.md"` or a string to customize
+  manage_readme_version: "README.md"
+```
+
 Package is not yet released on hex, but when it is documentation will be found there.
 
 Getting started:
@@ -56,4 +84,25 @@ Then when you want to release again, use:
 ``` bash
 mix git_ops.release
 ```
+
+## Managing your mix version
+
+To have mix manage your mix version, add `manage_mix_version?: true` to your configuration.
+
+Then, use a module attribute called `@version` to manage your application's
+version. Look at [this project's mix.exs](mix.exs) for an example.
+
+## Managing your readme version
+
+Most project readmes have a line like this that would ideally remain up to date:
+
+```elixir
+    {:git_ops, "~> 0.1.0", only: [:dev]}
+```
+
+You can keep that number up to date via `manage_readme_version`, which accepts
+`true` for `README.md` or a string pointing to some other path relative to your
+project root.
+
+
 
