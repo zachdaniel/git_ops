@@ -53,12 +53,16 @@ defmodule Mix.Tasks.GitOps.Release do
       end
 
     commit_messages
-    |> Enum.each(fn commit ->
-      IO.inspect(GitOps.Commit.parse(commit))
-    end)
+    |> Enum.map(fn commit ->
+      case GitOps.Commit.parse(commit) do
+        {:ok, commit} ->
+          commit
 
-    ## Get the commit log since either the beginning of time, or the last tag that is a semver.
-    ## use first_valid_version to get the most recent one (that isn't this one)
+        _ ->
+          Mix.shell().error("Unparseable commit: #{commit}")
+      end
+    end)
+    |> write_to_changelog(path)
 
     :ok
   end
@@ -72,8 +76,9 @@ defmodule Mix.Tasks.GitOps.Release do
   defp get_initial_commits!(repo) do
     messages =
       repo
-      |> Git.log!(["--format=%B"])
-      |> String.split("\n")
+      |> Git.log!(["--format=%B--gitops--"])
+      |> String.split("--gitops--")
+      |> Enum.map(&String.trim/1)
       |> Enum.reject(&Kernel.==(&1, ""))
 
     ["chore(GitOps): Add changelog using git_ops." | messages]
@@ -94,8 +99,13 @@ defmodule Mix.Tasks.GitOps.Release do
     most_recent_tag = GitOps.Version.first_valid_version(tags)
 
     repo
-    |> Git.log!(["#{most_recent_tag}..HEAD", "--format=%B"])
-    |> String.split("\n")
+    |> Git.log!(["#{most_recent_tag}..HEAD", "--format=%B--gitops--"])
+    |> String.split("--gitops--")
+    |> Enum.map(&String.trim/1)
     |> Enum.reject(&Kernel.==(&1, ""))
+  end
+
+  defp write_to_changelog(commits, _path) do
+    IO.inspect(commits)
   end
 end
