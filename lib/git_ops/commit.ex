@@ -43,13 +43,6 @@ defmodule GitOps.Commit do
 
     scope = Enum.join(scopes || [], ",")
 
-    breaking_indicator =
-      if breaking? do
-        "!"
-      else
-        ""
-      end
-
     body_text =
       if breaking? && String.starts_with?(body || "", "BREAKING CHANGE:") do
         "\n\n" <> body
