@@ -8,7 +8,9 @@ For an example, see this project's [CHANGELOG.md](CHANGELOG.md).
 Roadmap:
 
 * Automatically update mix.exs and the descriptive line in the readme
+* Support pre releases, release candidates, and build information
 * A hundred other things I forgot to write down while writing the initial version
+* Release to hex, with task documentation
 
 Important addendums:
 
@@ -31,11 +33,24 @@ by adding `git_ops` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:git_ops, "~> 0.1.0"}
+    {:git_ops, "~> 0.1.0", only: [:dev]}
   ]
 end
 ```
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/git_ops](https://hexdocs.pm/git_ops).
+
+Package is not yet released on hex, but when it is documentation will be found there.
+
+Getting started:
+
+```bash
+mix git_ops.release --initial
+```
+
+Commit the result of that, using a message like `chore: Initial Release`
+
+Then when you want to release again, use:
+
+``` bash
+mix git_ops.release
+```
 
