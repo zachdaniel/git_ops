@@ -5,9 +5,9 @@ defmodule Mix.Tasks.GitOps.Release do
 
   @doc false
   def run(args) do
-    changelog_file = Application.get_env(:git_ops, :changelog_file)
+    changelog_file = GitOps.Config.changelog_file()
     path = Path.expand(changelog_file)
-    mix_project_module = Application.get_env(:git_ops, :mix_project)
+    mix_project_module = GitOps.Config.mix_project()
     mix_project = mix_project_module.project()
     repo = GitOps.Git.init!()
 
@@ -26,7 +26,6 @@ defmodule Mix.Tasks.GitOps.Release do
 
     if opts[:initial] do
       GitOps.Changelog.initialize(path)
-      Git.tag(repo, current_version)
     end
 
     if not File.exists?(path) do
@@ -40,17 +39,29 @@ defmodule Mix.Tasks.GitOps.Release do
         GitOps.Git.get_commits_since_last_version!(repo)
       end
 
+    config_types = GitOps.Config.types()
+
     commit_messages
-    |> Enum.map(fn commit ->
-      case GitOps.Commit.parse(commit) do
+    |> Enum.flat_map(fn text ->
+      case GitOps.Commit.parse(text) do
         {:ok, commit} ->
-          commit
+          if Map.has_key?(config_types, String.downcase(commit.type)) do
+            [commit]
+          else
+            Mix.shell().error("Commit with unknown type: #{text}")
+            []
+          end
 
         _ ->
-          Mix.shell().error("Unparseable commit: #{commit}")
+          Mix.shell().error("Unparseable commit: #{text}")
+          []
       end
     end)
-    |> write_to_changelog(path)
+    |> write_to_changelog(path, current_version)
+
+    if opts[:initial] do
+      GitOps.Git.tag!(repo, current_version)
+    end
 
     :ok
   end
@@ -61,7 +72,7 @@ defmodule Mix.Tasks.GitOps.Release do
     opts
   end
 
-  defp write_to_changelog(commits, path) do
-    GitOps.Changelog.write(path, commits)
+  defp write_to_changelog(commits, path, current_version) do
+    GitOps.Changelog.write(path, commits, current_version)
   end
 end

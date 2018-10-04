@@ -41,7 +41,7 @@ defmodule GitOps.Commit do
       breaking?: breaking?
     } = commit
 
-    scope = Enum.join(scopes, ",")
+    scope = Enum.join(scopes || [], ",")
 
     breaking_indicator =
       if breaking? do
@@ -51,14 +51,14 @@ defmodule GitOps.Commit do
       end
 
     body_text =
-      if breaking? && String.starts_with?(body, "BREAKING CHANGE:") do
+      if breaking? && String.starts_with?(body || "", "BREAKING CHANGE:") do
         "\n\n" <> body
       else
         ""
       end
 
     footer_text =
-      if breaking? && String.starts_with?(body, "BREAKING CHANGE:") do
+      if breaking? && String.starts_with?(body || "", "BREAKING CHANGE:") do
         "\n\n" <> footer
       end
 
