@@ -5,11 +5,14 @@ For more information, see [conventional
 commits](https://conventionalcommits.org).
 For an example, see this project's [CHANGELOG.md](CHANGELOG.md).
 
-Roadmap:
+Roadmap (in no particular order):
 
 * Automatically update mix.exs and the descriptive line in the readme
 * Support pre releases, release candidates, and build information
 * A hundred other things I forgot to write down while writing the initial version
+* Automatically parse issue numbers and github mentions into the correct format,
+  linking the issue
+* A task to build a compliant commit
 * Release to hex, with task documentation
 
 Important addendums:
