@@ -18,7 +18,7 @@ defmodule GitOps.Commit do
     |> ignore(ascii_char([41]))
     |> optional(whitespace)
 
-  breaking_change_indicator = tag(ascii_char([?!]), :breaking_change)
+  breaking_change_indicator = tag(ascii_char([?!]), :breaking?)
 
   message =
     optional(whitespace)
