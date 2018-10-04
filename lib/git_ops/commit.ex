@@ -62,7 +62,7 @@ defmodule GitOps.Commit do
         "\n\n" <> footer
       end
 
-    "#{breaking_indicator}#{scope}: #{message}#{body_text}#{footer_text}"
+    "* #{breaking_indicator}#{scope}: #{message}#{body_text}#{footer_text}"
   end
 
   def parse(text) do

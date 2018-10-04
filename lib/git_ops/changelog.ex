@@ -26,7 +26,7 @@ defmodule GitOps.Changelog do
         String.downcase(commit.type)
       end)
       |> Stream.filter(fn {group, _commits} ->
-        Map.has_key?(config_types, group) && !config_types[group][:hidden]
+        Map.has_key?(config_types, group) && !config_types[group][:hidden?]
       end)
       |> Enum.map(fn {group, commits} ->
         formatted_commits = Enum.map_join(commits, "\n\n", &GitOps.Commit.format/1)
@@ -89,13 +89,13 @@ defmodule GitOps.Changelog do
       cond do
         Enum.any?(commits, &breaking?/1) ->
           # major
-          %{parsed | major: parsed.major + 1, minor: 0, patch: 0, pre: nil, build: nil}
+          %{parsed | major: parsed.major + 1, minor: 0, patch: 0, pre: [], build: nil}
 
         Enum.any?(commits, &feature?/1) ->
-          %{parsed | minor: parsed.minor + 1, patch: 0, pre: nil, build: nil}
+          %{parsed | minor: parsed.minor + 1, patch: 0, pre: [], build: nil}
 
         Enum.any?(commits, &fix?/1) ->
-          %{parsed | patch: parsed.patch + 1, pre: nil, build: nil}
+          %{parsed | patch: parsed.patch + 1, pre: [], build: nil}
 
         true ->
           parsed
