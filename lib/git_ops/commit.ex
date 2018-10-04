@@ -69,7 +69,7 @@ defmodule GitOps.Commit do
         ""
       end
 
-    "* #{breaking_indicator}#{scope_text}#{message}#{body_text}#{footer_text}"
+    "* #{scope_text}#{message}#{body_text}#{footer_text}"
   end
 
   def parse(text) do
