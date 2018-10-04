@@ -63,6 +63,16 @@ defmodule Mix.Tasks.GitOps.Release do
 
     GitOps.Changelog.write(path, commits, current_version, new_version)
 
+    if GitOps.Config.manage_mix_version?() do
+      GitOps.VersionReplace.update_mix_project(mix_project_module, current_version, new_version)
+    end
+
+    readme = GitOps.Config.manage_readme_version()
+
+    if readme do
+      GitOps.VersionReplace.update_readme(readme, current_version, new_version)
+    end
+
     GitOps.Git.tag!(repo, new_version)
 
     :ok

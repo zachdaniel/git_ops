@@ -3,6 +3,20 @@ defmodule GitOps.Config do
   def changelog_file(), do: Application.get_env(:git_ops, :changelog_file) || "CHANGELOG.md"
   def repository_url(), do: Application.get_env(:git_ops, :repository_url)
   def primary_branch(), do: Application.get_env(:git_ops, :primary_branch) || "master"
+  def manage_mix_version?(), do: truthy?(Application.get_env(:git_ops, :manage_mix_version?))
+
+  def manage_readme_version() do
+    case Application.get_env(:git_ops, :manage_readme_version) do
+      true ->
+        "README.md"
+
+      file when is_bitstring(file) ->
+        file
+
+      other ->
+        truthy?(other)
+    end
+  end
 
   def types() do
     configured = Application.get_env(:git_ops, :types) || []
@@ -38,4 +52,8 @@ defmodule GitOps.Config do
       {sanitized_key, value}
     end)
   end
+
+  defp truthy?(nil), do: false
+  defp truthy?(false), do: false
+  defp truthy?(_), do: true
 end
