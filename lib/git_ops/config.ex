@@ -21,6 +21,9 @@ defmodule GitOps.Config do
       ],
       docs: [
         hidden?: true
+      ],
+      test: [
+        hidden?: true
       ]
     ]
 
