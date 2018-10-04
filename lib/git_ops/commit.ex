@@ -32,6 +32,39 @@ defmodule GitOps.Commit do
              |> ignore(ascii_char([?:]))
              |> concat(message)
 
+  def format(commit) do
+    %{
+      scope: scopes,
+      message: message,
+      body: body,
+      footer: footer,
+      breaking?: breaking?
+    } = commit
+
+    scope = Enum.join(scopes, ",")
+
+    breaking_indicator =
+      if breaking? do
+        "!"
+      else
+        ""
+      end
+
+    body_text =
+      if breaking? && String.starts_with?(body, "BREAKING CHANGE:") do
+        "\n\n" <> body
+      else
+        ""
+      end
+
+    footer_text =
+      if breaking? && String.starts_with?(body, "BREAKING CHANGE:") do
+        "\n\n" <> footer
+      end
+
+    "#{breaking_indicator}#{scope}: #{message}#{body_text}#{footer_text}"
+  end
+
   def parse(text) do
     case commit(text) do
       {:ok, result, remaining, _state, _dunno, _also_dunno} ->
