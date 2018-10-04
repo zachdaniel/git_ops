@@ -4,7 +4,39 @@ All notable changes to this project will be documented in this file.
 See [Conventional Commits](Https://conventionalcommits.org) for commit guidelines.
 
 
-## [1.0.0](https://github.com/zachdaniel/git_ops/compare/master@0.1.0...master@1.0.0) (2018-10-4)
+
+<!-- changelog -->
+
+## [0.3.0](https://github.com/zachdaniel/git_ops/compare/master@0.2.0...master@0.3.0) (2018-10-4)
+
+
+### Features:
+
+* Manage readme + mix.exs version numbers### Bug Fixes:
+
+* spacing in changelog
+
+* Changelog: Correctly tag new versions
+
+* Changelog: Don't show ! in the changelog
+
+* Changelog: semicolons in scopeless commits
+
+## [0.2.0](https://github.com/zachdaniel/git_ops/compare/master@0.1.0...master@0.2.0) (2018-10-4)
+
+
+### Features:
+
+* Manage readme + mix.exs version numbers### Bug Fixes:
+
+* Changelog: Correctly tag new versions
+
+* Changelog: Don't show ! in the changelog
+
+* Changelog: semicolons in scopeless commits
+
+
+## [0.1.0](https://github.com/zachdaniel/git_ops/compare/master@0.1.0...master@1.0.0) (2018-10-4)
 
 
 ### Breaking Changes:
@@ -28,18 +60,3 @@ This footer serves as another example.
 * Changelog: Fix changelog formatting
 
 * parser: recognize exlamation points
-
-## [0.2.0](https://github.com/zachdaniel/git_ops/compare/master@0.1.0...master@0.2.0) (2018-10-4)
-
-
-
-
-### Features:
-
-* Manage readme + mix.exs version numbers### Bug Fixes:
-
-* Changelog: Correctly tag new versions
-
-* Changelog: Don't show ! in the changelog
-
-* Changelog: semicolons in scopeless commits
