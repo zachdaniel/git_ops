@@ -28,3 +28,18 @@ This footer serves as another example.
 * Changelog: Fix changelog formatting
 
 * parser: recognize exlamation points
+
+## [0.2.0](https://github.com/zachdaniel/git_ops/compare/master@0.1.0...master@0.2.0) (2018-10-4)
+
+
+
+
+### Features:
+
+* Manage readme + mix.exs version numbers### Bug Fixes:
+
+* Changelog: Correctly tag new versions
+
+* Changelog: Don't show ! in the changelog
+
+* Changelog: semicolons in scopeless commits
