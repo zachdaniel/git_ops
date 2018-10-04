@@ -30,7 +30,7 @@ defmodule GitOps.Changelog do
       |> Enum.map(fn {group, commits} ->
         formatted_commits = Enum.map_join(commits, "\n\n", &GitOps.Commit.format/1)
 
-        ["### ", config_types[group][:header] || group, ":\n\n", formatted_commits]
+        ["\n\n### ", config_types[group][:header] || group, ":\n\n", formatted_commits]
       end)
 
     repository_url = GitOps.Config.repository_url()

@@ -12,7 +12,9 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 ### Features:
 
-* Manage readme + mix.exs version numbers### Bug Fixes:
+* Manage readme + mix.exs version numbers
+
+### Bug Fixes:
 
 * spacing in changelog
 
