@@ -5,6 +5,11 @@ For more information, see [conventional
 commits](https://conventionalcommits.org).
 For an example, see this project's [CHANGELOG.md](CHANGELOG.md).
 
+Roadmap:
+
+* Automatically update mix.exs and the descriptive line in the readme
+* A hundred other things I forgot to write down while writing the initial version
+
 Important addendums:
 
 A new version of the spec in beta adds a rather useful
