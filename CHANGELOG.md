@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [0.3.0](https://github.com/zachdaniel/git_ops/compare/0.2.3...0.3.0) (2018-10-5)
+
+
+
+
+### Features:
+
+* Support elixir 1.6
+
 ## [0.2.3](https://github.com/zachdaniel/git_ops/compare/0.2.2...0.2.3) (2018-10-5)
 
 
