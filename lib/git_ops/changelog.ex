@@ -41,8 +41,7 @@ defmodule GitOps.Changelog do
     version_header =
       if repository_url do
         trimmed_url = String.trim_trailing(repository_url, "/")
-        branch = GitOps.Config.primary_branch()
-        compare_link = compare_link(trimmed_url, branch, last_version, current_version)
+        compare_link = compare_link(trimmed_url, last_version, current_version)
 
         ["## [", current_version, "](", compare_link, ") ", date]
       else
@@ -81,16 +80,12 @@ defmodule GitOps.Changelog do
     File.write!(path, String.trim_leading(contents))
   end
 
-  defp compare_link(url, branch, last_version, current_version) do
+  defp compare_link(url, last_version, current_version) do
     [
       url,
       "/compare/",
-      branch,
-      "@",
       last_version,
       "...",
-      branch,
-      "@",
       current_version
     ]
   end

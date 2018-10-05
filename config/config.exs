@@ -31,7 +31,6 @@ config :git_ops,
   mix_project: GitOps.MixProject,
   changelog_file: "CHANGELOG.md",
   repository_url: "https://github.com/zachdaniel/git_ops",
-  primary_branch: "master",
   types: [],
   manage_mix_version?: true,
   manage_readme_version: true

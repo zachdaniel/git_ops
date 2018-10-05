@@ -49,7 +49,6 @@ config :git_ops,
   mix_project: MyApp.MixProject,
   changelog_file: "CHANGELOG.md",
   repository_url: "https://github.com/my_user/my_repo",
-  primary_branch: "master",
   types: [
     # Makes an allowed commit type called `tidbit` that is not
     # shown in the changelog
