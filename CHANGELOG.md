@@ -5,6 +5,13 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [0.2.0](https://github.com/zachdaniel/git_ops/compare/master@0.1.1...master@0.2.0) (2018-10-5)
+### Breaking Changes:
+
+* Commit and tag, instead of tag and commit
+
+
+
 ## [0.1.1](https://github.com/zachdaniel/git_ops/compare/master@0.1.1-rc0...master@0.1.1) (2018-10-5)
 
 
