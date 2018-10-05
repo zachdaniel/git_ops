@@ -3,6 +3,20 @@ defmodule Mix.Tasks.GitOps.Release do
 
   @shortdoc "Parses the commit log and writes any updates to the changelog"
 
+  @moduledoc """
+  Updates project changelog, and any other configured release capabilities.
+
+      mix git_ops.release
+
+
+  Logs an error for any commits that were not parseable.
+
+  ## Switches:
+
+      * `--initial` - Creates the first changelog, and sets the version to whatever the
+        configured mix project's version is.
+  """
+
   @doc false
   def run(args) do
     changelog_file = GitOps.Config.changelog_file()
