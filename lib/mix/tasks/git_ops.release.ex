@@ -115,7 +115,12 @@ defmodule Mix.Tasks.GitOps.Release do
         end
       end)
 
-    new_version = GitOps.Version.determine_new_version(tags, commits, opts)
+    new_version =
+      if opts[:initial] do
+        GitOps.Version.determine_new_version(tags, commits, opts)
+      else
+        mix_project_module.project()[:version]
+      end
 
     GitOps.Changelog.write(path, commits, current_version, new_version)
 
@@ -130,6 +135,8 @@ defmodule Mix.Tasks.GitOps.Release do
     end
 
     GitOps.Git.tag!(repo, new_version)
+
+    IO.puts("All thats left is to commit and push (don't forget to push the tag as well!)")
 
     :ok
   end
