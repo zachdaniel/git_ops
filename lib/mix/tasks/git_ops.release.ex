@@ -148,7 +148,7 @@ defmodule Mix.Tasks.GitOps.Release do
       GitOps.Git.commit!(repo, ["-am", "chore: release version #{new_version}"])
       GitOps.Git.tag!(repo, new_version)
 
-      Mix.shell().info("Don't forget to push the tag: git push <remote> #{new_version}")
+      Mix.shell().info("Don't forget to push the tag: git push origin refs/tags/#{new_version}")
     else
       Mix.shell().info("""
       If you want to do it on your own, make sure you tag the release with:
