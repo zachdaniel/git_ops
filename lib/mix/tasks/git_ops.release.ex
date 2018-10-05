@@ -117,9 +117,10 @@ defmodule Mix.Tasks.GitOps.Release do
 
     new_version =
       if opts[:initial] do
-        GitOps.Version.determine_new_version(tags, commits, opts)
-      else
+
         mix_project_module.project()[:version]
+      else
+GitOps.Version.determine_new_version(tags, commits, opts)
       end
 
     GitOps.Changelog.write(path, commits, current_version, new_version)
