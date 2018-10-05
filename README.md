@@ -1,4 +1,8 @@
 # GitOps
+[![Build Status](https://travis-ci.com/zachdaniel/git_ops.svg?branch=master)](https://travis-ci.com/zachdaniel/git_ops)
+[![Inline docs](http://inch-ci.org/github/zachdaniel/git_ops.svg?branch=master)](http://inch-ci.org/github/zachdaniel/git_ops)
+[![Coverage Status](https://coveralls.io/repos/github/zachdaniel/git_ops/badge.svg?branch=master)](https://coveralls.io/github/zachdaniel/git_ops?branch=master)
+[![Ebert](https://ebertapp.io/github/zachdaniel/git_ops.svg)](https://ebertapp.io/github/zachdaniel/git_ops)
 
 A small tool to help generate changelogs from conventional commit messages.
 For more information, see [conventional
@@ -8,8 +12,6 @@ For an example, see this project's [CHANGELOG.md](CHANGELOG.md).
 Roadmap (in no particular order):
 
 * More tests
-* CI 
-* Release to hex, with task documentation
 * Automatically parse issue numbers and github mentions into the correct format,
   linking the issue
 * A task to build a compliant commit
@@ -30,9 +32,6 @@ mind that you are very limited on space in these messages, and if you find
 yourself using multiple scopes your commit is probably too big.
 
 ## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `git_ops` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -84,6 +83,8 @@ Then when you want to release again, use:
 ``` bash
 mix git_ops.release
 ```
+
+For the full documentation of that task, see the task documentation in hex.
 
 ## Managing your mix version
 
