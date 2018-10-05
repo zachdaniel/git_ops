@@ -1,7 +1,7 @@
 defmodule GitOps.MixProject do
   use Mix.Project
 
-  @version "0.1.1-rc0"
+  @version "0.1.1"
 
   def project do
     [

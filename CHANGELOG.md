@@ -3,11 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](Https://conventionalcommits.org) for commit guidelines.
 
-
-
-
-
 <!-- changelog -->
+
+## [0.1.1](https://github.com/zachdaniel/git_ops/compare/master@0.1.1-rc0...master@0.1.1) (2018-10-5)
+
+
+
+
+### Bug Fixes:
+
+* Changelog: Spacing between beginning and body
+
+* Split version and changelog commits
 
 ## [0.1.1-rc0](https://github.com/zachdaniel/git_ops/compare/master@0.1.0...master@0.1.1-rc0) (2018-10-5)
 
