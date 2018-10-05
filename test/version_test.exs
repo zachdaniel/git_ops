@@ -106,7 +106,7 @@ defmodule GitOps.Test.VersionTest do
 
   test "a release candidate raises correctly when it would not change" do
     assert_raise RuntimeError, ~r/No changes should result in a new release version./, fn ->
-      new_version(["0.1.0", "0.1.1-rc0"], [chore()], rc: true) |> IO.inspect()
+      new_version(["0.1.0", "0.1.1-rc0"], [chore()], rc: true)
     end
   end
 end

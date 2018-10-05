@@ -4,7 +4,6 @@
       `feat(Calculator): Correctly preserve history`
       Any explanation or long form information in your commit message should be
       in a separate paragraph, separated by a blank line from the primary message
-      
 - [ ] Bug fixes include regression tests
 - [ ] Features include unit/acceptance tests
 

@@ -1,8 +1,19 @@
 defmodule GitOps.Commit do
+  @moduledoc """
+  Manages the structure, parsing, and formatting of commits.
+
+  Using `parse/1` you can parse a commit struct out of a commit message
+
+  Using `format/1` you can format a commit struct in the way that the
+  changelog expects.
+  """
   import NimbleParsec
 
   defstruct [:type, :scope, :message, :body, :footer, :breaking?]
 
+  @type t :: %__MODULE__{}
+
+  # credo:disable-for-lines:27 Credo.Check.Refactor.PipeChainStart
   whitespace = ignore(ascii_string([9, 32], min: 1))
 
   # 40/41 are `(` and `)`, but syntax highlighters don't like ?( and ?)
@@ -23,7 +34,6 @@ defmodule GitOps.Commit do
   message =
     optional(whitespace)
     |> tag(ascii_string([not: ?\n], min: 1), :message)
-    |> optional(ignore(ascii_char([?\n])))
 
   defparsecp :commit,
              optional(breaking_change_indicator)
@@ -56,7 +66,7 @@ defmodule GitOps.Commit do
       end
 
     scope_text =
-      if scope && String.trim(scope) != "" do
+      if String.trim(scope) != "" do
         "#{scope}: "
       else
         ""

@@ -87,24 +87,7 @@ defmodule Mix.Tasks.GitOps.Release do
     tags = GitOps.Git.tags(repo)
 
     {commit_messages_for_version, commit_messages_for_changelog} =
-      if opts[:initial] do
-        commits = GitOps.Git.get_initial_commits!(repo)
-        {commits, commits}
-      else
-        tag = GitOps.Version.last_valid_non_rc_version(tags)
-
-        commits_for_version = GitOps.Git.commit_messages_since_tag(repo, tag)
-        last_pre_release = GitOps.Version.last_pre_release_version_after(tags, tag)
-
-        if last_pre_release do
-          commit_messages_for_changelog =
-            GitOps.Git.commit_messages_since_tag(repo, last_pre_release)
-
-          {commits_for_version, commit_messages_for_changelog}
-        else
-          {commits_for_version, commits_for_version}
-        end
-      end
+      get_commit_messages(repo, tags, opts)
 
     config_types = GitOps.Config.types()
 
@@ -135,6 +118,27 @@ defmodule Mix.Tasks.GitOps.Release do
     :ok
   end
 
+  defp get_commit_messages(repo, tags, opts) do
+    if opts[:initial] do
+      commits = GitOps.Git.get_initial_commits!(repo)
+      {commits, commits}
+    else
+      tag = GitOps.Version.last_valid_non_rc_version(tags)
+
+      commits_for_version = GitOps.Git.commit_messages_since_tag(repo, tag)
+      last_pre_release = GitOps.Version.last_pre_release_version_after(tags, tag)
+
+      if last_pre_release do
+        commit_messages_for_changelog =
+          GitOps.Git.commit_messages_since_tag(repo, last_pre_release)
+
+        {commits_for_version, commit_messages_for_changelog}
+      else
+        {commits_for_version, commits_for_version}
+      end
+    end
+  end
+
   defp confirm_and_tag(repo, new_version) do
     message = """
     Please review the CHANGELOG.md and any other changes.
@@ -160,28 +164,27 @@ defmodule Mix.Tasks.GitOps.Release do
   end
 
   defp parse_commits(messages, config_types, log?) do
-    Enum.flat_map(messages, fn text ->
+    Enum.flat_map(messages, &parse_commit(&1, config_types, log?))
+  end
+
+  defp parse_commit(text, config_types, log?) do
       case GitOps.Commit.parse(text) do
         {:ok, commit} ->
           if Map.has_key?(config_types, String.downcase(commit.type)) do
             [commit]
           else
-            if log? do
-              Mix.shell().error("Commit with unknown type: #{text}")
-            end
-
-            []
+            error_if_log("Commit with unknown type: #{text}", log?)
           end
 
         _ ->
-          if log? do
-            Mix.shell().error("Unparseable commit: #{text}")
-          end
+          error_if_log("Unparseable commit: #{text}", log?)
 
           []
       end
-    end)
   end
+
+  defp error_if_log(error, _log? = true), do: Mix.shell().error(error)
+  defp error_if_log(_, _), do: :ok
 
   defp get_opts(args) do
     {opts, _} =

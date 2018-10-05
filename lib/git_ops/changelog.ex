@@ -1,4 +1,9 @@
 defmodule GitOps.Changelog do
+  @moduledoc """
+  Functions for writing commits to the changelog, and initializing it.
+  """
+
+  @spec write(String.t(), [GitOps.Commit.t()], String.t(), String.t()) :: :ok
   def write(path, commits, last_version, current_version) do
     original_file_contents = File.read!(path)
 
@@ -61,8 +66,11 @@ defmodule GitOps.Changelog do
         rest
       ]
     )
+
+    :ok
   end
 
+  @spec initialize(String.t()) :: :ok
   def initialize(path) do
     contents = """
     # Change Log
@@ -78,6 +86,8 @@ defmodule GitOps.Changelog do
     end
 
     File.write!(path, String.trim_leading(contents))
+
+    :ok
   end
 
   defp compare_link(url, last_version, current_version) do

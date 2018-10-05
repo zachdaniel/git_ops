@@ -1,4 +1,8 @@
 defmodule GitOps.Config do
+  @moduledoc """
+  Helpers around fetching configurations, including setting defaults.
+  """
+
   def mix_project(), do: Application.get_env(:git_ops, :mix_project)
   def changelog_file(), do: Application.get_env(:git_ops, :changelog_file) || "CHANGELOG.md"
   def repository_url(), do: Application.get_env(:git_ops, :repository_url)

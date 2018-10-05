@@ -1,9 +1,25 @@
 defmodule GitOps.Version do
+  @moduledoc """
+  Functionality around parsing and comparing versions contained in git tags
+  """
+
+  @dialyzer {:nowarn_function,
+             parse!: 1,
+             versions_equal_no_pre?: 2,
+             versions_equal?: 2,
+             do_increment_rc!: 1,
+             increment_rc!: 2,
+             determine_new_version: 3,
+             last_valid_non_rc_version: 1,
+             last_pre_release_version_after: 2,
+             new_version: 3}
+
+  @spec last_valid_non_rc_version([String.t()]) :: String.t() | nil
   def last_valid_non_rc_version(versions) do
     versions
     |> Enum.reverse()
     |> Enum.find(fn version ->
-      match?({:ok, %{pre: []}}, Version.parse(version))
+      match?({:ok, %{pre: []}}, parse(version))
     end)
   end
 
@@ -11,30 +27,13 @@ defmodule GitOps.Version do
     parsed =
       versions
       |> last_valid_non_rc_version()
-      |> Version.parse!()
+      |> parse!()
 
     rc? = opts[:rc]
 
     build = opts[:build]
 
-    new_version =
-      cond do
-        Enum.any?(commits, &GitOps.Commit.breaking?/1) ->
-          if opts[:no_major] do
-            %{parsed | major: parsed.major, minor: parsed.minor + 1, patch: 0}
-          else
-            %{parsed | major: parsed.major + 1, minor: 0, patch: 0}
-          end
-
-        Enum.any?(commits, &GitOps.Commit.feature?/1) ->
-          %{parsed | minor: parsed.minor + 1, patch: 0}
-
-        Enum.any?(commits, &GitOps.Commit.fix?/1) || opts[:force_patch] ->
-          %{parsed | patch: parsed.patch + 1}
-
-        true ->
-          parsed
-      end
+    new_version = new_version(commits, parsed, opts)
 
     pre_release =
       if rc? do
@@ -71,7 +70,7 @@ defmodule GitOps.Version do
 
   def last_pre_release_version_after(versions, last_version) do
     Enum.find(versions, fn version ->
-      case Version.parse(version) do
+      case parse(version) do
         {:ok, version} ->
           Version.compare(version, last_version) == :gt
 
@@ -81,10 +80,30 @@ defmodule GitOps.Version do
     end)
   end
 
+  defp new_version(commits, parsed, opts) do
+    cond do
+      Enum.any?(commits, &GitOps.Commit.breaking?/1) ->
+        if opts[:no_major] do
+          %{parsed | major: parsed.major, minor: parsed.minor + 1, patch: 0}
+        else
+          %{parsed | major: parsed.major + 1, minor: 0, patch: 0}
+        end
+
+      Enum.any?(commits, &GitOps.Commit.feature?/1) ->
+        %{parsed | minor: parsed.minor + 1, patch: 0}
+
+      Enum.any?(commits, &GitOps.Commit.fix?/1) || opts[:force_patch] ->
+        %{parsed | patch: parsed.patch + 1}
+
+      true ->
+        parsed
+    end
+  end
+
   defp increment_rc!(nil, _), do: "rc0"
 
   defp increment_rc!(last_pre_release_version, new_version) do
-    parsed_pre_release = Version.parse!(last_pre_release_version)
+    parsed_pre_release = parse!(last_pre_release_version)
 
     if versions_equal_no_pre?(parsed_pre_release, new_version) do
       parsed_pre_release
@@ -119,4 +138,7 @@ defmodule GitOps.Version do
   defp versions_equal_no_pre?(left, right) do
     versions_equal?(%{left | pre: []}, %{right | pre: []})
   end
+
+  defp parse(text), do: Version.parse(text)
+  defp parse!(text), do: Version.parse!(text)
 end
