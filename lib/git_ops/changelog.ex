@@ -52,7 +52,7 @@ defmodule GitOps.Changelog do
     File.write!(
       path,
       [
-        head,
+        String.trim(head),
         "\n\n<!-- changelog -->\n\n",
         version_header,
         "\n",
