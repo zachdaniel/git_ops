@@ -8,7 +8,6 @@ defmodule Mix.Tasks.GitOps.Release do
 
       mix git_ops.release
 
-
   Logs an error for any commits that were not parseable.
 
   In the case that the prior version was a pre-release and this one is not,
@@ -168,19 +167,19 @@ defmodule Mix.Tasks.GitOps.Release do
   end
 
   defp parse_commit(text, config_types, log?) do
-      case GitOps.Commit.parse(text) do
-        {:ok, commit} ->
-          if Map.has_key?(config_types, String.downcase(commit.type)) do
-            [commit]
-          else
-            error_if_log("Commit with unknown type: #{text}", log?)
-          end
+    case GitOps.Commit.parse(text) do
+      {:ok, commit} ->
+        if Map.has_key?(config_types, String.downcase(commit.type)) do
+          [commit]
+        else
+          error_if_log("Commit with unknown type: #{text}", log?)
+        end
 
-        _ ->
-          error_if_log("Unparseable commit: #{text}", log?)
+      _ ->
+        error_if_log("Unparseable commit: #{text}", log?)
 
-          []
-      end
+        []
+    end
   end
 
   defp error_if_log(error, _log? = true), do: Mix.shell().error(error)

@@ -31,9 +31,7 @@ defmodule GitOps.Commit do
 
   breaking_change_indicator = tag(ascii_char([?!]), :breaking?)
 
-  message =
-    optional(whitespace)
-    |> tag(ascii_string([not: ?\n], min: 1), :message)
+  message = tag(optional(whitespace), ascii_string([not: ?\n], min: 1), :message)
 
   defparsecp :commit,
              optional(breaking_change_indicator)
