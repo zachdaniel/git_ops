@@ -18,7 +18,7 @@ defmodule GitOps.Git do
     ["chore(GitOps): Add changelog using git_ops." | messages]
   end
 
-  def get_commits_since_last_version!(repo) do
+  def tags(repo) do
     tags =
       repo
       |> Git.tag!()
@@ -28,12 +28,14 @@ defmodule GitOps.Git do
       raise """
       Could not find an appropriate semver tag in git history. Ensure that you have initialized the project and commited the result.
       """
+    else
+      tags
     end
+  end
 
-    most_recent_tag = GitOps.Version.first_valid_version(tags)
-
+  def commit_messages_since_tag(repo, tag) do
     repo
-    |> Git.log!(["#{most_recent_tag}..HEAD", "--format=%B--gitops--"])
+    |> Git.log!(["#{tag}..HEAD", "--format=%B--gitops--"])
     |> String.split("--gitops--")
     |> Enum.map(&String.trim/1)
     |> Enum.reject(&Kernel.==(&1, ""))
