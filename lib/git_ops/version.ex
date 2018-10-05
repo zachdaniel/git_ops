@@ -58,6 +58,8 @@ defmodule GitOps.Version do
         `git commit --allow-empty` that contains an appropriate message.
       * If you don't care and want a new version, you can use `--force-patch` which
         will update the patch version regardless.
+      * You can add build metadata using `--build` that will signify that something was
+        unique about this build.
       """
     end
 
