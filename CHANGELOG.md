@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [0.2.2](https://github.com/zachdaniel/git_ops/compare/master@0.2.1...master@0.2.2) (2018-10-5)
+
+
+
+
+### Bug Fixes:
+
+* inform of a safer tag push
+
 ## [0.2.1](https://github.com/zachdaniel/git_ops/compare/master@0.2.0...master@0.2.1) (2018-10-5)
 
 
