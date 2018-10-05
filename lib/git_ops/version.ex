@@ -69,7 +69,7 @@ defmodule GitOps.Version do
     |> to_string()
   end
 
-  defp last_pre_release_version_after(versions, last_version) do
+  def last_pre_release_version_after(versions, last_version) do
     Enum.find(versions, fn version ->
       case Version.parse(version) do
         {:ok, version} ->

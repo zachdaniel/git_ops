@@ -86,44 +86,39 @@ defmodule Mix.Tasks.GitOps.Release do
 
     tags = GitOps.Git.tags(repo)
 
-    commit_messages =
+    {commit_messages_for_version, commit_messages_for_changelog} =
       if opts[:initial] do
-        GitOps.Git.get_initial_commits!(repo)
+        commits = GitOps.Git.get_initial_commits!(repo)
+        {commits, commits}
       else
         tag = GitOps.Version.last_valid_non_rc_version(tags)
 
-        GitOps.Git.commit_messages_since_tag(repo, tag)
+        commits_for_version = GitOps.Git.commit_messages_since_tag(repo, tag)
+        last_pre_release = GitOps.Version.last_pre_release_version_after(tags, tag)
+
+        if last_pre_release do
+          commit_messages_for_changelog =
+            GitOps.Git.commit_messages_since_tag(repo, last_pre_release)
+
+          {commits_for_version, commit_messages_for_changelog}
+        else
+          {commits_for_version, commits_for_version}
+        end
       end
 
     config_types = GitOps.Config.types()
 
-    commits =
-      commit_messages
-      |> Enum.flat_map(fn text ->
-        case GitOps.Commit.parse(text) do
-          {:ok, commit} ->
-            if Map.has_key?(config_types, String.downcase(commit.type)) do
-              [commit]
-            else
-              Mix.shell().error("Commit with unknown type: #{text}")
-              []
-            end
-
-          _ ->
-            Mix.shell().error("Unparseable commit: #{text}")
-            []
-        end
-      end)
+    commits_for_version = parse_commits(commit_messages_for_version, config_types, true)
+    commits_for_changelog = parse_commits(commit_messages_for_changelog, config_types, false)
 
     new_version =
       if opts[:initial] do
-
         mix_project_module.project()[:version]
       else
-GitOps.Version.determine_new_version(tags, commits, opts)
+        GitOps.Version.determine_new_version(tags, commits_for_version, opts)
       end
 
-    GitOps.Changelog.write(path, commits, current_version, new_version)
+    GitOps.Changelog.write(path, commits_for_changelog, current_version, new_version)
 
     if GitOps.Config.manage_mix_version?() do
       GitOps.VersionReplace.update_mix_project(mix_project_module, current_version, new_version)
@@ -137,12 +132,36 @@ GitOps.Version.determine_new_version(tags, commits, opts)
 
     GitOps.Git.tag!(repo, new_version)
 
-    IO.puts("All thats left is to commit and push (don't forget to push the tag as well!)")
+    Mix.shell().info("All thats left is to commit and push (don't forget to push the tag as well!)")
 
     :ok
   end
 
-  def get_opts(args) do
+  defp parse_commits(messages, config_types, log?) do
+    Enum.flat_map(messages, fn text ->
+      case GitOps.Commit.parse(text) do
+        {:ok, commit} ->
+          if Map.has_key?(config_types, String.downcase(commit.type)) do
+            [commit]
+          else
+            if log? do
+              Mix.shell().error("Commit with unknown type: #{text}")
+            end
+
+            []
+          end
+
+        _ ->
+          if log? do
+            Mix.shell().error("Unparseable commit: #{text}")
+          end
+
+          []
+      end
+    end)
+  end
+
+  defp get_opts(args) do
     {opts, _} =
       OptionParser.parse!(args,
         strict: [
