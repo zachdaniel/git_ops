@@ -7,7 +7,8 @@ For an example, see this project's [CHANGELOG.md](CHANGELOG.md).
 
 Roadmap (in no particular order):
 
-* Support pre releases, release candidates, and build information
+* More tests
+* CI 
 * Automatically parse issue numbers and github mentions into the correct format,
   linking the issue
 * A task to build a compliant commit
