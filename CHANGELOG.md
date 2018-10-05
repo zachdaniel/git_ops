@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [0.3.1](https://github.com/zachdaniel/git_ops/compare/0.3.0...0.3.1) (2018-10-5)
+
+
+
+
+### Bug Fixes:
+
+* use annotated tags
+
 ## [0.3.0](https://github.com/zachdaniel/git_ops/compare/0.2.3...0.3.0) (2018-10-5)
 
 
