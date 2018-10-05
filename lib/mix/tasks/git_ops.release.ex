@@ -130,11 +130,31 @@ defmodule Mix.Tasks.GitOps.Release do
       GitOps.VersionReplace.update_readme(readme, current_version, new_version)
     end
 
-    GitOps.Git.tag!(repo, new_version)
-
-    Mix.shell().info("All thats left is to commit and push (don't forget to push the tag as well!)")
+    confirm_and_tag(repo, new_version)
 
     :ok
+  end
+
+  defp confirm_and_tag(repo, new_version) do
+    message = """
+    Please review the CHANGELOG.md and any other changes.
+
+    Shall we commit and tag?
+
+    Instructions will be printed for committing and tagging if you choose no.
+    """
+
+    if Mix.shell().yes?(message) do
+      GitOps.Git.commit!(repo, ["-am", "chore: release version #{new_version}"])
+      GitOps.Git.tag!(repo, new_version)
+    else
+      """
+      If you want to do it on your own, make sure you tag the release with:
+
+          git commit -am "chore: release version #{new_version}"
+          git tag #{new_version}
+      """
+    end
   end
 
   defp parse_commits(messages, config_types, log?) do

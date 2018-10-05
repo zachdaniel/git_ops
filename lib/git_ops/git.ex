@@ -3,6 +3,10 @@ defmodule GitOps.Git do
     Git.init!(File.cwd!())
   end
 
+  def commit!(repo, args) do
+    Git.commit!(repo, args)
+  end
+
   def tag!(repo, current_version) do
     Git.tag!(repo, current_version)
   end
