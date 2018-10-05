@@ -12,7 +12,7 @@ defmodule GitOps.Git do
     Git.commit!(repo, args)
   end
 
-  @spec tag!(Git.Repository.t(), String.t()) :: String.t()
+  @spec tag!(Git.Repository.t(), String.t() | [String.t()]) :: String.t()
   def tag!(repo, current_version) do
     Git.tag!(repo, current_version)
   end

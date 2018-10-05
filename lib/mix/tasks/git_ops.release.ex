@@ -18,40 +18,40 @@ defmodule Mix.Tasks.GitOps.Release do
 
   ## Switches:
 
-      * `--initial` - Creates the first changelog, and sets the version to whatever the
-        configured mix project's version is.
+  * `--initial` - Creates the first changelog, and sets the version to whatever the
+    configured mix project's version is.
 
-      * `--pre-release` - Sets this release to be a pre release, using the configured
-        string as the pre release identifier. This is a manual process, and results in
-        an otherwise unchanged version. (Does not change the minor version).
-        The version number will only change if a *higher* version number bump is required
-        than what was originally changed in the creation of the RC. For instance, if patch
-        was changed when creating the pre-release, and no fixes or features were added when
-        requesting a new pre-release, then the version will not change. However, if the last
-        pre-release had only a patch version bump, but a major change has since been added,
-        the version will be changed accordingly.
+  * `--pre-release` - Sets this release to be a pre release, using the configured
+    string as the pre release identifier. This is a manual process, and results in
+    an otherwise unchanged version. (Does not change the minor version).
+    The version number will only change if a *higher* version number bump is required
+    than what was originally changed in the creation of the RC. For instance, if patch
+    was changed when creating the pre-release, and no fixes or features were added when
+    requesting a new pre-release, then the version will not change. However, if the last
+    pre-release had only a patch version bump, but a major change has since been added,
+    the version will be changed accordingly.
 
-      * `--rc` - Overrides the presence of `--pre-release`, and manages an incrementing
-        identifier as the prerelease. This will look like `1.0.0-rc0` `1.0.0-rc1` and so
-        forth. See the `--pre-release` flag for information on when the version will change
-        for a pre-release. In the case that the version must change, the counter for
-        the release candidate counter will be reset as well.
+  * `--rc` - Overrides the presence of `--pre-release`, and manages an incrementing
+    identifier as the prerelease. This will look like `1.0.0-rc0` `1.0.0-rc1` and so
+    forth. See the `--pre-release` flag for information on when the version will change
+    for a pre-release. In the case that the version must change, the counter for
+    the release candidate counter will be reset as well.
 
-      * `--build` - Sets the release build metadata. Build information has no semantic
-        meaning to the version itself, and so is simply attached to the end and is to
-        be used to describe the build conditions for that release. You might build the
-        same version many times, and this can be used to denote that in whatever way
-        you choose.
+  * `--build` - Sets the release build metadata. Build information has no semantic
+    meaning to the version itself, and so is simply attached to the end and is to
+    be used to describe the build conditions for that release. You might build the
+    same version many times, and this can be used to denote that in whatever way
+    you choose.
 
-      * `--force-patch` - In cases where this task is run, but the version should not
-        change, this option will force the patch number to be incremented.
+  * `--force-patch` - In cases where this task is run, but the version should not
+    change, this option will force the patch number to be incremented.
 
-      * `--no-major` - Forces major version changes to instead only result in minor version
-        changes. This would be a common option for libraries that are still in 0.x.x phases
-        where 1.0.0 should only happen at some specified milestones. After that, it is important
-        to *not* resist a 2.x.x change just because it doesn't seem like it deserves it.
-        Semantic versioning uses this major version change to communicate, and it should not be
-        reserved.
+  * `--no-major` - Forces major version changes to instead only result in minor version
+    changes. This would be a common option for libraries that are still in 0.x.x phases
+    where 1.0.0 should only happen at some specified milestones. After that, it is important
+    to *not* resist a 2.x.x change just because it doesn't seem like it deserves it.
+    Semantic versioning uses this major version change to communicate, and it should not be
+    reserved.
   """
 
   @doc false
@@ -149,15 +149,15 @@ defmodule Mix.Tasks.GitOps.Release do
 
     if Mix.shell().yes?(message) do
       GitOps.Git.commit!(repo, ["-am", "chore: release version #{new_version}"])
-      GitOps.Git.tag!(repo, new_version)
+      GitOps.Git.tag!(repo, ["-a", new_version, "-m", "release #{new_version}"])
 
-      Mix.shell().info("Don't forget to push the tag: git push origin refs/tags/#{new_version}")
+      Mix.shell().info("Don't forget to push with tags:\n\n    git push --follow-tags")
     else
       Mix.shell().info("""
       If you want to do it on your own, make sure you tag the release with:
 
           git commit -am "chore: release version #{new_version}"
-          git tag #{new_version}
+          git tag -a #{new_version} -m "release #{new_version}"
       """)
     end
   end

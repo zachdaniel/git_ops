@@ -1,4 +1,5 @@
 # GitOps
+[![Hex pm](http://img.shields.io/hexpm/v/git_ops.svg?style=flat)](https://hex.pm/packages/git_ops)
 [![Build Status](https://travis-ci.com/zachdaniel/git_ops.svg?branch=master)](https://travis-ci.com/zachdaniel/git_ops)
 [![Inline docs](http://inch-ci.org/github/zachdaniel/git_ops.svg?branch=master)](http://inch-ci.org/github/zachdaniel/git_ops)
 [![Coverage Status](https://coveralls.io/repos/github/zachdaniel/git_ops/badge.svg?branch=master)](https://coveralls.io/github/zachdaniel/git_ops?branch=master)
@@ -40,6 +41,10 @@ def deps do
   ]
 end
 ```
+
+## Documentation
+
+View the [hex documentation](https://hexdocs.pm/git_ops)
 
 ## Configuration
 
@@ -98,7 +103,7 @@ version. Look at [this project's mix.exs](mix.exs) for an example.
 Most project readmes have a line like this that would ideally remain up to date:
 
 ```elixir
-    {:git_ops, "~> 0.3.0", only: [:dev]}
+    {:git_ops, "~> 0.3.2", only: [:dev]}
 ```
 
 You can keep that number up to date via `manage_readme_version`, which accepts
