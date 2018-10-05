@@ -7,7 +7,7 @@ defmodule GitOps.MixProject do
     [
       app: :git_ops,
       version: @version,
-      elixir: "~> 1.7",
+      elixir: "~> 1.6",
       description: description(),
       package: package(),
       start_permanent: Mix.env() == :prod,
@@ -52,7 +52,6 @@ defmodule GitOps.MixProject do
       ]
     ]
   end
-
 
   # Run "mix help compile.app" to learn about applications.
   def application do
