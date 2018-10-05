@@ -1,4 +1,4 @@
-# GitOps
+# GitOps - Testing
 
 A small tool to help generate changelogs from conventional commit messages.
 For more information, see [conventional
