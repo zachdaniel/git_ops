@@ -9,11 +9,12 @@ Roadmap (in no particular order):
 
 * More tests
 * CI 
+* Release to hex, with task documentation
 * Automatically parse issue numbers and github mentions into the correct format,
   linking the issue
 * A task to build a compliant commit
-* Release to hex, with task documentation
 * A hundred other things I forgot to write down while writing the initial version
+* A sample PR template and instructions on how to use it in your project
 
 Important addendums:
 
