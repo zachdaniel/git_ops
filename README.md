@@ -104,5 +104,10 @@ You can keep that number up to date via `manage_readme_version`, which accepts
 `true` for `README.md` or a string pointing to some other path relative to your
 project root.
 
+## Using this with open source projects
 
+If you'd like your contributors to use the conventional commit format, you can
+use a [PULL_REQUEST_TEMPLATE.md](PULL_REQUEST_TEMPLATE.md) like ours. However,
+it is also possible to manage it as the maintainers of a project by altering
+either the merge commit or alter the commit when merging/squashing (recommended)
 
