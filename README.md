@@ -37,7 +37,7 @@ by adding `git_ops` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:git_ops, "~> 0.1.0", only: [:dev]}
+    {:git_ops, "~> 0.1.1-rc0", only: [:dev]}
   ]
 end
 ```
