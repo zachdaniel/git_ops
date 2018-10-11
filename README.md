@@ -40,7 +40,7 @@ yourself using multiple scopes your commit is probably too big.
 ```elixir
 def deps do
   [
-    {:git_ops, "~> 0.3.1", only: [:dev]}
+    {:git_ops, "~> 0.3.2", only: [:dev]}
   ]
 end
 ```
