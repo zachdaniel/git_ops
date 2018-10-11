@@ -173,6 +173,8 @@ defmodule Mix.Tasks.GitOps.Release do
           [commit]
         else
           error_if_log("Commit with unknown type: #{text}", log?)
+
+          []
         end
 
       _ ->
