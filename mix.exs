@@ -69,7 +69,7 @@ defmodule GitOps.MixProject do
       {:excoveralls, "~> 0.6", only: :test},
       {:git_cli, "~> 0.2"},
       {:inch_ex, "~> 0.5", only: [:dev, :test]},
-      {:nimble_parsec, "~> 0.2"}
+      {:nimble_parsec, "~> 0.4"}
     ]
   end
 end
