@@ -59,6 +59,9 @@ defmodule Mix.Tasks.GitOps.Release do
     changelog_file = GitOps.Config.changelog_file()
     path = Path.expand(changelog_file)
     mix_project_module = GitOps.Config.mix_project()
+    unless mix_project_module do
+      raise "mix_project must be configured in order to use git_ops. Please see the configuration in the README.md for an example."
+    end
     mix_project = mix_project_module.project()
     repo = GitOps.Git.init!()
 
