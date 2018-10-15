@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [0.3.4](https://github.com/zachdaniel/git_ops/compare/0.3.3...0.3.4) (2018-10-15)
+
+
+
+
+### Bug Fixes:
+
+* Fail better when mix_project is not set
+
 ## [0.3.3](https://github.com/zachdaniel/git_ops/compare/0.3.2...0.3.3) (2018-10-11)
 
 
