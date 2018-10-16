@@ -20,6 +20,7 @@ Roadmap (in no particular order):
 * A task to build a compliant commit
 * Validation of commits
 * Figure out why dialyzer hates the `GitOps.Version` module
+* Automatically link to the PR that merged a given commit in the changelog
 * A hundred other things I forgot to write down while writing the initial version
 
 Important addendums:
