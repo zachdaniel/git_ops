@@ -33,4 +33,5 @@ config :git_ops,
   repository_url: "https://github.com/zachdaniel/git_ops",
   types: [],
   manage_mix_version?: true,
-  manage_readme_version: true
+  manage_readme_version: true,
+  version_tag_prefix: "v"

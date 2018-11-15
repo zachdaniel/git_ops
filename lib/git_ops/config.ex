@@ -56,6 +56,8 @@ defmodule GitOps.Config do
     end)
   end
 
+  def prefix(), do: Application.get_env(:git_ops, :version_tag_prefix) || ""
+
   defp truthy?(nil), do: false
   defp truthy?(false), do: false
   defp truthy?(_), do: true

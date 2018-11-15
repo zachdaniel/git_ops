@@ -4,30 +4,29 @@ defmodule GitOps.Version do
   """
 
   @dialyzer {:nowarn_function,
-             parse!: 1,
+             parse!: 2,
              versions_equal_no_pre?: 2,
              versions_equal?: 2,
              do_increment_rc!: 1,
              increment_rc!: 2,
-             determine_new_version: 3,
-             last_valid_non_rc_version: 1,
-             last_pre_release_version_after: 2,
+             determine_new_version: 4,
+             last_valid_non_rc_version: 2,
+             last_pre_release_version_after: 3,
              new_version: 3}
 
-  @spec last_valid_non_rc_version([String.t()]) :: String.t() | nil
-  def last_valid_non_rc_version(versions) do
+  @spec last_valid_non_rc_version([String.t()], String.t()) :: String.t() | nil
+  def last_valid_non_rc_version(versions, prefix) do
     versions
     |> Enum.reverse()
     |> Enum.find(fn version ->
-      match?({:ok, %{pre: []}}, parse(version))
+      match?({:ok, %{pre: []}}, parse(prefix, version))
     end)
   end
 
-  def determine_new_version(versions, commits, opts) do
-    parsed =
-      versions
-      |> last_valid_non_rc_version()
-      |> parse!()
+  def determine_new_version(versions, prefix, commits, opts) do
+    last_non_rc = last_valid_non_rc_version(versions, prefix)
+
+    parsed = parse!(prefix, last_non_rc)
 
     rc? = opts[:rc]
 
@@ -38,7 +37,7 @@ defmodule GitOps.Version do
     pre_release =
       if rc? do
         versions
-        |> last_pre_release_version_after(parsed)
+        |> last_pre_release_version_after(parsed, prefix)
         |> increment_rc!(new_version)
         |> List.wrap()
       else
@@ -62,15 +61,18 @@ defmodule GitOps.Version do
       """
     end
 
-    new_version
-    |> Map.put(:pre, pre_release)
-    |> Map.put(:build, build)
-    |> to_string()
+    unprefixed =
+      new_version
+      |> Map.put(:pre, pre_release)
+      |> Map.put(:build, build)
+      |> to_string()
+
+    prefix <> unprefixed
   end
 
-  def last_pre_release_version_after(versions, last_version) do
+  def last_pre_release_version_after(versions, last_version, prefix) do
     Enum.find(versions, fn version ->
-      case parse(version) do
+      case parse(prefix, version) do
         {:ok, version} ->
           Version.compare(version, last_version) == :gt
 
@@ -103,7 +105,7 @@ defmodule GitOps.Version do
   defp increment_rc!(nil, _), do: "rc0"
 
   defp increment_rc!(last_pre_release_version, new_version) do
-    parsed_pre_release = parse!(last_pre_release_version)
+    parsed_pre_release = parse!("", last_pre_release_version)
 
     if versions_equal_no_pre?(parsed_pre_release, new_version) do
       parsed_pre_release
@@ -139,6 +141,25 @@ defmodule GitOps.Version do
     versions_equal?(%{left | pre: []}, %{right | pre: []})
   end
 
-  defp parse(text), do: Version.parse(text)
-  defp parse!(text), do: Version.parse!(text)
+  defp parse("", text), do: Version.parse(text)
+
+  defp parse(prefix, text) do
+    if String.starts_with?(text, prefix) do
+      text
+      |> String.trim_leading(prefix)
+      |> Version.parse()
+    else
+      :error
+    end
+  end
+
+  defp parse!(prefix, text) do
+    case parse(prefix, text) do
+      {:ok, parsed} ->
+        parsed
+
+      :error ->
+        raise ArgumentError, "Expected: #{text} to be parseable as a version, but it was not."
+    end
+  end
 end
