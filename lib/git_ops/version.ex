@@ -141,7 +141,7 @@ defmodule GitOps.Version do
     versions_equal?(%{left | pre: []}, %{right | pre: []})
   end
 
-  defp parse(version = %Version{}, _), do: {:ok, version}
+  defp parse(_, %Version{} = version), do: {:ok, version}
   defp parse("", text), do: Version.parse(text)
 
   defp parse(prefix, text) do
