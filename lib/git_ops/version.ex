@@ -71,10 +71,12 @@ defmodule GitOps.Version do
   end
 
   def last_pre_release_version_after(versions, last_version, prefix) do
+    last_version_without_prefix = String.trim_leading(last_version, prefix)
+
     Enum.find(versions, fn version ->
       case parse(prefix, version) do
         {:ok, version} ->
-          Version.compare(version, last_version) == :gt
+          Version.compare(version, last_version_without_prefix) == :gt
 
         _ ->
           false
