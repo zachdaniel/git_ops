@@ -74,7 +74,7 @@ defmodule GitOps.Version do
     Enum.find(versions, fn version ->
       case parse(prefix, version) do
         {:ok, version} ->
-          Version.compare(version, parse!(last_version, prefix)) == :gt
+          Version.compare(version, parse!(prefix, last_version)) == :gt
 
         _ ->
           false
