@@ -16,6 +16,25 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 ### Bug Fixes:
 
+* messaging and tag prefix
+
+* prefix is the *first* argument to `parse!/2`
+
+* fix error when version struct not expected
+
+* resolve issue with comparing invalid version
+
+## [v0.4.0](https://github.com/zachdaniel/git_ops/compare/0.4.0...v0.4.0) (2018-11-16)
+
+
+
+
+### Features:
+
+* Allow configuring a version prefix
+
+### Bug Fixes:
+
 * prefix is the *first* argument to `parse!/2`
 
 * fix error when version struct not expected
