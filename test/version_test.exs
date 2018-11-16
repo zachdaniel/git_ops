@@ -2,7 +2,9 @@ defmodule GitOps.Test.VersionTest do
   use ExUnit.Case
 
   defp new_version(versions, commits, opts \\ []) do
-    GitOps.Version.determine_new_version(versions, commits, opts)
+    {prefix, opts} = Keyword.pop(opts, :prefix)
+
+    GitOps.Version.determine_new_version(versions, prefix || "", commits, opts)
   end
 
   defp minor() do
@@ -108,5 +110,9 @@ defmodule GitOps.Test.VersionTest do
     assert_raise RuntimeError, ~r/No changes should result in a new release version./, fn ->
       new_version(["0.1.0", "0.1.1-rc0"], [chore()], rc: true)
     end
+  end
+
+  test "if a prefix is configured, it is ignored when searching for a tag" do
+    assert new_version(["v0.1.1", "2.0.0"], [break()], prefix: "v") == "v1.0.0"
   end
 end

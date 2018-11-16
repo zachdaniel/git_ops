@@ -59,9 +59,11 @@ defmodule Mix.Tasks.GitOps.Release do
     changelog_file = GitOps.Config.changelog_file()
     path = Path.expand(changelog_file)
     mix_project_module = GitOps.Config.mix_project()
+
     unless mix_project_module do
       raise "mix_project must be configured in order to use git_ops. Please see the configuration in the README.md for an example."
     end
+
     mix_project = mix_project_module.project()
     repo = GitOps.Git.init!()
 
@@ -88,22 +90,26 @@ defmodule Mix.Tasks.GitOps.Release do
 
     tags = GitOps.Git.tags(repo)
 
+    prefix = GitOps.Config.prefix()
+
     {commit_messages_for_version, commit_messages_for_changelog} =
-      get_commit_messages(repo, tags, opts)
+      get_commit_messages(repo, prefix, tags, opts)
 
     config_types = GitOps.Config.types()
 
     commits_for_version = parse_commits(commit_messages_for_version, config_types, true)
     commits_for_changelog = parse_commits(commit_messages_for_changelog, config_types, false)
 
-    new_version =
+    prefixed_version =
       if opts[:initial] do
         mix_project_module.project()[:version]
       else
-        GitOps.Version.determine_new_version(tags, commits_for_version, opts)
+        GitOps.Version.determine_new_version(tags, prefix, commits_for_version, opts)
       end
 
-    GitOps.Changelog.write(path, commits_for_changelog, current_version, new_version)
+    new_version = String.trim_leading(prefixed_version, prefix)
+
+    GitOps.Changelog.write(path, commits_for_changelog, current_version, prefixed_version)
 
     if GitOps.Config.manage_mix_version?() do
       GitOps.VersionReplace.update_mix_project(mix_project_module, current_version, new_version)
@@ -120,15 +126,15 @@ defmodule Mix.Tasks.GitOps.Release do
     :ok
   end
 
-  defp get_commit_messages(repo, tags, opts) do
+  defp get_commit_messages(repo, prefix, tags, opts) do
     if opts[:initial] do
       commits = GitOps.Git.get_initial_commits!(repo)
       {commits, commits}
     else
-      tag = GitOps.Version.last_valid_non_rc_version(tags)
+      tag = GitOps.Version.last_valid_non_rc_version(tags, prefix)
 
       commits_for_version = GitOps.Git.commit_messages_since_tag(repo, tag)
-      last_pre_release = GitOps.Version.last_pre_release_version_after(tags, tag)
+      last_pre_release = GitOps.Version.last_pre_release_version_after(tags, tag, prefix)
 
       if last_pre_release do
         commit_messages_for_changelog =
