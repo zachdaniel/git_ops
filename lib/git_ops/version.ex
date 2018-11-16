@@ -71,12 +71,10 @@ defmodule GitOps.Version do
   end
 
   def last_pre_release_version_after(versions, last_version, prefix) do
-    last_version_without_prefix = String.trim_leading(last_version, prefix)
-
     Enum.find(versions, fn version ->
       case parse(prefix, version) do
         {:ok, version} ->
-          Version.compare(version, last_version_without_prefix) == :gt
+          Version.compare(version, parse!(last_version, prefix)) == :gt
 
         _ ->
           false
@@ -143,6 +141,7 @@ defmodule GitOps.Version do
     versions_equal?(%{left | pre: []}, %{right | pre: []})
   end
 
+  defp parse(version = %Version{}, _), do: {:ok, version}
   defp parse("", text), do: Version.parse(text)
 
   defp parse(prefix, text) do
