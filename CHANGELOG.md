@@ -24,38 +24,7 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 * resolve issue with comparing invalid version
 
-## [v0.4.0](https://github.com/zachdaniel/git_ops/compare/0.4.0...v0.4.0) (2018-11-16)
-
-
-
-
-### Features:
-
-* Allow configuring a version prefix
-
-### Bug Fixes:
-
-* prefix is the *first* argument to `parse!/2`
-
-* fix error when version struct not expected
-
-* resolve issue with comparing invalid version
-
-## [v0.4.0](https://github.com/zachdaniel/git_ops/compare/0.3.4...v0.4.0) (2018-11-16)
-
-
-
-
-### Features:
-
-* Allow configuring a version prefix
-
-### Bug Fixes:
-
-* resolve issue with comparing invalid version
-
 ## [0.3.4](https://github.com/zachdaniel/git_ops/compare/0.3.3...0.3.4) (2018-10-15)
-
 
 
 
