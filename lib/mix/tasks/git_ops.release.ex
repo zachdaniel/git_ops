@@ -121,7 +121,7 @@ defmodule Mix.Tasks.GitOps.Release do
       GitOps.VersionReplace.update_readme(readme, current_version, new_version)
     end
 
-    confirm_and_tag(repo, new_version)
+    confirm_and_tag(repo, prefixed_version)
 
     :ok
   end
@@ -149,6 +149,8 @@ defmodule Mix.Tasks.GitOps.Release do
 
   defp confirm_and_tag(repo, new_version) do
     message = """
+    Your new version is: #{new_version}.
+
     Please review the CHANGELOG.md and any other changes.
 
     Shall we commit and tag?
