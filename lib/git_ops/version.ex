@@ -5,7 +5,11 @@ defmodule GitOps.Version do
 
   @dialyzer {
     :nowarn_function,
-    parse!: 2, versions_equal?: 2, increment_rc!: 1, determine_new_version: 4, new_version: 4
+    parse!: 2,
+    versions_equal?: 2,
+    increment_rc!: 1,
+    determine_new_version: 4,
+    new_version: 4
   }
 
   @spec last_valid_non_rc_version([String.t()], String.t()) :: String.t() | nil
@@ -88,17 +92,15 @@ defmodule GitOps.Version do
   defp default_pre_release(true, _pre_release), do: ["rc0"]
   defp default_pre_release(_rc?, pre_release), do: List.wrap(pre_release)
 
-  defp new_version_patch(parsed, [], _rc?), do: %{parsed | patch: parsed.patch + 1, pre: []}
-
-  defp new_version_patch(parsed = %{pre: []}, pre, _rc?),
-    do: %{parsed | patch: parsed.patch + 1, pre: pre}
-
-  defp new_version_patch(parsed, _pre, true), do: %{parsed | pre: increment_rc!(parsed.pre)}
-
-  defp new_version_patch(parsed = %{pre: ["rc" <> _]}, pre, nil),
-    do: %{parsed | patch: parsed.patch + 1, pre: pre}
-
-  defp new_version_patch(parsed, pre, _rc?), do: %{parsed | pre: pre}
+  defp new_version_patch(parsed, pre, rc?) do
+    case {parsed, pre, rc?} do
+      {parsed, [], _} -> %{parsed | patch: parsed.patch + 1, pre: []}
+      {parsed = %{pre: []}, pre, _} -> %{parsed | patch: parsed.patch + 1, pre: pre}
+      {parsed, _, true} -> %{parsed | pre: increment_rc!(parsed.pre)}
+      {parsed = %{pre: ["rc" <> _]}, pre, nil} -> %{parsed | patch: parsed.patch + 1, pre: pre}
+      {parsed, pre, _} -> %{parsed | pre: pre}
+    end
+  end
 
   defp increment_rc!(nil), do: "rc0"
   defp increment_rc!([]), do: ["rc0"]
