@@ -78,7 +78,6 @@ defmodule GitOps.Version do
         %{parsed | minor: parsed.minor + 1, patch: 0, pre: pre}
 
       Enum.any?(commits, &GitOps.Commit.fix?/1) || opts[:force_patch] ->
-        IO.inspect(parsed.pre)
         new_version_patch(parsed, pre, rc?)
 
       true ->
