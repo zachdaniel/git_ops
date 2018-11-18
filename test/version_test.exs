@@ -32,6 +32,70 @@ defmodule GitOps.Test.VersionTest do
     %{minor() | breaking?: true}
   end
 
+  test "many things" do
+    current_version = "1.2.2"
+    current_version_rc = current_version <> "-rc2"
+    current_version_pre = current_version <> "-a"
+
+    major_bump = "2.0.0"
+    minor_bump = "1.3.0"
+    patch_bump = "1.2.3"
+
+    assert new_version(current_version, [chore()], force_patch: true) == patch_bump
+    assert new_version(current_version, [patch()], force_patch: true) == patch_bump
+    assert new_version(current_version, [minor()], force_patch: true) == minor_bump
+    assert new_version(current_version, [break()], force_patch: true) == major_bump
+
+    assert new_version(current_version_rc, [chore()], force_patch: true) == patch_bump
+    assert new_version(current_version_rc, [patch()], force_patch: true) == patch_bump
+    assert new_version(current_version_rc, [minor()], force_patch: true) == minor_bump
+    assert new_version(current_version_rc, [break()], force_patch: true) == major_bump
+
+    assert new_version(current_version, [chore()], force_patch: true, rc: true) == patch_bump <> "-rc0"
+    assert new_version(current_version, [patch()], force_patch: true, rc: true) == patch_bump <> "-rc0"
+    assert new_version(current_version, [minor()], force_patch: true, rc: true) == minor_bump <> "-rc0"
+    assert new_version(current_version, [break()], force_patch: true, rc: true) == major_bump <> "-rc0"
+
+    assert_raise RuntimeError, ~r/No changes should result in a new release version./, fn ->
+      new_version(current_version_rc, [chore()], rc: true)
+    end
+
+    assert new_version(current_version_rc, [patch()], rc: true) == current_version <> "-rc3"
+    assert new_version(current_version_rc, [minor()], rc: true) == minor_bump <> "-rc0"
+    assert new_version(current_version_rc, [break()], rc: true) == major_bump <> "-rc0"
+
+    assert_raise RuntimeError, ~r/No changes should result in a new release version./, fn ->
+      new_version(current_version, [chore()], pre_release: "a")
+    end
+
+    assert new_version(current_version, [patch()], pre_release: "a") == patch_bump <> "-a"
+    assert new_version(current_version, [minor()], pre_release: "a") == minor_bump <> "-a"
+    assert new_version(current_version, [break()], pre_release: "a") == major_bump <> "-a"
+
+    assert_raise RuntimeError, ~r/No changes should result in a new release version./, fn ->
+      new_version(current_version_pre, [chore()], pre_release: "b")
+    end
+
+    assert new_version(current_version_pre, [patch()], pre_release: "b") == current_version <> "-b"
+    assert new_version(current_version_pre, [minor()], pre_release: "b") == minor_bump <> "-b"
+    assert new_version(current_version_pre, [break()], pre_release: "b") == major_bump <> "-b"
+
+    assert new_version(current_version, [chore()], force_patch: true, pre_release: "a") == patch_bump <> "-a"
+    assert new_version(current_version, [patch()], force_patch: true, pre_release: "a") == patch_bump <> "-a"
+    assert new_version(current_version, [minor()], force_patch: true, pre_release: "a") == minor_bump <> "-a"
+    assert new_version(current_version, [break()], force_patch: true, pre_release: "a") == major_bump <> "-a"
+
+    assert new_version(current_version_rc, [chore()], force_patch: true, pre_release: "a") == patch_bump <> "-a"
+    assert new_version(current_version_rc, [patch()], force_patch: true, pre_release: "a") == patch_bump <> "-a"
+    assert new_version(current_version_rc, [minor()], force_patch: true, pre_release: "a") == minor_bump <> "-a"
+    assert new_version(current_version_rc, [break()], force_patch: true, pre_release: "a") == major_bump <> "-a"
+
+    assert new_version(current_version_pre, [chore()], force_patch: true, pre_release: "b") == current_version <> "-b"
+    assert new_version(current_version_pre, [patch()], force_patch: true, pre_release: "b") == current_version <> "-b"
+    assert new_version(current_version_pre, [minor()], force_patch: true, pre_release: "b") == minor_bump <> "-b"
+    assert new_version(current_version_pre, [break()], force_patch: true, pre_release: "b") == major_bump <> "-b"
+  end
+
   test "a new version containing a patch commit increments only the patch" do
     assert new_version("0.1.0", [patch()]) == "0.1.1"
   end

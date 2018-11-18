@@ -22,7 +22,7 @@ defmodule GitOps.Version do
   end
 
   def determine_new_version(current_version, prefix, commits, opts) do
-    parsed = parse!(prefix, current_version)
+    parsed = parse!(prefix, prefix <> current_version)
 
     rc? = opts[:rc]
 
@@ -82,6 +82,7 @@ defmodule GitOps.Version do
         %{parsed | minor: parsed.minor + 1, patch: 0, pre: pre}
 
       Enum.any?(commits, &GitOps.Commit.fix?/1) || opts[:force_patch] ->
+        IO.inspect(parsed.pre)
         new_version_patch(parsed, pre, rc?)
 
       true ->
@@ -92,9 +93,12 @@ defmodule GitOps.Version do
   defp default_pre_release(true, _pre_release), do: ["rc0"]
   defp default_pre_release(_rc?, pre_release), do: List.wrap(pre_release)
 
-  defp new_version_patch(parsed, [], _rc?), do: %{parsed | patch: parsed.patch + 1}
-  defp new_version_patch(parsed = %{patch: 0}, pre, _rc?), do: %{parsed | patch: 1, pre: pre}
+  defp new_version_patch(parsed, [], _rc?), do: %{parsed | patch: parsed.patch + 1, pre: []}
+  defp new_version_patch(parsed = %{pre: []}, pre, _rc?), do: %{parsed | patch: parsed.patch + 1, pre: pre}
   defp new_version_patch(parsed, _pre, true), do: %{parsed | pre: increment_rc!(parsed.pre)}
+  defp new_version_patch(parsed = %{pre: ["rc" <> _]}, pre, nil),
+    do: %{parsed | patch: parsed.patch + 1, pre: pre}
+
   defp new_version_patch(parsed, pre, _rc?), do: %{parsed | pre: pre}
 
   defp increment_rc!(nil), do: "rc0"

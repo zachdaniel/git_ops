@@ -57,10 +57,10 @@ defmodule Mix.Tasks.GitOps.Release do
   @doc false
   def run(args) do
     changelog_file = GitOps.Config.changelog_file()
-    path = Path.expand(changelog_file)
+    changelog_path = Path.expand(changelog_file)
 
-    unless File.exists?(path) do
-      raise "\nFile: #{path} did not exist. Please use the `--initial` command to initialize."
+    unless File.exists?(changelog_path) do
+      raise "\nFile: #{changelog_path} did not exist. Please use the `--initial` command to initialize."
     end
 
     mix_project_module = GitOps.Config.mix_project()
@@ -88,7 +88,7 @@ defmodule Mix.Tasks.GitOps.Release do
     opts = get_opts(args)
 
     if opts[:initial] do
-      GitOps.Changelog.initialize(path)
+      GitOps.Changelog.initialize(changelog_path)
     end
 
     tags = GitOps.Git.tags(repo)
@@ -117,19 +117,20 @@ defmodule Mix.Tasks.GitOps.Release do
 
     new_version = String.trim_leading(prefixed_new_version, prefix)
 
-    GitOps.Changelog.write(path, commits_for_changelog, current_version, prefixed_new_version)
+    if confirm_and_tag(repo, prefixed_new_version) do
 
-    if GitOps.Config.manage_mix_version?() do
-      GitOps.VersionReplace.update_mix_project(mix_project_module, current_version, new_version)
+      GitOps.Changelog.write(changelog_path, commits_for_changelog, current_version, prefixed_new_version)
+
+      if GitOps.Config.manage_mix_version?() do
+        GitOps.VersionReplace.update_mix_project(mix_project_module, current_version, new_version)
+      end
+
+      readme = GitOps.Config.manage_readme_version()
+
+      if readme do
+        GitOps.VersionReplace.update_readme(readme, current_version, new_version)
+      end
     end
-
-    readme = GitOps.Config.manage_readme_version()
-
-    if readme do
-      GitOps.VersionReplace.update_readme(readme, current_version, new_version)
-    end
-
-    confirm_and_tag(repo, prefixed_new_version)
 
     :ok
   end
@@ -171,6 +172,8 @@ defmodule Mix.Tasks.GitOps.Release do
       GitOps.Git.tag!(repo, ["-a", new_version, "-m", "release #{new_version}"])
 
       Mix.shell().info("Don't forget to push with tags:\n\n    git push --follow-tags")
+
+      true
     else
       Mix.shell().info("""
       If you want to do it on your own, make sure you tag the release with:
@@ -178,6 +181,8 @@ defmodule Mix.Tasks.GitOps.Release do
           git commit -am "chore: release version #{new_version}"
           git tag -a #{new_version} -m "release #{new_version}"
       """)
+
+      false
     end
   end
 
