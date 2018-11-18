@@ -5,11 +5,7 @@ defmodule GitOps.Version do
 
   @dialyzer {
     :nowarn_function,
-    parse!: 2,
-    versions_equal?: 2,
-    increment_rc!: 1,
-    determine_new_version: 4,
-    new_version: 4
+    parse!: 2, versions_equal?: 2, increment_rc!: 1, determine_new_version: 4, new_version: 4
   }
 
   @spec last_valid_non_rc_version([String.t()], String.t()) :: String.t() | nil
@@ -94,8 +90,12 @@ defmodule GitOps.Version do
   defp default_pre_release(_rc?, pre_release), do: List.wrap(pre_release)
 
   defp new_version_patch(parsed, [], _rc?), do: %{parsed | patch: parsed.patch + 1, pre: []}
-  defp new_version_patch(parsed = %{pre: []}, pre, _rc?), do: %{parsed | patch: parsed.patch + 1, pre: pre}
+
+  defp new_version_patch(parsed = %{pre: []}, pre, _rc?),
+    do: %{parsed | patch: parsed.patch + 1, pre: pre}
+
   defp new_version_patch(parsed, _pre, true), do: %{parsed | pre: increment_rc!(parsed.pre)}
+
   defp new_version_patch(parsed = %{pre: ["rc" <> _]}, pre, nil),
     do: %{parsed | patch: parsed.patch + 1, pre: pre}
 

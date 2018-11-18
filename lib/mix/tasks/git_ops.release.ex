@@ -118,8 +118,12 @@ defmodule Mix.Tasks.GitOps.Release do
     new_version = String.trim_leading(prefixed_new_version, prefix)
 
     if confirm_and_tag(repo, prefixed_new_version) do
-
-      GitOps.Changelog.write(changelog_path, commits_for_changelog, current_version, prefixed_new_version)
+      GitOps.Changelog.write(
+        changelog_path,
+        commits_for_changelog,
+        current_version,
+        prefixed_new_version
+      )
 
       if GitOps.Config.manage_mix_version?() do
         GitOps.VersionReplace.update_mix_project(mix_project_module, current_version, new_version)

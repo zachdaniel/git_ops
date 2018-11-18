@@ -18,8 +18,7 @@ defmodule GitOps.VersionReplace do
   defp update_file(file, replace, pattern) do
     contents = File.read!(file)
 
-    new_contents =
-      String.replace(contents, replace, pattern)
+    new_contents = String.replace(contents, replace, pattern)
 
     if new_contents == contents do
       {:error, :bad_replace}
