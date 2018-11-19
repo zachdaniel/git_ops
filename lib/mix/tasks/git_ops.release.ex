@@ -60,12 +60,7 @@ defmodule Mix.Tasks.GitOps.Release do
     changelog_file = GitOps.Config.changelog_file()
     changelog_path = Path.expand(changelog_file)
 
-    unless File.exists?(changelog_path) do
-      raise "\nFile: #{changelog_path} did not exist. Please use the `--initial` command to initialize."
-    end
-
     mix_project_module = GitOps.Config.mix_project()
-
     mix_project = mix_project_module.project()
 
     current_version = String.trim(mix_project[:version])
