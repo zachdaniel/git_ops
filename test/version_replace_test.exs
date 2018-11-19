@@ -1,6 +1,8 @@
 defmodule GitOps.Test.VersionReplaceTest do
   use ExUnit.Case
 
+  alias GitOps.VersionReplace
+
   def readme_contents(version) do
     """
     ## Installation
@@ -30,7 +32,7 @@ defmodule GitOps.Test.VersionReplaceTest do
 
   test "that README gets written to properly" do
     readme = "TEST_README.md"
-    GitOps.VersionReplace.update_readme(readme, "0.1.1", "1.0.0")
+    VersionReplace.update_readme(readme, "0.1.1", "1.0.0")
 
     assert File.read!(readme) == readme_contents("1.0.0")
   end

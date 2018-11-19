@@ -1,10 +1,12 @@
 defmodule GitOps.Test.VersionTest do
   use ExUnit.Case
 
+  alias GitOps.Version
+
   defp new_version(current_version, commits, opts \\ []) do
     {prefix, opts} = Keyword.pop(opts, :prefix)
 
-    GitOps.Version.determine_new_version(current_version, prefix || "", commits, opts)
+    Version.determine_new_version(current_version, prefix || "", commits, opts)
   end
 
   defp minor() do
@@ -164,14 +166,14 @@ defmodule GitOps.Test.VersionTest do
 
   test "last valid non rc is found correctly without prefixes" do
     versions = ["0.0.1", "0.1.0-rc0", "0.1.0", "0.2.0-alpha"]
-    last_rc = GitOps.Version.last_valid_non_rc_version(versions, "")
+    last_rc = Version.last_valid_non_rc_version(versions, "")
 
     assert last_rc == "0.1.0"
   end
 
   test "last valid non rc is found correctly with prefixes" do
     versions = ["v0.0.1", "v0.1.0-rc0", "0.1.0", "0.2.0-alpha"]
-    last_rc = GitOps.Version.last_valid_non_rc_version(versions, "v")
+    last_rc = Version.last_valid_non_rc_version(versions, "v")
 
     assert last_rc == "v0.0.1"
   end
@@ -179,7 +181,7 @@ defmodule GitOps.Test.VersionTest do
   # QUESTION: is this supposed to be the functionality?
   # test "last pre release version after is found correctly without prefixes" do
   #   versions = ["0.0.1", "0.1.0-rc0", "0.1.0", "0.1.1", "0.2.0-alpha"]
-  #   last_pre = GitOps.Version.last_pre_release_version_after(versions, "0.1.0", "")
+  #   last_pre = Version.last_pre_release_version_after(versions, "0.1.0", "")
 
   #   assert last_pre == "0.2.0-alpha" # actually 0.1.1
   # end
