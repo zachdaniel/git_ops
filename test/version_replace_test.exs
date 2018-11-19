@@ -23,11 +23,12 @@ defmodule GitOps.Test.VersionReplaceTest do
   end
 
   setup_all do
+    readme = "TEST_README.md"
     readme_contents = readme_contents("0.1.1")
 
-    File.write!("TEST_README.md", readme_contents)
+    File.write!(readme, readme_contents)
 
-    on_exit(fn -> File.rm!("TEST_README.md") end)
+    on_exit(fn -> File.rm!(readme) end)
   end
 
   test "that README gets written to properly" do

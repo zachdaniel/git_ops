@@ -41,12 +41,14 @@ defmodule GitOps.Test.ConfigTest do
   end
 
   test "mix_project_check succeeds on valid project" do
-    File.write!("CUSTOM_CHANGELOG.md", "")
+    changelog = "CUSTOM_CHANGELOG.md"
+
+    File.write!(changelog, "")
 
     try do
       Config.mix_project_check(nil)
     after
-      File.rm!("CUSTOM_CHANGELOG.md")
+      File.rm!(changelog)
     end
   end
 
