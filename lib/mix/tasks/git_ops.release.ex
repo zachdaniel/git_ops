@@ -99,8 +99,6 @@ defmodule Mix.Tasks.GitOps.Release do
 
     new_version = String.trim_leading(prefixed_new_version, prefix)
 
-    confirm_and_tag(repo, prefixed_new_version)
-
     GitOps.Changelog.write(
       changelog_path,
       commits_for_changelog,
@@ -117,6 +115,8 @@ defmodule Mix.Tasks.GitOps.Release do
     if readme do
       GitOps.VersionReplace.update_readme(readme, current_version, new_version)
     end
+
+    confirm_and_tag(repo, prefixed_new_version)
 
     :ok
   end
