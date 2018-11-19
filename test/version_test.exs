@@ -143,4 +143,38 @@ defmodule GitOps.Test.VersionTest do
       new_version("0.1.1-rc0", [chore()], rc: true)
     end
   end
+
+  test "invalid rc number version raises" do
+    assert_raise RuntimeError, ~r/Found an rc version that could not be parsed/, fn ->
+      new_version("0.1.1-rca", [patch()], rc: true)
+    end
+  end
+
+  test "invalid rc label version raises" do
+    assert_raise RuntimeError, ~r/Found an rc version that could not be parsed/, fn ->
+      new_version("0.1.1-releasecandidate", [patch()], rc: true)
+    end
+  end
+
+  test "last valid non rc is found correctly without prefixes" do
+    versions = ["0.0.1", "0.1.0-rc0", "0.1.0", "0.2.0-alpha"]
+    last_rc = GitOps.Version.last_valid_non_rc_version(versions, "")
+
+    assert last_rc == "0.1.0"
+  end
+
+  test "last valid non rc is found correctly with prefixes" do
+    versions = ["v0.0.1", "v0.1.0-rc0", "0.1.0", "0.2.0-alpha"]
+    last_rc = GitOps.Version.last_valid_non_rc_version(versions, "v")
+
+    assert last_rc == "v0.0.1"
+  end
+
+  # QUESTION: is this supposed to be the functionality?
+  # test "last pre release version after is found correctly without prefixes" do
+  #   versions = ["0.0.1", "0.1.0-rc0", "0.1.0", "0.1.1", "0.2.0-alpha"]
+  #   last_pre = GitOps.Version.last_pre_release_version_after(versions, "0.1.0", "")
+
+  #   assert last_pre == "0.2.0-alpha" # actually 0.1.1
+  # end
 end
