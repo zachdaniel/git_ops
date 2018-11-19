@@ -117,23 +117,23 @@ defmodule Mix.Tasks.GitOps.Release do
 
     new_version = String.trim_leading(prefixed_new_version, prefix)
 
-    if confirm_and_tag(repo, prefixed_new_version) do
-      GitOps.Changelog.write(
-        changelog_path,
-        commits_for_changelog,
-        current_version,
-        prefixed_new_version
-      )
+    confirm_and_tag(repo, prefixed_new_version)
 
-      if GitOps.Config.manage_mix_version?() do
-        GitOps.VersionReplace.update_mix_project(mix_project_module, current_version, new_version)
-      end
+    GitOps.Changelog.write(
+      changelog_path,
+      commits_for_changelog,
+      current_version,
+      prefixed_new_version
+    )
 
-      readme = GitOps.Config.manage_readme_version()
+    if GitOps.Config.manage_mix_version?() do
+      GitOps.VersionReplace.update_mix_project(mix_project_module, current_version, new_version)
+    end
 
-      if readme do
-        GitOps.VersionReplace.update_readme(readme, current_version, new_version)
-      end
+    readme = GitOps.Config.manage_readme_version()
+
+    if readme do
+      GitOps.VersionReplace.update_readme(readme, current_version, new_version)
     end
 
     :ok
@@ -176,8 +176,6 @@ defmodule Mix.Tasks.GitOps.Release do
       GitOps.Git.tag!(repo, ["-a", new_version, "-m", "release #{new_version}"])
 
       Mix.shell().info("Don't forget to push with tags:\n\n    git push --follow-tags")
-
-      true
     else
       Mix.shell().info("""
       If you want to do it on your own, make sure you tag the release with:
@@ -185,8 +183,6 @@ defmodule Mix.Tasks.GitOps.Release do
           git commit -am "chore: release version #{new_version}"
           git tag -a #{new_version} -m "release #{new_version}"
       """)
-
-      false
     end
   end
 
