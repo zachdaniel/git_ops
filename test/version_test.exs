@@ -159,9 +159,11 @@ defmodule GitOps.Test.VersionTest do
   end
 
   test "no prefix on version raises" do
-    assert_raise ArgumentError, ~r/Expected: .+ to be parseable as a version, but it was not/, fn ->
-      new_version("v0.1.1", [patch()], rc: true, prefix: "vv")
-    end
+    assert_raise ArgumentError,
+                 ~r/Expected: .+ to be parseable as a version, but it was not/,
+                 fn ->
+                   new_version("v0.1.1", [patch()], rc: true, prefix: "vv")
+                 end
   end
 
   test "last valid non rc is found correctly without prefixes" do
