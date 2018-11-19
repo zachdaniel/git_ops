@@ -69,15 +69,6 @@ defmodule Mix.Tasks.GitOps.Release do
     mix_project = mix_project_module.project()
 
     current_version = String.trim(mix_project[:version])
-      if mix_project[:version] do
-        String.trim(mix_project[:version])
-      else
-        raise """
-        Unable to determine the version of your mix_project.
-
-        Ensure your mix project is configured correctly, and has a version specified.
-        """
-      end
 
     repo = GitOps.Git.init!()
 
