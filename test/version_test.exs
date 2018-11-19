@@ -143,8 +143,4 @@ defmodule GitOps.Test.VersionTest do
       new_version("0.1.1-rc0", [chore()], rc: true)
     end
   end
-
-  test "if a prefix is configured, it is ignored when searching for a tag" do
-    assert new_version("v0.1.1", [break()], prefix: "v") == "v1.0.0"
-  end
 end
