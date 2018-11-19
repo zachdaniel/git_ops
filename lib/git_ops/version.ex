@@ -3,17 +3,6 @@ defmodule GitOps.Version do
   Functionality around parsing and comparing versions contained in git tags
   """
 
-  @dialyzer {:nowarn_function,
-             parse!: 2,
-             versions_equal_no_pre?: 2,
-             versions_equal?: 2,
-             do_increment_rc!: 1,
-             increment_rc!: 2,
-             determine_new_version: 4,
-             last_valid_non_rc_version: 2,
-             last_pre_release_version_after: 3,
-             new_version: 3}
-
   @spec last_valid_non_rc_version([String.t()], String.t()) :: String.t() | nil
   def last_valid_non_rc_version(versions, prefix) do
     versions
