@@ -112,7 +112,9 @@ defmodule Mix.Tasks.GitOps.Release do
 
     create_and_display_changes(current_version, new_version, changelog_changes, opts)
 
-    confirm_and_tag(repo, prefixed_new_version)
+    unless opts[:dry_run] do
+      confirm_and_tag(repo, prefixed_new_version, opts)
+    end
 
     :ok
   end
@@ -169,7 +171,7 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp confirm_and_tag(repo, new_version) do
+  defp confirm_and_tag(repo, new_version, opts) do
     message = """
     Shall we commit and tag?
 
