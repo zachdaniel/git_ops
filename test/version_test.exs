@@ -180,11 +180,10 @@ defmodule GitOps.Test.VersionTest do
     assert last_rc == "v0.0.1"
   end
 
-  # QUESTION: is this supposed to be the functionality?
-  # test "last pre release version after is found correctly without prefixes" do
-  #   versions = ["0.0.1", "0.1.0-rc0", "0.1.0", "0.1.1", "0.2.0-alpha"]
-  #   last_pre = Version.last_pre_release_version_after(versions, "0.1.0", "")
+  test "last_version_greater_than is found correctly without prefixes" do
+    versions = ["0.0.1", "0.1.0-rc0", "0.1.0", "0.1.1", "0.2.0-alpha"]
+    last_version_after = Version.last_version_greater_than(versions, "0.1.0", "")
 
-  #   assert last_pre == "0.2.0-alpha" # actually 0.1.1
-  # end
+    assert last_version_after == "0.1.1"
+  end
 end

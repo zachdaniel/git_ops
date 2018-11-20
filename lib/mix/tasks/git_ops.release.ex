@@ -114,6 +114,8 @@ defmodule Mix.Tasks.GitOps.Release do
 
     confirm_and_tag(repo, prefixed_new_version)
 
+    confirm_and_tag(repo, prefixed_new_version)
+
     :ok
   end
 
@@ -125,11 +127,11 @@ defmodule Mix.Tasks.GitOps.Release do
       tag = GitOps.Version.last_valid_non_rc_version(tags, prefix)
 
       commits_for_version = GitOps.Git.commit_messages_since_tag(repo, tag)
-      last_pre_release = GitOps.Version.last_pre_release_version_after(tags, tag, prefix)
+      last_version_after = GitOps.Version.last_version_greater_than(tags, tag, prefix)
 
-      if last_pre_release do
+      if last_version_after do
         commit_messages_for_changelog =
-          GitOps.Git.commit_messages_since_tag(repo, last_pre_release)
+          GitOps.Git.commit_messages_since_tag(repo, last_version_after)
 
         {commits_for_version, commit_messages_for_changelog}
       else

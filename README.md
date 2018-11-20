@@ -8,7 +8,7 @@
 A small tool to help generate changelogs from conventional commit messages.
 For more information, see [conventional
 commits](https://conventionalcommits.org).
-For an example, see this project's [CHANGELOG.md](CHANGELOG.md).
+For an example, see this project's [CHANGELOG.md](https://github.com/zachdaniel/git_ops/blob/master/CHANGELOG.md).
 
 Roadmap (in no particular order):
 
@@ -19,7 +19,6 @@ Roadmap (in no particular order):
   linking the issue
 * A task to build a compliant commit
 * Validation of commits
-* Figure out why dialyzer hates the `GitOps.Version` module
 * Automatically link to the PR that merged a given commit in the changelog
 * A hundred other things I forgot to write down while writing the initial version
 
@@ -41,7 +40,7 @@ yourself using multiple scopes your commit is probably too big.
 ```elixir
 def deps do
   [
-    {:git_ops, "~> 0.4.1", only: [:dev]}
+    {:git_ops, "~> 0.5.0", only: [:dev]}
   ]
 end
 ```
@@ -107,7 +106,7 @@ version. Look at [this project's mix.exs](mix.exs) for an example.
 Most project readmes have a line like this that would ideally remain up to date:
 
 ```elixir
-    {:git_ops, "~> 0.4.1", only: [:dev]}
+    {:git_ops, "~> 0.5.0", only: [:dev]}
 ```
 
 You can keep that number up to date via `manage_readme_version`, which accepts

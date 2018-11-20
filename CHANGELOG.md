@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.5.0](https://github.com/zachdaniel/git_ops/compare/0.4.1...v0.5.0) (2018-11-20)
+
+
+
+
+### Features:
+
+* calculate new version from project instead of tags
+
 ## [v0.4.1](https://github.com/zachdaniel/git_ops/compare/0.4.0...v0.4.1) (2018-11-16)
 
 
