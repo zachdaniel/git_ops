@@ -53,10 +53,14 @@ defmodule Mix.Tasks.GitOps.Release do
     Semantic versioning uses this major version change to communicate, and it should not be
     reserved.
   """
-  @before_compile {GitOps.Config, :mix_project_check}
+  # @before_compile {GitOps.Config, :mix_project_check}
 
   @doc false
   def run(args) do
+    opts = get_opts(args)
+
+    GitOps.Config.mix_project_check(opts)
+
     changelog_file = GitOps.Config.changelog_file()
     changelog_path = Path.expand(changelog_file)
 
@@ -67,7 +71,7 @@ defmodule Mix.Tasks.GitOps.Release do
 
     repo = GitOps.Git.init!()
 
-    opts = get_opts(args)
+
 
     if opts[:initial] do
       GitOps.Changelog.initialize(changelog_path)
