@@ -171,7 +171,7 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp confirm_and_tag(repo, new_version, opts) do
+  defp confirm_and_tag(repo, new_version) do
     message = """
     Shall we commit and tag?
 
