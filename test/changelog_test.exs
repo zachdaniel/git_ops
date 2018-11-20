@@ -31,25 +31,25 @@ defmodule GitOps.Test.ChangelogTest do
 
   test "writing commits to changefile works correctly" do
     changelog = "./TEST_CHANGELOG.md"
-    commits =
-      [
-        %GitOps.Commit{
-          body: nil,
-          breaking?: false,
-          footer: nil,
-          message: "feat: New feature",
-          scope: nil,
-          type: "feat"
-        },
-        %GitOps.Commit{
-          body: nil,
-          breaking?: false,
-          footer: nil,
-          message: "fix: Fix that new feature",
-          scope: nil,
-          type: "fix"
-        }
-      ]
+
+    commits = [
+      %GitOps.Commit{
+        body: nil,
+        breaking?: false,
+        footer: nil,
+        message: "feat: New feature",
+        scope: nil,
+        type: "feat"
+      },
+      %GitOps.Commit{
+        body: nil,
+        breaking?: false,
+        footer: nil,
+        message: "fix: Fix that new feature",
+        scope: nil,
+        type: "fix"
+      }
+    ]
 
     try do
       Changelog.initialize(changelog)
