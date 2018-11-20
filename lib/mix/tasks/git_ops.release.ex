@@ -113,7 +113,7 @@ defmodule Mix.Tasks.GitOps.Release do
     create_and_display_changes(current_version, new_version, changelog_changes, opts)
 
     unless opts[:dry_run] do
-      confirm_and_tag(repo, prefixed_new_version, opts)
+      confirm_and_tag(repo, prefixed_new_version)
     end
 
     :ok
