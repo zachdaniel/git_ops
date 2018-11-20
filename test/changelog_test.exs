@@ -25,7 +25,7 @@ defmodule GitOps.Test.ChangelogTest do
       }
     ]
 
-    on_exit fn -> File.rm!(changelog) end
+    on_exit(fn -> File.rm!(changelog) end)
 
     %{changelog: changelog, commits: commits}
   end
@@ -65,7 +65,7 @@ defmodule GitOps.Test.ChangelogTest do
 
     original_contents = File.read!(changelog)
 
-    changes = Changelog.write(changelog, context.commits, "0.1.0", "0.2.0", [dry_run: true])
+    changes = Changelog.write(changelog, context.commits, "0.1.0", "0.2.0", dry_run: true)
 
     assert String.length(changes) > 0
 

@@ -44,7 +44,7 @@ defmodule GitOps.Test.VersionReplaceTest do
   test "that README changes are not written with dry_run", context do
     readme = context.readme
 
-    VersionReplace.update_readme(readme, "0.1.1", "1.0.0", [dry_run: true])
+    VersionReplace.update_readme(readme, "0.1.1", "1.0.0", dry_run: true)
 
     assert File.read!(readme) == readme_contents("1.0.0")
   end
