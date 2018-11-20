@@ -41,7 +41,7 @@ defmodule GitOps.Test.ConfigTest do
   end
 
   test "mix_project_check succeeds with initial flag but no changelog file" do
-    Config.mix_project_check([initial: true])
+    Config.mix_project_check(initial: true)
   end
 
   test "mix_project_check succeeds on valid project" do

@@ -71,8 +71,6 @@ defmodule Mix.Tasks.GitOps.Release do
 
     repo = GitOps.Git.init!()
 
-
-
     if opts[:initial] do
       GitOps.Changelog.initialize(changelog_path)
     end
