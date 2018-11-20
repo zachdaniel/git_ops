@@ -114,8 +114,6 @@ defmodule Mix.Tasks.GitOps.Release do
 
     confirm_and_tag(repo, prefixed_new_version)
 
-    confirm_and_tag(repo, prefixed_new_version)
-
     :ok
   end
 
