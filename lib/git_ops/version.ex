@@ -46,7 +46,7 @@ defmodule GitOps.Version do
     prefix <> unprefixed
   end
 
-  def last_pre_release_version_after(versions, last_version, prefix) do
+  def last_version_greater_than(versions, last_version, prefix) do
     Enum.find(versions, fn version ->
       case parse(prefix, version) do
         {:ok, version} ->
