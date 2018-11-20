@@ -3,7 +3,7 @@ defmodule GitOps.Config do
   Helpers around fetching configurations, including setting defaults.
   """
 
-  def mix_project_check(opts) do
+  def mix_project_check(opts \\ []) do
     unless mix_project().project()[:version] do
       raise "mix_project must be configured in order to use git_ops. Please see the configuration in the README.md for an example."
     end
