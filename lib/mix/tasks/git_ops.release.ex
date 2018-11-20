@@ -53,7 +53,6 @@ defmodule Mix.Tasks.GitOps.Release do
     Semantic versioning uses this major version change to communicate, and it should not be
     reserved.
   """
-  # @before_compile {GitOps.Config, :mix_project_check}
 
   @doc false
   def run(args) do
