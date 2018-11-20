@@ -30,7 +30,7 @@ defmodule GitOps.Test.CommitTest do
   test "a simple feature is formatted correctly" do
     assert format!("feat: An awesome new feature!") == "* An awesome new feature!"
   end
-  
+
   test "a breaking change does not include the exclamation mark in the formatted version" do
     assert format!("!feat: An awesome new feature!") == "* An awesome new feature!"
   end

@@ -53,63 +53,58 @@ defmodule Mix.Tasks.GitOps.Release do
     Semantic versioning uses this major version change to communicate, and it should not be
     reserved.
   """
+  @before_compile {GitOps.Config, :mix_project_check}
 
   @doc false
   def run(args) do
     changelog_file = GitOps.Config.changelog_file()
-    path = Path.expand(changelog_file)
+    changelog_path = Path.expand(changelog_file)
+
     mix_project_module = GitOps.Config.mix_project()
-
-    unless mix_project_module do
-      raise "mix_project must be configured in order to use git_ops. Please see the configuration in the README.md for an example."
-    end
-
     mix_project = mix_project_module.project()
+
+    current_version = String.trim(mix_project[:version])
+
     repo = GitOps.Git.init!()
-
-    current_version =
-      if mix_project[:version] do
-        String.trim(mix_project[:version])
-      else
-        raise """
-        Unable to determine the version of your mix_project.
-
-        Ensure your mix project is configured correctly, and has a version specified.
-        """
-      end
 
     opts = get_opts(args)
 
     if opts[:initial] do
-      GitOps.Changelog.initialize(path)
-    end
-
-    if not File.exists?(path) do
-      raise "\nFile: #{path} did not exist. Please use the `--initial` command to initialize."
+      GitOps.Changelog.initialize(changelog_path)
     end
 
     tags = GitOps.Git.tags(repo)
 
     prefix = GitOps.Config.prefix()
 
+    config_types = GitOps.Config.types()
+
     {commit_messages_for_version, commit_messages_for_changelog} =
       get_commit_messages(repo, prefix, tags, opts)
-
-    config_types = GitOps.Config.types()
 
     commits_for_version = parse_commits(commit_messages_for_version, config_types, true)
     commits_for_changelog = parse_commits(commit_messages_for_changelog, config_types, false)
 
-    prefixed_version =
+    prefixed_new_version =
       if opts[:initial] do
-        mix_project_module.project()[:version]
+        mix_project[:version]
       else
-        GitOps.Version.determine_new_version(tags, prefix, commits_for_version, opts)
+        GitOps.Version.determine_new_version(
+          current_version,
+          prefix,
+          commits_for_version,
+          opts
+        )
       end
 
-    new_version = String.trim_leading(prefixed_version, prefix)
+    new_version = String.trim_leading(prefixed_new_version, prefix)
 
-    GitOps.Changelog.write(path, commits_for_changelog, current_version, prefixed_version)
+    GitOps.Changelog.write(
+      changelog_path,
+      commits_for_changelog,
+      current_version,
+      prefixed_new_version
+    )
 
     if GitOps.Config.manage_mix_version?() do
       GitOps.VersionReplace.update_mix_project(mix_project_module, current_version, new_version)
@@ -121,7 +116,7 @@ defmodule Mix.Tasks.GitOps.Release do
       GitOps.VersionReplace.update_readme(readme, current_version, new_version)
     end
 
-    confirm_and_tag(repo, prefixed_version)
+    confirm_and_tag(repo, prefixed_new_version)
 
     :ok
   end
@@ -134,11 +129,11 @@ defmodule Mix.Tasks.GitOps.Release do
       tag = GitOps.Version.last_valid_non_rc_version(tags, prefix)
 
       commits_for_version = GitOps.Git.commit_messages_since_tag(repo, tag)
-      last_pre_release = GitOps.Version.last_pre_release_version_after(tags, tag, prefix)
+      last_version_after = GitOps.Version.last_version_greater_than(tags, tag, prefix)
 
-      if last_pre_release do
+      if last_version_after do
         commit_messages_for_changelog =
-          GitOps.Git.commit_messages_since_tag(repo, last_pre_release)
+          GitOps.Git.commit_messages_since_tag(repo, last_version_after)
 
         {commits_for_version, commit_messages_for_changelog}
       else

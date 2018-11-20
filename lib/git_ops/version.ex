@@ -3,17 +3,6 @@ defmodule GitOps.Version do
   Functionality around parsing and comparing versions contained in git tags
   """
 
-  @dialyzer {:nowarn_function,
-             parse!: 2,
-             versions_equal_no_pre?: 2,
-             versions_equal?: 2,
-             do_increment_rc!: 1,
-             increment_rc!: 2,
-             determine_new_version: 4,
-             last_valid_non_rc_version: 2,
-             last_pre_release_version_after: 3,
-             new_version: 3}
-
   @spec last_valid_non_rc_version([String.t()], String.t()) :: String.t() | nil
   def last_valid_non_rc_version(versions, prefix) do
     versions
@@ -23,26 +12,14 @@ defmodule GitOps.Version do
     end)
   end
 
-  def determine_new_version(versions, prefix, commits, opts) do
-    last_non_rc = last_valid_non_rc_version(versions, prefix)
-
-    parsed = parse!(prefix, last_non_rc)
+  def determine_new_version(current_version, prefix, commits, opts) do
+    parsed = parse!(prefix, prefix <> current_version)
 
     rc? = opts[:rc]
 
     build = opts[:build]
 
-    new_version = new_version(commits, parsed, opts)
-
-    pre_release =
-      if rc? do
-        versions
-        |> last_pre_release_version_after(parsed, prefix)
-        |> increment_rc!(new_version)
-        |> List.wrap()
-      else
-        List.wrap(opts[:pre_release])
-      end
+    new_version = new_version(commits, parsed, rc?, opts)
 
     if versions_equal?(new_version, parsed) && build == parsed.build do
       raise """
@@ -63,14 +40,13 @@ defmodule GitOps.Version do
 
     unprefixed =
       new_version
-      |> Map.put(:pre, pre_release)
       |> Map.put(:build, build)
       |> to_string()
 
     prefix <> unprefixed
   end
 
-  def last_pre_release_version_after(versions, last_version, prefix) do
+  def last_version_greater_than(versions, last_version, prefix) do
     Enum.find(versions, fn version ->
       case parse(prefix, version) do
         {:ok, version} ->
@@ -82,44 +58,46 @@ defmodule GitOps.Version do
     end)
   end
 
-  defp new_version(commits, parsed, opts) do
+  defp new_version(commits, parsed, rc?, opts) do
+    pre = default_pre_release(rc?, opts[:pre_release])
+
     cond do
       Enum.any?(commits, &GitOps.Commit.breaking?/1) ->
         if opts[:no_major] do
-          %{parsed | major: parsed.major, minor: parsed.minor + 1, patch: 0}
+          %{parsed | minor: parsed.minor + 1, patch: 0, pre: pre}
         else
-          %{parsed | major: parsed.major + 1, minor: 0, patch: 0}
+          %{parsed | major: parsed.major + 1, minor: 0, patch: 0, pre: pre}
         end
 
       Enum.any?(commits, &GitOps.Commit.feature?/1) ->
-        %{parsed | minor: parsed.minor + 1, patch: 0}
+        %{parsed | minor: parsed.minor + 1, patch: 0, pre: pre}
 
       Enum.any?(commits, &GitOps.Commit.fix?/1) || opts[:force_patch] ->
-        %{parsed | patch: parsed.patch + 1}
+        new_version_patch(parsed, pre, rc?)
 
       true ->
         parsed
     end
   end
 
-  defp increment_rc!(nil, _), do: "rc0"
+  defp default_pre_release(true, _pre_release), do: ["rc0"]
+  defp default_pre_release(_rc?, pre_release), do: List.wrap(pre_release)
 
-  defp increment_rc!(last_pre_release_version, new_version) do
-    parsed_pre_release = parse!("", last_pre_release_version)
-
-    if versions_equal_no_pre?(parsed_pre_release, new_version) do
-      parsed_pre_release
-      |> Map.get(:pre)
-      |> Enum.at(0)
-      |> do_increment_rc!()
-    else
-      ["rc0"]
+  defp new_version_patch(parsed, pre, rc?) do
+    case {parsed, pre, rc?} do
+      {parsed, [], _} -> %{parsed | patch: parsed.patch + 1, pre: []}
+      {parsed = %{pre: []}, pre, _} -> %{parsed | patch: parsed.patch + 1, pre: pre}
+      {parsed, _, true} -> %{parsed | pre: increment_rc!(parsed.pre)}
+      {parsed = %{pre: ["rc" <> _]}, pre, nil} -> %{parsed | patch: parsed.patch + 1, pre: pre}
+      {parsed, pre, _} -> %{parsed | pre: pre}
     end
   end
 
-  defp do_increment_rc!(nil), do: "rc0"
+  defp increment_rc!(nil), do: "rc0"
+  defp increment_rc!([]), do: ["rc0"]
+  defp increment_rc!([rc]), do: List.wrap(increment_rc!(rc))
 
-  defp do_increment_rc!(rc = "rc" <> version) do
+  defp increment_rc!(rc = "rc" <> version) do
     case Integer.parse(version) do
       {int, ""} ->
         "rc#{int + 1}"
@@ -129,16 +107,12 @@ defmodule GitOps.Version do
     end
   end
 
-  defp do_increment_rc!(rc) do
+  defp increment_rc!(rc) do
     raise "Found an rc version that could not be parsed: #{rc}"
   end
 
   defp versions_equal?(left, right) do
     Version.compare(left, right) == :eq
-  end
-
-  defp versions_equal_no_pre?(left, right) do
-    versions_equal?(%{left | pre: []}, %{right | pre: []})
   end
 
   defp parse(_, %Version{} = version), do: {:ok, version}
