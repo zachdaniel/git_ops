@@ -3,8 +3,8 @@ defmodule GitOps.Changelog do
   Functions for writing commits to the changelog, and initializing it.
   """
 
-  @spec write(String.t(), [GitOps.Commit.t()], String.t(), String.t()) :: :ok
-  def write(path, commits, last_version, current_version) do
+  @spec write(String.t(), [GitOps.Commit.t()], String.t(), String.t(), Keyword.t()) :: :ok
+  def write(path, commits, last_version, current_version, opts \\ []) do
     original_file_contents = File.read!(path)
 
     [head | rest] = String.split(original_file_contents, "<!-- changelog -->")
@@ -53,9 +53,8 @@ defmodule GitOps.Changelog do
         ["## ", current_version, " ", date]
       end
 
-    File.write!(
-      path,
-      [
+    new_contents =
+      IO.iodata_to_binary([
         String.trim(head),
         "\n\n<!-- changelog -->\n\n",
         version_header,
@@ -64,10 +63,13 @@ defmodule GitOps.Changelog do
         "\n\n",
         contents_to_insert,
         rest
-      ]
-    )
+      ])
 
-    :ok
+    unless opts[:dry_run] do
+      File.write!(path, new_contents)
+    end
+
+    String.trim(original_file_contents, new_contents)
   end
 
   @spec initialize(String.t()) :: :ok

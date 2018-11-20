@@ -52,16 +52,18 @@ defmodule Mix.Tasks.GitOps.Release do
     to *not* resist a 2.x.x change just because it doesn't seem like it deserves it.
     Semantic versioning uses this major version change to communicate, and it should not be
     reserved.
+
+  * `--dry-run` - Allow users to run release process and view changes without committing and tagging
   """
   @before_compile {GitOps.Config, :mix_project_check}
 
   @doc false
   def run(args) do
-    changelog_file = GitOps.Config.changelog_file()
-    changelog_path = Path.expand(changelog_file)
-
     mix_project_module = GitOps.Config.mix_project()
     mix_project = mix_project_module.project()
+
+    changelog_file = GitOps.Config.changelog_file()
+    changelog_path = Path.expand(changelog_file)
 
     current_version = String.trim(mix_project[:version])
 
@@ -99,24 +101,18 @@ defmodule Mix.Tasks.GitOps.Release do
 
     new_version = String.trim_leading(prefixed_new_version, prefix)
 
+    changelog_changes =
+      GitOps.Changelog.write(
+        changelog_path,
+        commits_for_changelog,
+        current_version,
+        prefixed_new_version,
+        opts
+      )
+
+    create_and_display_changes(current_version, new_version, changelog_changes, opts)
+
     confirm_and_tag(repo, prefixed_new_version)
-
-    GitOps.Changelog.write(
-      changelog_path,
-      commits_for_changelog,
-      current_version,
-      prefixed_new_version
-    )
-
-    if GitOps.Config.manage_mix_version?() do
-      GitOps.VersionReplace.update_mix_project(mix_project_module, current_version, new_version)
-    end
-
-    readme = GitOps.Config.manage_readme_version()
-
-    if readme do
-      GitOps.VersionReplace.update_readme(readme, current_version, new_version)
-    end
 
     :ok
   end
@@ -142,12 +138,39 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
+  defp create_and_display_changes(current_version, new_version, changelog_changes, opts) do
+    changelog_file = GitOps.Config.changelog_file()
+    mix_project_module = GitOps.Config.mix_project()
+    readme = GitOps.Config.manage_readme_version()
+
+    Mix.shell().info("Your new version is: #{new_version}\n")
+
+    mix_project_changes =
+      if GitOps.Config.manage_mix_version?() do
+        GitOps.VersionReplace.update_mix_project(
+          mix_project_module,
+          current_version,
+          new_version,
+          opts
+        )
+      end
+
+    readme_changes =
+      if readme do
+        GitOps.VersionReplace.update_readme(readme, current_version, new_version, opts)
+      end
+
+    if opts[:dry_run] do
+      "Below are the contents of files that will change.\n"
+      |> append_changes_to_message(changelog_file, changelog_changes)
+      |> append_changes_to_message(readme, readme_changes)
+      |> append_changes_to_message(mix_project_module, mix_project_changes)
+      |> Mix.shell().info()
+    end
+  end
+
   defp confirm_and_tag(repo, new_version) do
     message = """
-    Your new version is: #{new_version}.
-
-    Please review the CHANGELOG.md and any other changes.
-
     Shall we commit and tag?
 
     Instructions will be printed for committing and tagging if you choose no.
@@ -190,6 +213,10 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
+  defp append_changes_to_message(message, file, changes) do
+    message <> "----- BEGIN #{file} -----\n\n#{changes}\n----- END #{file} -----\n\n"
+  end
+
   defp error_if_log(error, _log? = true), do: Mix.shell().error(error)
   defp error_if_log(_, _), do: :ok
 
@@ -202,9 +229,17 @@ defmodule Mix.Tasks.GitOps.Release do
           initial: :boolean,
           no_major: :boolean,
           pre_release: :string,
-          rc: :boolean
+          rc: :boolean,
+          dry_run: :boolean
         ],
-        aliases: [i: :initial, p: :pre_release, b: :build, f: :force_patch, n: :no_major]
+        aliases: [
+          i: :initial,
+          p: :pre_release,
+          b: :build,
+          f: :force_patch,
+          n: :no_major,
+          d: :dry_run
+        ]
       )
 
     opts
