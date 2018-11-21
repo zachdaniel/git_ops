@@ -100,8 +100,7 @@ defmodule Mix.Tasks.GitOps.Release do
       end
 
     new_version = String.trim_leading(prefixed_new_version, prefix)
-    IO.inspect(current_version)
-    IO.inspect(new_version)
+
     changelog_changes =
       GitOps.Changelog.write(
         changelog_path,
