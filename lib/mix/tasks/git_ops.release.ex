@@ -100,7 +100,8 @@ defmodule Mix.Tasks.GitOps.Release do
       end
 
     new_version = String.trim_leading(prefixed_new_version, prefix)
-
+    IO.inspect(current_version)
+    IO.inspect(new_version)
     changelog_changes =
       GitOps.Changelog.write(
         changelog_path,
@@ -215,6 +216,7 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
+  defp append_changes_to_message(message, _, {:error, :bad_replace}), do: message
   defp append_changes_to_message(message, file, changes) do
     message <> "----- BEGIN #{file} -----\n\n#{changes}\n----- END #{file} -----\n\n"
   end
