@@ -17,7 +17,7 @@ defmodule GitOps.Mix.Tasks.Test.ReleaseTest do
     Application.put_env(:git_ops, :types, custom: [header: "Custom"], docs: [hidden?: false])
     Application.put_env(:git_ops, :version_tag_prefix, "v")
 
-    on_exit fn -> File.rm!(changelog) end
+    on_exit(fn -> File.rm!(changelog) end)
 
     %{changelog: changelog}
   end

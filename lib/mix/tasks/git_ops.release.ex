@@ -217,6 +217,7 @@ defmodule Mix.Tasks.GitOps.Release do
   end
 
   defp append_changes_to_message(message, _, {:error, :bad_replace}), do: message
+
   defp append_changes_to_message(message, file, changes) do
     message <> "----- BEGIN #{file} -----\n\n#{changes}\n----- END #{file} -----\n\n"
   end
