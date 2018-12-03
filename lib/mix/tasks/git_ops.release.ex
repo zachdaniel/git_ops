@@ -55,10 +55,13 @@ defmodule Mix.Tasks.GitOps.Release do
 
   * `--dry-run` - Allow users to run release process and view changes without committing and tagging
   """
-  @before_compile {GitOps.Config, :mix_project_check}
 
   @doc false
   def run(args) do
+    opts = get_opts(args)
+
+    GitOps.Config.mix_project_check(opts)
+
     mix_project_module = GitOps.Config.mix_project()
     mix_project = mix_project_module.project()
 
@@ -68,8 +71,6 @@ defmodule Mix.Tasks.GitOps.Release do
     current_version = String.trim(mix_project[:version])
 
     repo = GitOps.Git.init!()
-
-    opts = get_opts(args)
 
     if opts[:initial] do
       GitOps.Changelog.initialize(changelog_path)
@@ -216,6 +217,7 @@ defmodule Mix.Tasks.GitOps.Release do
   end
 
   defp append_changes_to_message(message, _, {:error, :bad_replace}), do: message
+
   defp append_changes_to_message(message, file, changes) do
     message <> "----- BEGIN #{file} -----\n\n#{changes}\n----- END #{file} -----\n\n"
   end

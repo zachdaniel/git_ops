@@ -3,7 +3,7 @@ defmodule GitOps.Changelog do
   Functions for writing commits to the changelog, and initializing it.
   """
 
-  @spec write(String.t(), [GitOps.Commit.t()], String.t(), String.t(), Keyword.t()) :: :ok
+  @spec write(String.t(), [GitOps.Commit.t()], String.t(), String.t(), Keyword.t()) :: String.t()
   def write(path, commits, last_version, current_version, opts \\ []) do
     original_file_contents = File.read!(path)
 

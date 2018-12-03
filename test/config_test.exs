@@ -30,14 +30,18 @@ defmodule GitOps.Test.ConfigTest do
     Application.put_env(:git_ops, :mix_project, InvalidProject)
 
     assert_raise RuntimeError, ~r/mix_project must be configured/, fn ->
-      Config.mix_project_check(nil)
+      Config.mix_project_check()
     end
   end
 
   test "mix_project_check fails on invalid changelog" do
     assert_raise RuntimeError, ~r/File: .+ did not exist/, fn ->
-      Config.mix_project_check(nil)
+      Config.mix_project_check()
     end
+  end
+
+  test "mix_project_check succeeds with initial flag but no changelog file" do
+    Config.mix_project_check(initial: true)
   end
 
   test "mix_project_check succeeds on valid project" do
