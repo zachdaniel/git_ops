@@ -3,6 +3,8 @@ defmodule GitOps.Version do
   Functionality around parsing and comparing versions contained in git tags
   """
 
+  alias GitOps.Commit
+
   @spec last_valid_non_rc_version([String.t()], String.t()) :: String.t() | nil
   def last_valid_non_rc_version(versions, prefix) do
     versions
@@ -62,17 +64,17 @@ defmodule GitOps.Version do
     pre = default_pre_release(rc?, opts[:pre_release])
 
     cond do
-      Enum.any?(commits, &GitOps.Commit.breaking?/1) ->
+      Enum.any?(commits, &Commit.breaking?/1) ->
         if opts[:no_major] do
           %{parsed | minor: parsed.minor + 1, patch: 0, pre: pre}
         else
           %{parsed | major: parsed.major + 1, minor: 0, patch: 0, pre: pre}
         end
 
-      Enum.any?(commits, &GitOps.Commit.feature?/1) ->
+      Enum.any?(commits, &Commit.feature?/1) ->
         %{parsed | minor: parsed.minor + 1, patch: 0, pre: pre}
 
-      Enum.any?(commits, &GitOps.Commit.fix?/1) || opts[:force_patch] ->
+      Enum.any?(commits, &Commit.fix?/1) || opts[:force_patch] ->
         new_version_patch(parsed, pre, rc?)
 
       true ->
@@ -115,7 +117,7 @@ defmodule GitOps.Version do
     Version.compare(left, right) == :eq
   end
 
-  defp parse(_, %Version{} = version), do: {:ok, version}
+  defp parse(_, version = %Version{}), do: {:ok, version}
   defp parse("", text), do: Version.parse(text)
 
   defp parse(prefix, text) do

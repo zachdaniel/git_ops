@@ -60,7 +60,7 @@ config :git_ops,
     # Makes an allowed commit type called `tidbit` that is not
     # shown in the changelog
     tidbit: [
-      hidden?: true 
+      hidden?: true
     ],
     # Makes an allowed commit type called `important` that gets
     # a section in the changelog with the header "Important Changes"
@@ -119,4 +119,3 @@ If you'd like your contributors to use the conventional commit format, you can
 use a [PULL_REQUEST_TEMPLATE.md](PULL_REQUEST_TEMPLATE.md) like ours. However,
 it is also possible to manage it as the maintainers of a project by altering
 either the merge commit or alter the commit when merging/squashing (recommended)
-

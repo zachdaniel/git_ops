@@ -9,28 +9,28 @@ defmodule GitOps.Test.VersionTest do
     Version.determine_new_version(current_version, prefix || "", commits, opts)
   end
 
-  defp minor() do
+  defp minor do
     %GitOps.Commit{
       type: "feat",
       message: "feat"
     }
   end
 
-  defp patch() do
+  defp patch do
     %GitOps.Commit{
       type: "fix",
       message: "fix"
     }
   end
 
-  defp chore() do
+  defp chore do
     %GitOps.Commit{
       type: "chore",
       message: "chore"
     }
   end
 
-  defp break() do
+  defp break do
     %{minor() | breaking?: true}
   end
 
