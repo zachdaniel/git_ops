@@ -82,8 +82,7 @@ defmodule Mix.Tasks.GitOps.Release do
 
     config_types = GitOps.Config.types()
 
-    {commit_messages_for_version, commit_messages_for_changelog} =
-      get_commit_messages(repo, prefix, tags, opts)
+    {commit_messages_for_version, commit_messages_for_changelog} = get_commit_messages(repo, prefix, tags, opts)
 
     commits_for_version = parse_commits(commit_messages_for_version, config_types, true)
     commits_for_changelog = parse_commits(commit_messages_for_changelog, config_types, false)
@@ -100,7 +99,7 @@ defmodule Mix.Tasks.GitOps.Release do
         )
       end
 
-    new_version = String.trim_leading(prefixed_new_version, prefix)
+    new_version = if "" != prefix, do: String.trim_leading(prefixed_new_version, prefix), else: prefixed_new_version
 
     changelog_changes =
       GitOps.Changelog.write(
@@ -131,8 +130,7 @@ defmodule Mix.Tasks.GitOps.Release do
       last_version_after = GitOps.Version.last_version_greater_than(tags, tag, prefix)
 
       if last_version_after do
-        commit_messages_for_changelog =
-          GitOps.Git.commit_messages_since_tag(repo, last_version_after)
+        commit_messages_for_changelog = GitOps.Git.commit_messages_since_tag(repo, last_version_after)
 
         {commits_for_version, commit_messages_for_changelog}
       else
