@@ -93,9 +93,9 @@ defmodule GitOps.Test.ConfigTest do
 end
 
 defmodule Project do
-  def project(), do: [version: "0.1.0"]
+  def project, do: [version: "0.1.0"]
 end
 
 defmodule InvalidProject do
-  def project(), do: nil
+  def project, do: nil
 end

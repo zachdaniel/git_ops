@@ -56,33 +56,40 @@ defmodule Mix.Tasks.GitOps.Release do
   * `--dry-run` - Allow users to run release process and view changes without committing and tagging
   """
 
+  alias GitOps.Changelog
+  alias GitOps.Commit
+  alias GitOps.Config
+  alias GitOps.Git
+  alias GitOps.VersionReplace
+
   @doc false
   def run(args) do
     opts = get_opts(args)
 
-    GitOps.Config.mix_project_check(opts)
+    Config.mix_project_check(opts)
 
-    mix_project_module = GitOps.Config.mix_project()
+    mix_project_module = Config.mix_project()
     mix_project = mix_project_module.project()
 
-    changelog_file = GitOps.Config.changelog_file()
+    changelog_file = Config.changelog_file()
     changelog_path = Path.expand(changelog_file)
 
     current_version = String.trim(mix_project[:version])
 
-    repo = GitOps.Git.init!()
+    repo = Git.init!()
 
     if opts[:initial] do
-      GitOps.Changelog.initialize(changelog_path)
+      Changelog.initialize(changelog_path)
     end
 
-    tags = GitOps.Git.tags(repo)
+    tags = Git.tags(repo)
 
-    prefix = GitOps.Config.prefix()
+    prefix = Config.prefix()
 
-    config_types = GitOps.Config.types()
+    config_types = Config.types()
 
-    {commit_messages_for_version, commit_messages_for_changelog} = get_commit_messages(repo, prefix, tags, opts)
+    {commit_messages_for_version, commit_messages_for_changelog} =
+      get_commit_messages(repo, prefix, tags, opts)
 
     commits_for_version = parse_commits(commit_messages_for_version, config_types, true)
     commits_for_changelog = parse_commits(commit_messages_for_changelog, config_types, false)
@@ -99,10 +106,13 @@ defmodule Mix.Tasks.GitOps.Release do
         )
       end
 
-    new_version = if "" != prefix, do: String.trim_leading(prefixed_new_version, prefix), else: prefixed_new_version
+    new_version =
+      if "" != prefix,
+        do: String.trim_leading(prefixed_new_version, prefix),
+        else: prefixed_new_version
 
     changelog_changes =
-      GitOps.Changelog.write(
+      Changelog.write(
         changelog_path,
         commits_for_changelog,
         current_version,
@@ -121,16 +131,16 @@ defmodule Mix.Tasks.GitOps.Release do
 
   defp get_commit_messages(repo, prefix, tags, opts) do
     if opts[:initial] do
-      commits = GitOps.Git.get_initial_commits!(repo)
+      commits = Git.get_initial_commits!(repo)
       {commits, commits}
     else
       tag = GitOps.Version.last_valid_non_rc_version(tags, prefix)
 
-      commits_for_version = GitOps.Git.commit_messages_since_tag(repo, tag)
+      commits_for_version = Git.commit_messages_since_tag(repo, tag)
       last_version_after = GitOps.Version.last_version_greater_than(tags, tag, prefix)
 
       if last_version_after do
-        commit_messages_for_changelog = GitOps.Git.commit_messages_since_tag(repo, last_version_after)
+        commit_messages_for_changelog = Git.commit_messages_since_tag(repo, last_version_after)
 
         {commits_for_version, commit_messages_for_changelog}
       else
@@ -140,15 +150,15 @@ defmodule Mix.Tasks.GitOps.Release do
   end
 
   defp create_and_display_changes(current_version, new_version, changelog_changes, opts) do
-    changelog_file = GitOps.Config.changelog_file()
-    mix_project_module = GitOps.Config.mix_project()
-    readme = GitOps.Config.manage_readme_version()
+    changelog_file = Config.changelog_file()
+    mix_project_module = Config.mix_project()
+    readme = Config.manage_readme_version()
 
     Mix.shell().info("Your new version is: #{new_version}\n")
 
     mix_project_changes =
-      if GitOps.Config.manage_mix_version?() do
-        GitOps.VersionReplace.update_mix_project(
+      if Config.manage_mix_version?() do
+        VersionReplace.update_mix_project(
           mix_project_module,
           current_version,
           new_version,
@@ -158,7 +168,7 @@ defmodule Mix.Tasks.GitOps.Release do
 
     readme_changes =
       if readme do
-        GitOps.VersionReplace.update_readme(readme, current_version, new_version, opts)
+        VersionReplace.update_readme(readme, current_version, new_version, opts)
       end
 
     if opts[:dry_run] do
@@ -178,8 +188,8 @@ defmodule Mix.Tasks.GitOps.Release do
     """
 
     if Mix.shell().yes?(message) do
-      GitOps.Git.commit!(repo, ["-am", "chore: release version #{new_version}"])
-      GitOps.Git.tag!(repo, ["-a", new_version, "-m", "release #{new_version}"])
+      Git.commit!(repo, ["-am", "chore: release version #{new_version}"])
+      Git.tag!(repo, ["-a", new_version, "-m", "release #{new_version}"])
 
       Mix.shell().info("Don't forget to push with tags:\n\n    git push --follow-tags")
     else
@@ -197,7 +207,7 @@ defmodule Mix.Tasks.GitOps.Release do
   end
 
   defp parse_commit(text, config_types, log?) do
-    case GitOps.Commit.parse(text) do
+    case Commit.parse(text) do
       {:ok, commit} ->
         if Map.has_key?(config_types, String.downcase(commit.type)) do
           [commit]

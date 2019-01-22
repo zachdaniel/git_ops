@@ -3,15 +3,18 @@ defmodule GitOps.Changelog do
   Functions for writing commits to the changelog, and initializing it.
   """
 
-  @spec write(String.t(), [GitOps.Commit.t()], String.t(), String.t(), Keyword.t()) :: String.t()
+  alias GitOps.Commit
+  alias GitOps.Config
+
+  @spec write(String.t(), [Commit.t()], String.t(), String.t(), Keyword.t()) :: String.t()
   def write(path, commits, last_version, current_version, opts \\ []) do
     original_file_contents = File.read!(path)
 
     [head | rest] = String.split(original_file_contents, "<!-- changelog -->")
 
-    config_types = GitOps.Config.types()
+    config_types = Config.types()
 
-    breaking_changes = Enum.filter(commits, &GitOps.Commit.breaking?/1)
+    breaking_changes = Enum.filter(commits, &Commit.breaking?/1)
 
     breaking_changes_contents =
       if Enum.empty?(breaking_changes) do
@@ -19,7 +22,7 @@ defmodule GitOps.Changelog do
       else
         [
           "### Breaking Changes:\n\n",
-          Enum.map_join(breaking_changes, "\n\n", &GitOps.Commit.format/1)
+          Enum.map_join(breaking_changes, "\n\n", &Commit.format/1)
         ]
       end
 
@@ -33,12 +36,12 @@ defmodule GitOps.Changelog do
         Map.has_key?(config_types, group) && !config_types[group][:hidden?]
       end)
       |> Enum.map(fn {group, commits} ->
-        formatted_commits = Enum.map_join(commits, "\n\n", &GitOps.Commit.format/1)
+        formatted_commits = Enum.map_join(commits, "\n\n", &Commit.format/1)
 
         ["\n\n### ", config_types[group][:header] || group, ":\n\n", formatted_commits]
       end)
 
-    repository_url = GitOps.Config.repository_url()
+    repository_url = Config.repository_url()
 
     today = Date.utc_today()
     date = ["(", to_string(today.year), ?-, to_string(today.month), ?-, to_string(today.day), ")"]
