@@ -107,9 +107,11 @@ defmodule Mix.Tasks.GitOps.Release do
       end
 
     new_version =
-      if "" != prefix,
-        do: String.trim_leading(prefixed_new_version, prefix),
-        else: prefixed_new_version
+      if prefix != "" do
+        String.trim_leading(prefixed_new_version, prefix)
+      else
+        prefixed_new_version
+      end
 
     changelog_changes =
       Changelog.write(
