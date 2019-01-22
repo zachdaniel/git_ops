@@ -5,36 +5,6 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
-## [v0.7.0](https://github.com/zachdaniel/git_ops/compare/0.6.0...v0.7.0) (2019-1-22)
-
-
-
-
-### Features:
-
-* credo format
-
-### Bug Fixes:
-
-* allow no prfexix (#1)
-
-## [v0.6.0](https://github.com/zachdaniel/git_ops/compare/0.5.0...v0.6.0) (2019-1-22)
-
-
-
-
-### Features:
-
-* test: add tests for version_tag_prefix
-
-* dry_run release option
-
-### Bug Fixes:
-
-* allow no prfexix
-
-* initial mix project check (#6)
-
 ## [v0.5.0](https://github.com/zachdaniel/git_ops/compare/0.4.1...v0.5.0) (2018-11-20)
 
 

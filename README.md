@@ -40,7 +40,7 @@ yourself using multiple scopes your commit is probably too big.
 ```elixir
 def deps do
   [
-    {:git_ops, "~> 0.7.0", only: [:dev]}
+    {:git_ops, "~> 0.5.0", only: [:dev]}
   ]
 end
 ```
@@ -60,7 +60,7 @@ config :git_ops,
     # Makes an allowed commit type called `tidbit` that is not
     # shown in the changelog
     tidbit: [
-      hidden?: true 
+      hidden?: true
     ],
     # Makes an allowed commit type called `important` that gets
     # a section in the changelog with the header "Important Changes"
@@ -106,7 +106,7 @@ version. Look at [this project's mix.exs](mix.exs) for an example.
 Most project readmes have a line like this that would ideally remain up to date:
 
 ```elixir
-    {:git_ops, "~> 0.7.0", only: [:dev]}
+    {:git_ops, "~> 0.5.0", only: [:dev]}
 ```
 
 You can keep that number up to date via `manage_readme_version`, which accepts
@@ -119,4 +119,3 @@ If you'd like your contributors to use the conventional commit format, you can
 use a [PULL_REQUEST_TEMPLATE.md](PULL_REQUEST_TEMPLATE.md) like ours. However,
 it is also possible to manage it as the maintainers of a project by altering
 either the merge commit or alter the commit when merging/squashing (recommended)
-
