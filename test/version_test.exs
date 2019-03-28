@@ -167,23 +167,32 @@ defmodule GitOps.Test.VersionTest do
   end
 
   test "last valid non rc is found correctly without prefixes" do
-    versions = ["0.0.1", "0.1.0-rc0", "0.1.0", "0.2.0-alpha"]
+    versions = ["0.0.1", "0.1.0-rc0", "0.1.0", "0.2.0-alpha", "0.11.0", "0.9.0"]
     last_rc = Version.last_valid_non_rc_version(versions, "")
 
-    assert last_rc == "0.1.0"
+    assert last_rc == "0.11.0"
   end
 
   test "last valid non rc is found correctly with prefixes" do
-    versions = ["v0.0.1", "v0.1.0-rc0", "0.1.0", "0.2.0-alpha"]
+    versions = [
+      "v0.0.1",
+      "v0.1.0-rc0",
+      "0.1.0",
+      "0.2.0-alpha",
+      "v0.11.0",
+      "0.9.0-alpha",
+      "v0.9.0"
+    ]
+
     last_rc = Version.last_valid_non_rc_version(versions, "v")
 
-    assert last_rc == "v0.0.1"
+    assert last_rc == "v0.11.0"
   end
 
   test "last_version_greater_than is found correctly without prefixes" do
-    versions = ["0.0.1", "0.1.0-rc0", "0.1.0", "0.1.1", "0.2.0-alpha"]
+    versions = ["0.0.1", "0.1.0-rc0", "0.1.0", "0.1.1", "0.2.0-alpha", "0.11.0", "0.9.0"]
     last_version_after = Version.last_version_greater_than(versions, "0.1.0", "")
 
-    assert last_version_after == "0.1.1"
+    assert last_version_after == "0.11.0"
   end
 end

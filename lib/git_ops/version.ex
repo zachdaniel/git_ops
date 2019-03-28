@@ -9,9 +9,23 @@ defmodule GitOps.Version do
   def last_valid_non_rc_version(versions, prefix) do
     versions
     |> Enum.reverse()
-    |> Enum.find(fn version ->
-      match?({:ok, %{pre: []}}, parse(prefix, version))
+    |> Enum.reduce({nil, nil}, fn version, acc ->
+      case parse(prefix, version) do
+        {:ok, %{pre: []} = parsed_version} -> compare_versions({version, parsed_version}, acc)
+        _ -> acc
+      end
     end)
+    |> elem(0)
+  end
+
+  defp compare_versions(version1, {_, nil}), do: version1
+
+  defp compare_versions({raw_version1, version1}, {raw_version2, version2}) do
+    if Version.compare(version1, version2) == :gt do
+      {raw_version1, version1}
+    else
+      {raw_version2, version2}
+    end
   end
 
   def determine_new_version(current_version, prefix, commits, opts) do
@@ -49,15 +63,21 @@ defmodule GitOps.Version do
   end
 
   def last_version_greater_than(versions, last_version, prefix) do
-    Enum.find(versions, fn version ->
-      case parse(prefix, version) do
-        {:ok, version} ->
-          Version.compare(version, parse!(prefix, last_version)) == :gt
+    greatest_version =
+      Enum.reduce(versions, {last_version, parse!(prefix, last_version)}, fn version, acc ->
+        case parse(prefix, version) do
+          {:ok, parsed_version} ->
+            compare_versions({version, parsed_version}, acc)
 
-        _ ->
-          false
-      end
-    end)
+          _ ->
+            acc
+        end
+      end)
+
+    case greatest_version do
+      {^last_version, _} -> nil
+      {version, _} -> version
+    end
   end
 
   defp new_version(commits, parsed, rc?, opts) do
