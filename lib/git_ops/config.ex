@@ -3,6 +3,46 @@ defmodule GitOps.Config do
   Helpers around fetching configurations, including setting defaults.
   """
 
+  @default_types [
+    build: [
+      hidden?: true
+    ],
+    chore: [
+      hidden?: true
+    ],
+    ci: [
+      hidden?: true
+    ],
+    docs: [
+      hidden?: true
+    ],
+    feat: [
+      header: "Features",
+      hidden?: false
+    ],
+    fix: [
+      header: "Bug Fixes",
+      hidden?: false
+    ],
+    improvement: [
+      header: "Improvements",
+      hidden?: false
+    ],
+    perf: [
+      header: "Performance Improvements",
+      hidden?: false
+    ],
+    refactor: [
+      hidden: true
+    ],
+    style: [
+      hidden: true
+    ],
+    test: [
+      hidden?: true
+    ]
+  ]
+
   def mix_project_check(opts \\ []) do
     unless mix_project().project()[:version] do
       raise "mix_project must be configured in order to use git_ops. Please see the configuration in the README.md for an example."
@@ -36,27 +76,7 @@ defmodule GitOps.Config do
   def types do
     configured = Application.get_env(:git_ops, :types) || []
 
-    default = [
-      feat: [
-        header: "Features",
-        hidden?: false
-      ],
-      fix: [
-        header: "Bug Fixes",
-        hidden?: false
-      ],
-      chore: [
-        hidden?: true
-      ],
-      docs: [
-        hidden?: true
-      ],
-      test: [
-        hidden?: true
-      ]
-    ]
-
-    default
+    @default_types
     |> Keyword.merge(configured)
     |> Enum.into(%{}, fn {key, value} ->
       sanitized_key =

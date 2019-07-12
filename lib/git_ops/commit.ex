@@ -107,7 +107,7 @@ defmodule GitOps.Commit do
   end
 
   def fix?(%GitOps.Commit{type: type}) do
-    String.downcase(type) == "fix"
+    String.downcase(type) == "fix" || String.downcase(type) == "improvement"
   end
 
   defp scopes([value]) when is_bitstring(value), do: String.split(value, ",")
