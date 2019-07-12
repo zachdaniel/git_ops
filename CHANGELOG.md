@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.6.1](https://github.com/zachdaniel/git_ops/compare/0.6.0...v0.6.1) (2019-7-12)
+
+
+
+
+### Improvements:
+
+* support additional commit types by default
+
 ## [v0.6.0](https://github.com/zachdaniel/git_ops/compare/0.5.0...v0.6.0) (2019-1-22)
 
 
