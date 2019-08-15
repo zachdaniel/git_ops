@@ -76,8 +76,6 @@ config :git_ops,
   manage_readme_version: "README.md"
 ```
 
-Package is not yet released on hex, but when it is documentation will be found there.
-
 Getting started:
 
 ```bash
