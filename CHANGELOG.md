@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.6.3](https://github.com/zachdaniel/git_ops/compare/0.6.2...v0.6.3) (2019-8-19)
+
+
+
+
+### Bug Fixes:
+
+* explicitly add changelog
+
 ## [v0.6.2](https://github.com/zachdaniel/git_ops/compare/0.6.1...v0.6.2) (2019-8-19)
 
 
