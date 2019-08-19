@@ -91,7 +91,11 @@ defmodule Mix.Tasks.GitOps.Release do
     {commit_messages_for_version, commit_messages_for_changelog} =
       get_commit_messages(repo, prefix, tags, opts)
 
-    commits_for_version = parse_commits(commit_messages_for_version, config_types, true)
+    log_for_version? = !opts[:initial]
+
+    commits_for_version =
+      parse_commits(commit_messages_for_version, config_types, log_for_version?)
+
     commits_for_changelog = parse_commits(commit_messages_for_changelog, config_types, false)
 
     prefixed_new_version =

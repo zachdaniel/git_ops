@@ -25,7 +25,7 @@ defmodule GitOps.Commit do
   scope =
     optional(whitespace)
     |> ignore(ascii_char([40]))
-    |> tag(ascii_string([not: 40, not: 41], min: 1), :scope)
+    |> tag(utf8_string([not: 40, not: 41], min: 1), :scope)
     |> ignore(ascii_char([41]))
     |> optional(whitespace)
 
@@ -33,12 +33,15 @@ defmodule GitOps.Commit do
 
   message = tag(optional(whitespace), ascii_string([not: ?\n], min: 1), :message)
 
-  defparsecp :commit,
-             optional(breaking_change_indicator)
-             |> concat(type)
-             |> concat(optional(scope))
-             |> ignore(ascii_char([?:]))
-             |> concat(message)
+  defparsecp(
+    :commit,
+    optional(breaking_change_indicator)
+    |> concat(type)
+    |> concat(optional(scope))
+    |> ignore(ascii_char([?:]))
+    |> concat(message),
+    inline: true
+  )
 
   def format(commit) do
     %{
@@ -95,9 +98,12 @@ defmodule GitOps.Commit do
            breaking?: is_breaking?(result[:breaking?], body, footer)
          }}
 
-      error = {:error, _message, _remaining, _state, _dunno, _also_dunno} ->
-        error
+      {:error, _message, _remaining, _state, _dunno, _also_dunno} ->
+        :error
     end
+  rescue
+    _ ->
+      :error
   end
 
   def breaking?(%GitOps.Commit{breaking?: breaking?}), do: breaking?
