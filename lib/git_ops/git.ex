@@ -7,6 +7,11 @@ defmodule GitOps.Git do
     Git.init!(File.cwd!())
   end
 
+  @spec add!(Git.Repositor.t(), [String.t()]) :: String.t()
+  def add!(repo, args) do
+    Git.add!(repo, args)
+  end
+
   @spec commit!(Git.Repository.t(), [String.t()]) :: String.t()
   def commit!(repo, args) do
     Git.commit!(repo, args)

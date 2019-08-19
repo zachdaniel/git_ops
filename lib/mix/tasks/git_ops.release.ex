@@ -129,7 +129,7 @@ defmodule Mix.Tasks.GitOps.Release do
     create_and_display_changes(current_version, new_version, changelog_changes, opts)
 
     unless opts[:dry_run] do
-      confirm_and_tag(repo, prefixed_new_version)
+      confirm_and_tag(repo, changelog_file, prefixed_new_version)
     end
 
     :ok
@@ -186,7 +186,7 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp confirm_and_tag(repo, new_version) do
+  defp confirm_and_tag(repo, changelog_file, new_version) do
     message = """
     Shall we commit and tag?
 
@@ -194,6 +194,7 @@ defmodule Mix.Tasks.GitOps.Release do
     """
 
     if Mix.shell().yes?(message) do
+      Git.add!(repo, "#{changelog_file}")
       Git.commit!(repo, ["-am", "chore: release version #{new_version}"])
       Git.tag!(repo, ["-a", new_version, "-m", "release #{new_version}"])
 
