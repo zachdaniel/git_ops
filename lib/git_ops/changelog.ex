@@ -75,8 +75,8 @@ defmodule GitOps.Changelog do
     String.trim(original_file_contents, new_contents)
   end
 
-  @spec initialize(String.t()) :: :ok
-  def initialize(path) do
+  @spec initialize(String.t(), Keyword.t()) :: :ok
+  def initialize(path, opts \\ []) do
     contents = """
     # Change Log
 
@@ -90,7 +90,9 @@ defmodule GitOps.Changelog do
       raise "\nFile already exists: #{path}. Please remove it to initialize."
     end
 
-    File.write!(path, String.trim_leading(contents))
+    unless opts[:dry_run] do
+      File.write!(path, String.trim_leading(contents))
+    end
 
     :ok
   end

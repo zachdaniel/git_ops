@@ -3,7 +3,7 @@ defmodule GitOps.Test.ChangelogTest do
 
   alias GitOps.Changelog
 
-  setup do
+  setup context do
     changelog = "./TEST_CHANGELOG.md"
 
     commits = [
@@ -25,7 +25,9 @@ defmodule GitOps.Test.ChangelogTest do
       }
     ]
 
-    on_exit(fn -> File.rm!(changelog) end)
+    unless context[:no_rm_on_exit] do
+      on_exit(fn -> File.rm!(changelog) end)
+    end
 
     %{changelog: changelog, commits: commits}
   end
@@ -46,6 +48,17 @@ defmodule GitOps.Test.ChangelogTest do
     Changelog.initialize(changelog)
 
     assert File.read!(changelog) != ""
+  end
+
+  @tag :no_rm_on_exit
+  test "initializing with dry_run doesen't create the changelog file", context do
+    changelog = context.changelog
+
+    Changelog.initialize(changelog, dry_run: true)
+
+    assert_raise File.Error, ~r/no such file or directory/, fn ->
+      assert File.read!(changelog)
+    end
   end
 
   test "writing commits to changefile works correctly", context do
