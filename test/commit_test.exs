@@ -23,8 +23,17 @@ defmodule GitOps.Test.CommitTest do
     assert parse!("feat: An awesome new feature!").message == "An awesome new feature!"
   end
 
-  test "a breaking change via exlamation mark is parsed as a breaking change" do
-    assert parse!("!feat: A breaking change").breaking?
+  @tag :regression
+  test "a breaking change via a prefixed exclamation mark fails to parse" do
+    assert Commit.parse("!feat: A breaking change") == :error
+  end
+
+  test "a breaking change via a postfixed exclamation mark is parsed as a breaking change" do
+    assert parse!("feat!: A breaking change").breaking?
+  end
+
+  test "a breaking change via a postfixed exclamation mark after a scope is parsed as a breaking change" do
+    assert parse!("feat(stuff)!: A breaking change").breaking?
   end
 
   test "a simple feature is formatted correctly" do
@@ -32,6 +41,6 @@ defmodule GitOps.Test.CommitTest do
   end
 
   test "a breaking change does not include the exclamation mark in the formatted version" do
-    assert format!("!feat: An awesome new feature!") == "* An awesome new feature!"
+    assert format!("feat!: An awesome new feature!") == "* An awesome new feature!"
   end
 end
