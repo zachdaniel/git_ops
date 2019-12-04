@@ -19,7 +19,7 @@ defmodule GitOps.Commit do
   # 40/41 are `(` and `)`, but syntax highlighters don't like ?( and ?)
   type =
     optional(whitespace)
-    |> tag(ascii_string([not: ?:, not: 40, not: 41], min: 1), :type)
+    |> tag(ascii_string([not: ?:, not: ?!, not: 40, not: 41], min: 1), :type)
     |> optional(whitespace)
 
   scope =
@@ -35,9 +35,9 @@ defmodule GitOps.Commit do
 
   defparsecp(
     :commit,
-    optional(breaking_change_indicator)
-    |> concat(type)
+    type
     |> concat(optional(scope))
+    |> concat(optional(breaking_change_indicator))
     |> ignore(ascii_char([?:]))
     |> concat(message),
     inline: true
