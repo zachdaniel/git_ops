@@ -79,7 +79,7 @@ defmodule Mix.Tasks.GitOps.Release do
     repo = Git.init!()
 
     if opts[:initial] do
-      Changelog.initialize(changelog_path)
+      Changelog.initialize(changelog_path, opts)
     end
 
     tags = Git.tags(repo)
