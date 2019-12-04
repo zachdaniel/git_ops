@@ -5,6 +5,13 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.0.0](https://github.com/zachdaniel/git_ops/compare/0.6.4...v1.0.0) (2019-12-4)
+### Breaking Changes:
+
+* fail on prefixed `!` and support postfixed `!` (#22)
+
+
+
 ## [v0.6.4](https://github.com/zachdaniel/git_ops/compare/0.6.3...v0.6.4) (2019-12-4)
 
 
