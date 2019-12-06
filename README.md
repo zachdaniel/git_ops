@@ -25,9 +25,9 @@ Roadmap (in no particular order):
 Important addendums:
 
 A new version of the spec in beta adds a rather useful
-convention. Add ! in front of a commit message to simply signal it as a breaking
+convention. Add ! after the type/scope to simply signal it as a breaking
 change, instead of adding `BREAKING CHANGE: description` in your commit message.
-For example: `!fix(Spline Reticulator): `
+For example: `fix(Spline Reticulator)!: `
 
 The spec doesn't specify behavior around multiple scopes. This library parses
 scopes *as a comma separated list*. This allows for easily readable multiple
