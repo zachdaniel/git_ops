@@ -29,7 +29,18 @@ defmodule Mix.Tasks.GitOps.CheckMessage do
 
       :error ->
         error_exit("""
-        Not a valid Conventional Commit message:\n#{message}
+        Not a valid Conventional Commit message:
+        #{message}
+
+        The Conventionl Commit message format is:
+
+          <type>[optional scope][optional !]: <description>
+
+          [optional body]
+
+          [optional footer(s)]
+
+        <type> is one of #{inspect(GitOps.Config.types())}
 
         See https://www.conventionalcommits.org/en/v1.0.0/ for details.
         """)
