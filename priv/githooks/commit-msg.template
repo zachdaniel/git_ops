@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# A hook script to check the commit log message.
+# Called by "git commit" with one argument, the name of the file
+# that has the commit message. The hook should exit with non-zero
+# status after issuing an appropriate message if it wants to stop the
+# commit. The hook is allowed to edit the commit message file.
+
+# Call the mix task to parse the commit message file and check if it
+# folows the Conventional Commits spec
+mix git_ops.check_message "$@"
