@@ -33,10 +33,10 @@ defmodule GitOps.Config do
       hidden?: false
     ],
     refactor: [
-      hidden: true
+      hidden?: true
     ],
     style: [
-      hidden: true
+      hidden?: true
     ],
     test: [
       hidden?: true

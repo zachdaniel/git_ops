@@ -15,9 +15,6 @@ defmodule Mix.Tasks.GitOps.CheckMessage do
   """
 
   alias GitOps.Commit
-  alias GitOps.Git
-
-  @commit_msg_hook_name "commit-msg"
 
   @doc false
   def run([path]) do
@@ -28,6 +25,22 @@ defmodule Mix.Tasks.GitOps.CheckMessage do
         :ok
 
       :error ->
+        types = GitOps.Config.types()
+
+        not_hidden_types =
+          types
+          |> Enum.filter(fn {_type, opts} -> !opts[:hidden?] end)
+          |> Enum.map(fn {type, _} -> type end)
+          |> Enum.join("|")
+
+        hidden_types =
+          types
+          |> Enum.filter(fn {_type, opts} -> opts[:hidden?] end)
+          |> Enum.map(fn {type, _} -> type end)
+          |> Enum.join("|")
+
+        all_types = "#{not_hidden_types}|#{hidden_types}"
+
         error_exit("""
         Not a valid Conventional Commit message:
         #{message}
@@ -40,9 +53,13 @@ defmodule Mix.Tasks.GitOps.CheckMessage do
 
           [optional footer(s)]
 
-        <type> is one of #{inspect(GitOps.Config.types())}
+        Where:
+          <type> is one of #{all_types}
+            `feat` means a new feature
+            `fix` means a bug fix
+          `!` after <type>[optional scope] means a breaking change
 
-        See https://www.conventionalcommits.org/en/v1.0.0/ for details.
+        See https://www.conventionalcommits.org/en/v1.0.0/ for more details.
         """)
     end
   end

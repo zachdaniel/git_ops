@@ -6,20 +6,26 @@ defmodule Mix.Tasks.GitOps.MsgHook do
   @commit_msg_hook_name "commit-msg"
 
   @moduledoc """
-  Enables automatic check if git commit message follows Conventional Commits spec. It does that by
-  installing `mix git_ops.check_message` as git #{@commit_msg_hook_name} hook.
+  Installs a Git #{@commit_msg_hook_name} hook to automatically check if the commit message follows
+  the Conventional Commits spec:
 
       mix git_ops.msg_hook
 
-  Logs an error if the git hook already exists.
+  The actual check is done by using the git_ops.check_message mix task:
+
+      mix git_ops.check_message /path/to/commit/message/file
+
+  Logs an error if a Git #{@commit_msg_hook_name} hook exists but it does not call the message
+  validation task.
 
   ## Switches:
 
-  * `--force|-f` - Overwrite the git #{@commit_msg_hook_name} hook if it alerady exists.
+  * `--force|-f` - Overwrites the Git #{@commit_msg_hook_name} hook if one exists but it does not
+    call the message validation task.
 
   * `--uninstall` - Uninstalls the git #{@commit_msg_hook_name} hook if it exists.
 
-  * `--verbose|-v` - Write more messages.
+  * `--verbose|-v` - Be more verbose. Pass this option two times to be even more verbose.
   """
 
   alias GitOps.Git
@@ -28,9 +34,11 @@ defmodule Mix.Tasks.GitOps.MsgHook do
   def run(args) do
     {opts, _other_args, _} =
       OptionParser.parse(args,
-        switches: [force: :boolean, uninstall: :boolean, verbose: :boolean],
+        strict: [force: :boolean, uninstall: :boolean, verbose: :count],
         aliases: [f: :force, v: :verbose]
       )
+
+    opts = Keyword.merge([verbose: 0], opts)
 
     if opts[:uninstall] do
       uninstall(opts)
@@ -41,80 +49,48 @@ defmodule Mix.Tasks.GitOps.MsgHook do
     :ok
   end
 
-  defp msg_hook_contains_template(commit_msg_hook_path, template_file_path, opts) do
-    # regex to delete 1) lines starting with # and 2) empty lines
-    normalize_regex = ~r/(*ANYCRLF)(^#.*\R)|(^\s*\R)/m
-
-    normalized_template = Regex.replace(normalize_regex, File.read!(template_file_path), "")
-
-    normalized_commit_msg_hook =
-      Regex.replace(normalize_regex, File.read!(commit_msg_hook_path), "")
-
-    if opts[:verbose] do
-      Mix.shell().info("""
-      Conventional Commits message validation script:
-      #{normalized_template}
-
-      Git #{@commit_msg_hook_name} hook script (normalized):
-      #{normalized_commit_msg_hook}
-      """)
-    end
-
-    {normalized_commit_msg_hook =~ normalized_template, normalized_template}
-  end
-
   defp install(opts) do
-    repo = Git.init!()
+    {commit_msg_hook_path, commit_msg_hook_exists} = commit_msg_hook_info!(opts)
 
-    commit_msg_hook_path =
-      repo
-      |> Git.hooks_path()
-      |> Path.join(@commit_msg_hook_name)
-
-    if opts[:verbose] do
-      Mix.shell().info("""
-      Git hooks path: #{commit_msg_hook_path}
-      """)
-    end
-
-    commit_msg_hook_exists = File.exists?(commit_msg_hook_path)
-
-    if opts[:verbose] do
-      Mix.shell().info("""
-      The Git #{@commit_msg_hook_name} hook #{
-        if commit_msg_hook_exists, do: "exists", else: "does not exist"
-      }
-      """)
-    end
-
-    template_file_path =
-      Path.join([:code.priv_dir(:git_ops), "githooks", "#{@commit_msg_hook_name}.template"])
+    template_file_path = template_file_path(opts)
 
     if commit_msg_hook_exists do
-      case msg_hook_contains_template(commit_msg_hook_path, template_file_path, opts) do
-        {true, _} ->
-          if opts[:verbose] do
-            Mix.shell().info("""
-            Nothing to do: the #{@commit_msg_hook_name} hook `#{commit_msg_hook_path}` already contains the Conventional Commits message validation.
-            """)
-          end
+      normalized_commit_msg_hook =
+        normalize_script!(
+          commit_msg_hook_path,
+          "Git #{@commit_msg_hook_name} hook script (normalized)",
+          opts
+        )
 
-        {false, normalized_template} ->
-          if opts[:force] do
-            Mix.shell().info("""
-            The #{@commit_msg_hook_name} hook `#{commit_msg_hook_path}` does not contain the Conventional Commits message validation.
-            """)
+      normalized_validation_script =
+        normalize_script!(
+          template_file_path,
+          "Conventional Commits message validation script",
+          opts
+        )
 
-            if Mix.shell().yes?("Replacing forcefully (the current version will be lost)?") do
-              Mix.shell().info("TODO: replacing")
-            end
-          else
-            error_exit("""
-            The #{@commit_msg_hook_name} hook `#{commit_msg_hook_path}` does not contain the Conventional Commits message validation.
-            Please use --help to check the available options, or manually edit the hook to call the following:
-            #{normalized_template}
-            """)
+      if normalized_commit_msg_hook =~ normalized_validation_script do
+        if opts[:verbose] >= 1 do
+          Mix.shell().info("""
+          Nothing to do: the #{@commit_msg_hook_name} hook `#{commit_msg_hook_path}` already contains the Conventional Commits message validation.
+          """)
+        end
+      else
+        if opts[:force] do
+          Mix.shell().info("""
+          The #{@commit_msg_hook_name} hook `#{commit_msg_hook_path}` does not contain the Conventional Commits message validation.
+          """)
+
+          if Mix.shell().yes?("Replacing forcefully (the current version will be lost)?") do
+            Mix.shell().info("TODO: replacing")
           end
+        else
+          error_exit("""
+          The #{@commit_msg_hook_name} hook `#{commit_msg_hook_path}` does not contain the Conventional Commits message validation.
+          Please use --help to check the available options, or manually edit the hook to call the following:
+          #{normalized_validation_script}
+          """)
+        end
       end
     else
       install_commit_msg_hook!(template_file_path, commit_msg_hook_path, opts)
@@ -123,7 +99,40 @@ defmodule Mix.Tasks.GitOps.MsgHook do
     :ok
   end
 
-  defp uninstall(_opts) do
+  defp uninstall(opts) do
+    {commit_msg_hook_path, commit_msg_hook_exists} = commit_msg_hook_info!(opts)
+
+    template_file_path = template_file_path(opts)
+
+    if commit_msg_hook_exists do
+      normalized_commit_msg_hook =
+        normalize_script!(
+          commit_msg_hook_path,
+          "Git #{@commit_msg_hook_name} hook script (normalized)",
+          opts
+        )
+
+      normalized_validation_script =
+        normalize_script!(
+          template_file_path,
+          "Conventional Commits message validation script",
+          opts
+        )
+
+      if normalized_commit_msg_hook == normalized_validation_script do
+        uninstall_commit_msg_hook!(commit_msg_hook_path, opts)
+      else
+        error_exit("""
+        The #{@commit_msg_hook_name} hook `#{commit_msg_hook_path}` will not be deleted because it
+        is not identical to the version installed by this tool. Please check it manually.
+        """)
+      end
+    else
+      error_exit("""
+      The #{@commit_msg_hook_name} hook `#{commit_msg_hook_path}` does not exists. Nothing to uninstall.
+      """)
+    end
+
     :ok
   end
 
@@ -137,6 +146,57 @@ defmodule Mix.Tasks.GitOps.MsgHook do
     Mix.shell().info("""
     done.
     """)
+  end
+
+  defp uninstall_commit_msg_hook!(commit_msg_hook_path, _opts) do
+    Mix.shell().info("""
+    Uninstalling #{@commit_msg_hook_name} hook from #{commit_msg_hook_path}...
+    """)
+
+    File.rm!(commit_msg_hook_path)
+
+    Mix.shell().info("""
+    done.
+    """)
+  end
+
+  defp commit_msg_hook_info!(opts) do
+    commit_msg_hook_path =
+      Git.init!()
+      |> Git.hooks_path()
+      |> Path.join(@commit_msg_hook_name)
+
+    commit_msg_hook_exists = File.exists?(commit_msg_hook_path)
+
+    if opts[:verbose] >= 2 do
+      Mix.shell().info("""
+      Git hooks path: #{commit_msg_hook_path} (#{
+        if commit_msg_hook_exists, do: "existing", else: "not existing"
+      })
+      """)
+    end
+
+    {commit_msg_hook_path, commit_msg_hook_exists}
+  end
+
+  defp template_file_path(_opts) do
+    Path.join([:code.priv_dir(:git_ops), "githooks", "#{@commit_msg_hook_name}.template"])
+  end
+
+  defp normalize_script!(script_path, desciption, opts) do
+    # regex to delete 1) lines starting with # and 2) empty lines
+    normalize_regex = ~r/(*ANYCRLF)(^#.*\R)|(^\s*\R)/m
+
+    normalized_script = Regex.replace(normalize_regex, File.read!(script_path), "")
+
+    if opts[:verbose] >= 2 do
+      Mix.shell().info("""
+      #{desciption}:
+      #{normalized_script}
+      """)
+    end
+
+    normalized_script
   end
 
   @spec error_exit(String.t()) :: no_return

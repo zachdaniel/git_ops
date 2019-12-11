@@ -65,7 +65,7 @@ defmodule GitOps.Git do
   @spec hooks_path(Git.Repository.t()) :: String.t() | no_return
   def hooks_path(repo) do
     case Git.config(repo, ["core.hookspath"]) do
-      {:error, %Git.Error{code: 1, message: ""}} ->
+      {:error, %Git.Error{message: "", code: 1}} ->
         # no custom config for core.hookspath
         if File.dir?(@default_githooks_path) do
           @default_githooks_path
