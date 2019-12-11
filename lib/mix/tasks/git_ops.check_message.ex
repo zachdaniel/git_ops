@@ -54,10 +54,11 @@ defmodule Mix.Tasks.GitOps.CheckMessage do
           [optional footer(s)]
 
         Where:
-          <type> is one of #{all_types}
-            `feat` means a new feature
-            `fix` means a bug fix
-          `!` after <type>[optional scope] means a breaking change
+          • <type> is one of #{all_types}
+          • A bugfix is specified by type `fix`
+          • A new feature is specified by type `feat`
+          • A breaking change is specified by either `!` after <type>[optional scope] or by a
+            `BREAKING CHANGE: <description>` footer.
 
         See https://www.conventionalcommits.org/en/v1.0.0/ for more details.
         """)

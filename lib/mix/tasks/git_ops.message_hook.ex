@@ -15,6 +15,9 @@ defmodule Mix.Tasks.GitOps.MsgHook do
 
       mix git_ops.check_message /path/to/commit/message/file
 
+  It does nothing if a Git #{@commit_msg_hook_name} hook already exists that contains the above
+  message validation task (unless --force was used).
+
   Logs an error if a Git #{@commit_msg_hook_name} hook exists but it does not call the message
   validation task.
 
@@ -25,7 +28,7 @@ defmodule Mix.Tasks.GitOps.MsgHook do
 
   * `--uninstall` - Uninstalls the git #{@commit_msg_hook_name} hook if it exists.
 
-  * `--verbose|-v` - Be more verbose. Pass this option two times to be even more verbose.
+  * `--verbose|-v` - Be more verbose. Pass this option twice to be even more verbose.
   """
 
   alias GitOps.Git
