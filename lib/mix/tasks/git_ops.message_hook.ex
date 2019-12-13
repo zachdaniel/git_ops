@@ -85,7 +85,7 @@ defmodule Mix.Tasks.GitOps.MsgHook do
           """)
 
           if Mix.shell().yes?("Replacing forcefully (the current version will be lost)?") do
-            Mix.shell().info("TODO: replacing")
+            install_commit_msg_hook!(template_file_path, commit_msg_hook_path, opts)
           end
         else
           error_exit("""

@@ -10,11 +10,11 @@ defmodule Mix.Tasks.GitOps.CheckMessage do
 
   Logs an error if the commit message is not parse-able.
 
-  For more information on Conventional Commits, see the specification here:
-  https://www.conventionalcommits.org/en/v1.0.0/
+  See https://www.conventionalcommits.org/en/v1.0.0/ for more details on Conventional Commits.
   """
 
   alias GitOps.Commit
+  alias GitOps.Config
 
   @doc false
   def run([path]) do
@@ -25,7 +25,7 @@ defmodule Mix.Tasks.GitOps.CheckMessage do
         :ok
 
       :error ->
-        types = GitOps.Config.types()
+        types = Config.types()
 
         not_hidden_types =
           types
