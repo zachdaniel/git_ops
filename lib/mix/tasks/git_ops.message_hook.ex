@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.GitOps.MsgHook do
+defmodule Mix.Tasks.GitOps.MessageHook do
   use Mix.Task
 
   @shortdoc "Enables automatic check if git commit message follows Conventional Commits spec"
@@ -37,7 +37,12 @@ defmodule Mix.Tasks.GitOps.MsgHook do
   def run(args) do
     {opts, _other_args, _} =
       OptionParser.parse(args,
-        strict: [force: :boolean, uninstall: :boolean, verbose: :count],
+        strict: [
+          force: :boolean,
+          uninstall: :boolean,
+          verbose: :count,
+          commit_msg_hook_path_override: :string
+        ],
         aliases: [f: :force, v: :verbose]
       )
 
@@ -81,7 +86,7 @@ defmodule Mix.Tasks.GitOps.MsgHook do
       else
         if opts[:force] do
           Mix.shell().info("""
-          The #{@commit_msg_hook_name} hook `#{commit_msg_hook_path}` does not contain the Conventional Commits message validation.
+          The #{@commit_msg_hook_name} hook `#{commit_msg_hook_path}` does not call the Conventional Commits message validation task.
           """)
 
           if Mix.shell().yes?("Replacing forcefully (the current version will be lost)?") do
@@ -89,7 +94,7 @@ defmodule Mix.Tasks.GitOps.MsgHook do
           end
         else
           error_exit("""
-          The #{@commit_msg_hook_name} hook `#{commit_msg_hook_path}` does not contain the Conventional Commits message validation.
+          The #{@commit_msg_hook_name} hook `#{commit_msg_hook_path}` does not call the Conventional Commits message validation task.
           Please use --help to check the available options, or manually edit the hook to call the following:
           #{normalized_validation_script}
           """)
@@ -164,10 +169,16 @@ defmodule Mix.Tasks.GitOps.MsgHook do
   end
 
   defp commit_msg_hook_info!(opts) do
+    commit_msg_hook_path_override = opts[:commit_msg_hook_path_override]
+
     commit_msg_hook_path =
-      Git.init!()
-      |> Git.hooks_path()
-      |> Path.join(@commit_msg_hook_name)
+      if commit_msg_hook_path_override && is_binary(commit_msg_hook_path_override) do
+        commit_msg_hook_path_override
+      else
+        Git.init!()
+        |> Git.hooks_path()
+        |> Path.join(@commit_msg_hook_name)
+      end
 
     commit_msg_hook_exists = File.exists?(commit_msg_hook_path)
 
