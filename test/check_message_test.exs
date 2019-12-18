@@ -1,3 +1,6 @@
+# Suppress output of testing mix task
+Mix.shell(Mix.Shell.Process)
+
 defmodule GitOps.Mix.Tasks.Test.CheckMessageTest do
   use ExUnit.Case
 
@@ -33,6 +36,18 @@ defmodule GitOps.Mix.Tasks.Test.CheckMessageTest do
       assert_raise Mix.Error, ~r/Not a valid Conventional Commit message/, fn ->
         CheckMessage.run([temp_file_name])
       end
+    end
+
+    test "mix task return code for incorrect message", %{message_file_name: message_file_name} do
+      temp_file_name =
+        create_temp_file!(message_file_name, """
+        invalid message
+        """)
+
+      {_output, exit_status} =
+        System.cmd("mix", ["git_ops.check_message", temp_file_name], stderr_to_stdout: true)
+
+      assert exit_status > 0
     end
 
     test "check correct message", %{message_file_name: message_file_name} do
