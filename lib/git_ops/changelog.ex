@@ -44,7 +44,7 @@ defmodule GitOps.Changelog do
     repository_url = Config.repository_url()
 
     today = Date.utc_today()
-    date = ["(", to_string(today.year), ?-, to_string(today.month), ?-, to_string(today.day), ")"]
+    date = ["(", Date.to_iso8601(today), ")"]
 
     version_header =
       if repository_url do
