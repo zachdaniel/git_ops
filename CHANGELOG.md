@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.1.0](https://github.com/zachdaniel/git_ops/compare/1.0.0...v1.1.0) (2020-02-06)
+
+
+
+
+### Features:
+
+* commit message validation
+
 ## [v1.0.0](https://github.com/zachdaniel/git_ops/compare/0.6.4...v1.0.0) (2019-12-4)
 ### Breaking Changes:
 
