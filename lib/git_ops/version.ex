@@ -8,7 +8,6 @@ defmodule GitOps.Version do
   @spec last_valid_non_rc_version([String.t()], String.t()) :: String.t() | nil
   def last_valid_non_rc_version(versions, prefix) do
     versions
-    |> Enum.reverse()
     |> Enum.find(fn version ->
       match?({:ok, %{pre: []}}, parse(prefix, version))
     end)

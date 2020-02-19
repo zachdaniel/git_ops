@@ -41,15 +41,21 @@ defmodule GitOps.Git do
   def tags(repo) do
     tags =
       repo
-      |> Git.tag!()
-      |> String.split("\n")
+      |> Git.rev_list!(["--tags"])
+      |> String.split("\n", trim: true)
 
-    if Enum.empty?(tags) do
+    semver_tags =
+      repo
+      |> Git.describe!(["--always", "--abbrev=0", "--tags"] ++ tags)
+      |> String.split("\n", trim: true)
+      |> Enum.reject(fn tag -> Version.parse(tag) == :error end)
+
+    if Enum.empty?(semver_tags) do
       raise """
       Could not find an appropriate semver tag in git history. Ensure that you have initialized the project and commited the result.
       """
     else
-      tags
+      semver_tags
     end
   end
 
