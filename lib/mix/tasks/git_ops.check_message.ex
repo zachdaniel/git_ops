@@ -29,15 +29,13 @@ defmodule Mix.Tasks.GitOps.CheckMessage do
 
         not_hidden_types =
           types
-          |> Enum.filter(fn {_type, opts} -> !opts[:hidden?] end)
-          |> Enum.map(fn {type, _} -> type end)
-          |> Enum.join("|")
+          |> Enum.reject(fn {_type, opts} -> opts[:hidden?] end)
+          |> Enum.map_join("|", fn {type, _} -> type end)
 
         hidden_types =
           types
           |> Enum.filter(fn {_type, opts} -> opts[:hidden?] end)
-          |> Enum.map(fn {type, _} -> type end)
-          |> Enum.join("|")
+          |> Enum.map_join("|", fn {type, _} -> type end)
 
         all_types = "#{not_hidden_types}|#{hidden_types}"
 
