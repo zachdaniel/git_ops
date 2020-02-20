@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.1.1](https://github.com/zachdaniel/git_ops/compare/1.1.0...v1.1.1) (2020-02-20)
+
+
+
+
+### Bug Fixes:
+
+* Move version tag parsing logic
+
+* Fix tag order from git tag function.
+
+### Performance Improvements:
+
+* Save an iteration in the map+join (#29)
+
 ## [v1.1.0](https://github.com/zachdaniel/git_ops/compare/1.0.0...v1.1.0) (2020-02-06)
 
 
