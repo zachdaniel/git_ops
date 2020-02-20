@@ -48,7 +48,6 @@ defmodule GitOps.Git do
       repo
       |> Git.describe!(["--always", "--abbrev=0", "--tags"] ++ tags)
       |> String.split("\n", trim: true)
-      |> Enum.reject(fn tag -> Version.parse(tag) == :error end)
 
     if Enum.empty?(semver_tags) do
       raise """
