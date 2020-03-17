@@ -196,7 +196,7 @@ defmodule Mix.Tasks.GitOps.Release do
     if Mix.shell().yes?(message) do
       Git.add!(repo, "#{changelog_file}")
       Git.commit!(repo, ["-am", "chore: release version #{new_version}"])
-      Git.tag!(repo, ["-a", new_version, "-m", "release #{new_version}"])
+      Git.tag!(repo, ["-a", new_version, "-m", "release #{Config.prefix()}#{new_version}"])
 
       Mix.shell().info("Don't forget to push with tags:\n\n    git push --follow-tags")
     else
