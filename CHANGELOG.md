@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v1.1.3](https://github.com/zachdaniel/git_ops/compare/1.1.2...v1.1.3) (2020-03-17)
+
+
+
+
+### Bug Fixes:
+
+* use prefix on initial version
+
 ## [v1.1.2](https://github.com/zachdaniel/git_ops/compare/1.1.1...v1.1.2) (2020-03-17)
 
 
