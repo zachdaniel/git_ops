@@ -100,7 +100,7 @@ defmodule Mix.Tasks.GitOps.Release do
 
     prefixed_new_version =
       if opts[:initial] do
-        mix_project[:version]
+        prefix <> mix_project[:version]
       else
         GitOps.Version.determine_new_version(
           current_version,
