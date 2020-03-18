@@ -215,20 +215,26 @@ defmodule Mix.Tasks.GitOps.Release do
 
   defp parse_commit(text, config_types, log?) do
     case Commit.parse(text) do
-      {:ok, commit} ->
-        if Map.has_key?(config_types, String.downcase(commit.type)) do
-          [commit]
-        else
-          error_if_log("Commit with unknown type: #{text}", log?)
-
-          []
-        end
+      {:ok, commits} ->
+        commits_with_type(config_types, commits, text, log?)
 
       _ ->
         error_if_log("Unparseable commit: #{text}", log?)
 
         []
     end
+  end
+
+  defp commits_with_type(config_types, commits, text, log?) do
+    Enum.flat_map(commits, fn commit ->
+      if Map.has_key?(config_types, String.downcase(commit.type)) do
+        [commit]
+      else
+        error_if_log("Commit with unknown type in: #{text}", log?)
+
+        []
+      end
+    end)
   end
 
   defp append_changes_to_message(message, _, {:error, :bad_replace}), do: message
