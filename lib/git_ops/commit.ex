@@ -19,7 +19,8 @@ defmodule GitOps.Commit do
   # 40/41 are `(` and `)`, but syntax highlighters don't like ?( and ?)
   type =
     optional(whitespace)
-    |> tag(ascii_string([not: ?:, not: ?!, not: 40, not: 41], min: 1), :type)
+    |> optional(whitespace)
+    |> tag(ascii_string([not: ?:, not: ?!, not: 40, not: 41, not: 10, not: 32], min: 1), :type)
     |> optional(whitespace)
 
   scope =
@@ -33,13 +34,30 @@ defmodule GitOps.Commit do
 
   message = tag(optional(whitespace), ascii_string([not: ?\n], min: 1), :message)
 
-  defparsecp(
-    :commit,
+  commit =
     type
     |> concat(optional(scope))
     |> concat(optional(breaking_change_indicator))
     |> ignore(ascii_char([?:]))
-    |> concat(message),
+    |> concat(message)
+    |> concat(optional(whitespace))
+    |> concat(optional(ignore(ascii_string([10], min: 1))))
+
+  body =
+    [commit, eos()]
+    |> choice()
+    |> lookahead_not()
+    |> utf8_char([])
+    |> repeat()
+    |> reduce({List, :to_string, []})
+    |> tag(:body)
+
+  defparsecp(
+    :commits,
+    commit
+    |> concat(body)
+    |> tag(:commit)
+    |> repeat(),
     inline: true
   )
 
@@ -77,26 +95,35 @@ defmodule GitOps.Commit do
   end
 
   def parse(text) do
-    case commit(text) do
-      {:ok, result, remaining, _state, _dunno, _also_dunno} ->
-        remaining_lines =
-          remaining
-          |> String.split("\n")
-          |> Enum.map(&String.trim/1)
-          |> Enum.reject(&Kernel.==(&1, ""))
+    case commits(text) do
+      {:ok, [], _, _, _, _} ->
+        :error
 
-        body = Enum.at(remaining_lines, 0)
-        footer = Enum.at(remaining_lines, 1)
+      {:ok, results, _remaining, _state, _dunno, _also_dunno} ->
+        commits =
+          Enum.map(results, fn {:commit, result} ->
+            remaining_lines =
+              result[:body]
+              |> Enum.map(&String.trim/1)
+              |> Enum.join("\n")
+              |> String.split("\n")
+              |> Enum.map(&String.trim/1)
+              |> Enum.reject(&Kernel.==(&1, ""))
 
-        {:ok,
-         %__MODULE__{
-           type: Enum.at(result[:type], 0),
-           scope: scopes(result[:scope]),
-           message: Enum.at(result[:message], 0),
-           body: body,
-           footer: footer,
-           breaking?: is_breaking?(result[:breaking?], body, footer)
-         }}
+            body = Enum.at(remaining_lines, 0)
+            footer = Enum.at(remaining_lines, 1)
+
+            %__MODULE__{
+              type: Enum.at(result[:type], 0),
+              scope: scopes(result[:scope]),
+              message: Enum.at(result[:message], 0),
+              body: body,
+              footer: footer,
+              breaking?: is_breaking?(result[:breaking?], body, footer)
+            }
+          end)
+
+        {:ok, commits}
 
       {:error, _message, _remaining, _state, _dunno, _also_dunno} ->
         :error

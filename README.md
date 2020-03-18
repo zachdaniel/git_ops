@@ -13,8 +13,6 @@ For an example, see this project's [CHANGELOG.md](https://github.com/zachdaniel/
 Roadmap (in no particular order):
 
 * More tests
-* Support multiple changes in a single commit via multiple conventional commits
-  in a single commit
 * Automatically parse issue numbers and github mentions into the correct format,
   linking the issue
 * A task to build a compliant commit
