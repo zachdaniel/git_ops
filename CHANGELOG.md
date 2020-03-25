@@ -5,6 +5,13 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.0.0](https://github.com/zachdaniel/git_ops/compare/1.1.3...v2.0.0) (2020-03-25)
+### Breaking Changes:
+
+* parse multiple messages
+
+
+
 ## [v1.1.3](https://github.com/zachdaniel/git_ops/compare/1.1.2...v1.1.3) (2020-03-17)
 
 
