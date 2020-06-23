@@ -13,7 +13,7 @@ defmodule GitOps.MixProject do
       start_permanent: Mix.env() == :prod,
       name: "Git Ops",
       docs: docs(),
-      source_url: "https://github.com/spandex-project/spandex",
+      source_url: "https://github.com/zachdaniel/git_ops",
       deps: deps(),
       dialyzer: [plt_add_apps: [:mix]],
       test_coverage: [tool: ExCoveralls],
