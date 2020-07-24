@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.0.1](https://github.com/zachdaniel/git_ops/compare/v2.0.0...v2.0.1) (2020-07-24)
+
+
+
+
+### Bug Fixes:
+
+* messaging, and changelog ranges
+
 ## [v2.0.0](https://github.com/zachdaniel/git_ops/compare/1.1.3...v2.0.0) (2020-03-25)
 ### Breaking Changes:
 
