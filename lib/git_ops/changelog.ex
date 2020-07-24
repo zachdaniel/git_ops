@@ -101,6 +101,7 @@ defmodule GitOps.Changelog do
     [
       url,
       "/compare/",
+      Config.prefix(),
       last_version,
       "...",
       current_version

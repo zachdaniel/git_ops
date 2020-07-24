@@ -205,6 +205,7 @@ defmodule Mix.Tasks.GitOps.Release do
 
           git commit -am "chore: release version #{new_version}"
           git tag -a #{new_version} -m "release #{new_version}"
+          git push --follow-tags
       """)
     end
   end
