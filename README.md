@@ -116,3 +116,10 @@ If you'd like your contributors to use the conventional commit format, you can
 use a [PULL_REQUEST_TEMPLATE.md](PULL_REQUEST_TEMPLATE.md) like ours. However,
 it is also possible to manage it as the maintainers of a project by altering
 either the merge commit or alter the commit when merging/squashing (recommended)
+
+
+## Similar projects
+
+* https://github.com/glasnoster/eliver
+* https://github.com/oo6/mix-bump
+* https://github.com/mpanarin/versioce
