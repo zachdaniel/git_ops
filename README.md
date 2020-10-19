@@ -51,7 +51,7 @@ View the [hex documentation](https://hexdocs.pm/git_ops)
 
 ``` elixir
 config :git_ops,
-  mix_project: MyApp.MixProject,
+  mix_project: Mix.Project.get!(),
   changelog_file: "CHANGELOG.md",
   repository_url: "https://github.com/my_user/my_repo",
   types: [
