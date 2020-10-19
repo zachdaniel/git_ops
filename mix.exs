@@ -63,13 +63,13 @@ defmodule GitOps.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:credo, "~> 0.10.0", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false},
+      {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:excoveralls, "~> 0.6", only: :test},
       {:git_cli, "~> 0.2"},
-      {:inch_ex, "~> 0.5", only: [:dev, :test]},
-      {:nimble_parsec, "~> 0.4"}
+      {:inch_ex, "~> 2.0", only: [:dev, :test]},
+      {:nimble_parsec, "~> 1.0"}
     ]
   end
 end
