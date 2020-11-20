@@ -54,6 +54,8 @@ defmodule Mix.Tasks.GitOps.Release do
     reserved.
 
   * `--dry-run` - Allow users to run release process and view changes without committing and tagging
+
+  * `--yes` - Don't prompt for confirmation, just perform release.  Useful for your CI run.
   """
 
   alias GitOps.Changelog
@@ -128,11 +130,18 @@ defmodule Mix.Tasks.GitOps.Release do
 
     create_and_display_changes(current_version, new_version, changelog_changes, opts)
 
-    unless opts[:dry_run] do
-      confirm_and_tag(repo, changelog_file, prefixed_new_version)
-    end
+    cond do
+      opts[:dry_run] ->
+        :ok
 
-    :ok
+      opts[:yes] ->
+        tag(repo, changelog_file, prefixed_new_version)
+        :ok
+
+      true ->
+        confirm_and_tag(repo, changelog_file, prefixed_new_version)
+        :ok
+    end
   end
 
   defp get_commit_messages(repo, prefix, tags, opts) do
@@ -186,6 +195,14 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
+  defp tag(repo, changelog_file, new_version) do
+    Git.add!(repo, "#{changelog_file}")
+    Git.commit!(repo, ["-am", "chore: release version #{new_version}"])
+    Git.tag!(repo, ["-a", new_version, "-m", "release #{new_version}"])
+
+    Mix.shell().info("Don't forget to push with tags:\n\n    git push --follow-tags")
+  end
+
   defp confirm_and_tag(repo, changelog_file, new_version) do
     message = """
     Shall we commit and tag?
@@ -194,11 +211,7 @@ defmodule Mix.Tasks.GitOps.Release do
     """
 
     if Mix.shell().yes?(message) do
-      Git.add!(repo, "#{changelog_file}")
-      Git.commit!(repo, ["-am", "chore: release version #{new_version}"])
-      Git.tag!(repo, ["-a", new_version, "-m", "release #{new_version}"])
-
-      Mix.shell().info("Don't forget to push with tags:\n\n    git push --follow-tags")
+      tag(repo, changelog_file, new_version)
     else
       Mix.shell().info("""
       If you want to do it on your own, make sure you tag the release with:
@@ -257,7 +270,8 @@ defmodule Mix.Tasks.GitOps.Release do
           no_major: :boolean,
           pre_release: :string,
           rc: :boolean,
-          dry_run: :boolean
+          dry_run: :boolean,
+          yes: :boolean
         ],
         aliases: [
           i: :initial,
@@ -265,7 +279,8 @@ defmodule Mix.Tasks.GitOps.Release do
           b: :build,
           f: :force_patch,
           n: :no_major,
-          d: :dry_run
+          d: :dry_run,
+          y: :yes
         ]
       )
 
