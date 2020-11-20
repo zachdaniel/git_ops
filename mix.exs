@@ -1,6 +1,7 @@
 defmodule GitOps.MixProject do
   use Mix.Project
 
+  @source_url "https://github.com/zachdaniel/git_ops"
   @version "2.0.2"
 
   def project do
@@ -13,7 +14,7 @@ defmodule GitOps.MixProject do
       start_permanent: Mix.env() == :prod,
       name: "Git Ops",
       docs: docs(),
-      source_url: "https://github.com/zachdaniel/git_ops",
+      source_url: @source_url,
       deps: deps(),
       dialyzer: [plt_add_apps: [:mix]],
       test_coverage: [tool: ExCoveralls],
@@ -27,19 +28,20 @@ defmodule GitOps.MixProject do
     ]
   end
 
-  defp description() do
+  defp description do
     """
     A tool for managing the version and changelog of a project using conventional commits.
     """
   end
 
-  defp package() do
+  defp package do
     [
       name: :git_ops,
       maintainers: "Zachary Daniel",
       licenses: ["MIT License"],
       links: %{
-        "GitHub" => "https://github.com/zachdaniel/git_ops"
+        "Changelog" => "#{@source_url}/blob/master/CHANGELOG.md",
+        "GitHub" => @source_url
       }
     ]
   end
@@ -47,20 +49,21 @@ defmodule GitOps.MixProject do
   defp docs do
     [
       main: "readme",
+      source_url: @source_url,
+      source_ref: "v#{@version}",
       extras: [
-        "README.md"
+        "README.md",
+        "CHANGELOG.md"
       ]
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
       extra_applications: [:logger]
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
