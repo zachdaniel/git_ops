@@ -45,11 +45,12 @@ defmodule GitOps.Mix.Tasks.Test.MessageHookTest do
     assert File.exists?(commit_msg_hook_path)
     refute File.read!(commit_msg_hook_path) =~ ~S{mix git_ops.check_message "$@"}
 
-    assert_raise Mix.Error,
-                 ~r/The commit-msg hook `.*` does not call the Conventional Commits message validation task/,
-                 fn ->
-                   MessageHook.run(["--commit-msg-hook-path-override", commit_msg_hook_path])
-                 end
+    regex =
+      ~r/The commit-msg hook `.*` does not call the Conventional Commits message validation task/
+
+    assert_raise Mix.Error, regex, fn ->
+      MessageHook.run(["--commit-msg-hook-path-override", commit_msg_hook_path])
+    end
 
     assert File.exists?(commit_msg_hook_path)
     assert initial_content == File.read!(commit_msg_hook_path)
