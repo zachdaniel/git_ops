@@ -1,5 +1,9 @@
 # GitOps
+
 [![Hex pm](http://img.shields.io/hexpm/v/git_ops.svg?style=flat)](https://hex.pm/packages/git_ops)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/git_ops/)
+[![Total Download](https://img.shields.io/hexpm/dt/git_ops.svg)](https://hex.pm/packages/git_ops)
+[![License](https://img.shields.io/hexpm/l/git_ops.svg)](https://github.com/zachdaniel/git_opts/blob/master/LICENSE)
 [![Build Status](https://travis-ci.com/zachdaniel/git_ops.svg?branch=master)](https://travis-ci.com/zachdaniel/git_ops)
 [![Inline docs](http://inch-ci.org/github/zachdaniel/git_ops.svg?branch=master)](http://inch-ci.org/github/zachdaniel/git_ops)
 [![Coverage Status](https://coveralls.io/repos/github/zachdaniel/git_ops/badge.svg?branch=master)](https://coveralls.io/github/zachdaniel/git_ops?branch=master)
@@ -12,13 +16,12 @@ For an example, see this project's [CHANGELOG.md](https://github.com/zachdaniel/
 
 Roadmap (in no particular order):
 
-* More tests
-* Automatically parse issue numbers and github mentions into the correct format,
-  linking the issue
-* A task to build a compliant commit
-* Validation of commits
-* Automatically link to the PR that merged a given commit in the changelog
-* A hundred other things I forgot to write down while writing the initial version
+  * More tests
+  * Automatically parse issue numbers and github mentions into the correct format, linking the issue
+  * A task to build a compliant commit
+  * Validation of commits
+  * Automatically link to the PR that merged a given commit in the changelog
+  * A hundred other things I forgot to write down while writing the initial version
 
 Important addendums:
 
@@ -42,10 +45,6 @@ def deps do
   ]
 end
 ```
-
-## Documentation
-
-View the [hex documentation](https://hexdocs.pm/git_ops)
 
 ## Configuration
 
@@ -120,6 +119,6 @@ either the merge commit or alter the commit when merging/squashing (recommended)
 
 ## Similar projects
 
-* https://github.com/glasnoster/eliver
-* https://github.com/oo6/mix-bump
-* https://github.com/mpanarin/versioce
+  * https://github.com/glasnoster/eliver
+  * https://github.com/oo6/mix-bump
+  * https://github.com/mpanarin/versioce
