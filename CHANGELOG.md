@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.1.0](https://github.com/zachdaniel/git_ops/compare/v2.0.2...v2.1.0) (2020-11-21)
+
+
+
+
+### Features:
+
+* yes: Add `--yes` flag to `mix get_ops.release` (#38)
+
 ## [v2.0.2](https://github.com/zachdaniel/git_ops/compare/v2.0.1...v2.0.2) (2020-11-19)
 
 
