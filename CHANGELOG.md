@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.2.0](https://github.com/zachdaniel/git_ops/compare/v2.1.0...v2.2.0) (2020-12-15)
+
+
+
+
+### Features:
+
+* project_info_task: Add `git_ops.project_info` task. (#41)
+
+* yes: Add `--yes` flag to `mix get_ops.release` (#38)
+
 ## [v2.1.0](https://github.com/zachdaniel/git_ops/compare/v2.0.2...v2.1.0) (2020-11-21)
 
 
