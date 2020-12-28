@@ -47,7 +47,7 @@ defmodule GitOps.Mix.Tasks.Test.ProjectInfoTest do
     end
   end
 
-  describe "Github Actions actual format" do
+  describe "Github Actions format" do
     test "it is correctly formatted", %{name: name, version: version} do
       actual = run(["--format", "github-actions"])
 
@@ -60,13 +60,26 @@ defmodule GitOps.Mix.Tasks.Test.ProjectInfoTest do
     end
   end
 
-  describe "Shell actual format" do
+  describe "Shell format" do
     test "it is correctly formatted", %{name: name, version: version} do
       actual = run(["--format", "shell"])
 
       expected = """
       export APP_NAME="#{name}"
       export APP_VERSION="#{version}"
+      """
+
+      assert actual == expected
+    end
+  end
+
+  describe "Dotenv format" do
+    test "it is correctly formatted", %{name: name, version: version} do
+      actual = run(["--format", "dotenv"])
+
+      expected = """
+      APP_NAME="#{name}"
+      APP_VERSION="#{version}"
       """
 
       assert actual == expected
