@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.3.0](https://github.com/zachdaniel/git_ops/compare/v2.2.0...v2.3.0) (2020-12-28)
+
+
+
+
+### Features:
+
+* project_info_dotenv_format: Add the `dotenv` format for project info output. (#42)
+
 ## [v2.2.0](https://github.com/zachdaniel/git_ops/compare/v2.1.0...v2.2.0) (2020-12-15)
 
 
