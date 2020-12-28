@@ -13,7 +13,7 @@ defmodule Mix.Tasks.GitOps.ProjectInfo do
   ## Switches:
 
   * `--format|-f` selects the output format. Currently suported output formats
-    are `json`, `toml`, `github-actions` and `shell`.
+    are `json`, `toml`, `github-actions`, `shell` and `dotenv`.
   """
 
   alias GitOps.Config
@@ -30,6 +30,7 @@ defmodule Mix.Tasks.GitOps.ProjectInfo do
 
     opts
     |> Keyword.get(:format)
+    |> String.downcase()
     |> case do
       "toml" ->
         format_toml(project, opts)
@@ -43,8 +44,11 @@ defmodule Mix.Tasks.GitOps.ProjectInfo do
       "shell" ->
         format_shell(project, opts)
 
+      "dotenv" ->
+        format_dotenv(project, opts)
+
       format ->
-        raise "Invalid format `#{inspect(format)}`.  Valid formats are `json`, `toml`, `github-actions` and `shell`."
+        raise "Invalid format `#{inspect(format)}`.  Valid formats are `json`, `toml`, `github-actions`, `shell` and `dotenv`."
     end
   end
 
@@ -79,6 +83,12 @@ defmodule Mix.Tasks.GitOps.ProjectInfo do
     {name, version} = extract_name_and_version_from_project(project)
 
     IO.write(~s|export APP_NAME="#{name}"\nexport APP_VERSION="#{version}"\n|)
+  end
+
+  defp format_dotenv(project, _opts) do
+    {name, version} = extract_name_and_version_from_project(project)
+
+    IO.write(~s|APP_NAME="#{name}"\nAPP_VERSION="#{version}"\n|)
   end
 
   defp extract_name_and_version_from_project(project) do
