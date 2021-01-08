@@ -198,7 +198,15 @@ defmodule Mix.Tasks.GitOps.Release do
   defp tag(repo, changelog_file, new_version, new_message) do
     Git.add!(repo, "#{changelog_file}")
     Git.commit!(repo, ["-am", "chore: release version #{new_version}"])
-    new_message = String.replace(new_message, ~r/^#+/, "")
+
+    new_message =
+      new_message
+      |> String.replace(~r/^#+/, "")
+      |> String.split("\n")
+      |> Enum.map(&String.trim/1)
+      |> Enum.reject(&(&1 == ""))
+      |> Enum.join("\n")
+
     Git.tag!(repo, ["-a", new_version, "-m", "release #{new_version}\n\n" <> new_message])
 
     Mix.shell().info("Don't forget to push with tags:\n\n    git push --follow-tags")
