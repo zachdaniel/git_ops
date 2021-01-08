@@ -201,7 +201,7 @@ defmodule Mix.Tasks.GitOps.Release do
 
     new_message =
       new_message
-      |> String.replace(~r/^#+/, "")
+      |> String.replace(~r/^#+/m, "")
       |> String.split("\n")
       |> Enum.map(&String.trim/1)
       |> Enum.reject(&(&1 == ""))
