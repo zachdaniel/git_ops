@@ -56,15 +56,20 @@ defmodule GitOps.Changelog do
         ["## ", current_version, " ", date]
       end
 
-    new_contents =
+    new_message =
       IO.iodata_to_binary([
-        String.trim(head),
-        "\n\n<!-- changelog -->\n\n",
         version_header,
         "\n",
         breaking_changes_contents,
         "\n\n",
-        contents_to_insert,
+        contents_to_insert
+      ])
+
+    new_contents =
+      IO.iodata_to_binary([
+        String.trim(head),
+        "\n\n<!-- changelog -->\n\n",
+        new_message,
         rest
       ])
 
@@ -72,7 +77,7 @@ defmodule GitOps.Changelog do
       File.write!(path, new_contents)
     end
 
-    String.trim(original_file_contents, new_contents)
+    String.trim(new_message)
   end
 
   @spec initialize(String.t(), Keyword.t()) :: :ok

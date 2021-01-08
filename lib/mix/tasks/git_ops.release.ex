@@ -135,11 +135,11 @@ defmodule Mix.Tasks.GitOps.Release do
         :ok
 
       opts[:yes] ->
-        tag(repo, changelog_file, prefixed_new_version)
+        tag(repo, changelog_file, prefixed_new_version, changelog_changes)
         :ok
 
       true ->
-        confirm_and_tag(repo, changelog_file, prefixed_new_version)
+        confirm_and_tag(repo, changelog_file, prefixed_new_version, changelog_changes)
         :ok
     end
   end
@@ -195,15 +195,15 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp tag(repo, changelog_file, new_version) do
+  defp tag(repo, changelog_file, new_version, new_message) do
     Git.add!(repo, "#{changelog_file}")
     Git.commit!(repo, ["-am", "chore: release version #{new_version}"])
-    Git.tag!(repo, ["-a", new_version, "-m", "release #{new_version}"])
+    Git.tag!(repo, ["-a", new_version, "-m", new_message])
 
     Mix.shell().info("Don't forget to push with tags:\n\n    git push --follow-tags")
   end
 
-  defp confirm_and_tag(repo, changelog_file, new_version) do
+  defp confirm_and_tag(repo, changelog_file, new_version, new_message) do
     message = """
     Shall we commit and tag?
 
@@ -211,7 +211,7 @@ defmodule Mix.Tasks.GitOps.Release do
     """
 
     if Mix.shell().yes?(message) do
-      tag(repo, changelog_file, new_version)
+      tag(repo, changelog_file, new_version, new_message)
     else
       Mix.shell().info("""
       If you want to do it on your own, make sure you tag the release with:
