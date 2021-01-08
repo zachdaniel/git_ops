@@ -198,7 +198,8 @@ defmodule Mix.Tasks.GitOps.Release do
   defp tag(repo, changelog_file, new_version, new_message) do
     Git.add!(repo, "#{changelog_file}")
     Git.commit!(repo, ["-am", "chore: release version #{new_version}"])
-    Git.tag!(repo, ["-a", new_version, "-m", new_message])
+    new_message = String.replace(new_message, "#", "\#")
+    Git.tag!(repo, ["-a", new_version, "-m", "release #{new_version}\n\n" <> new_message])
 
     Mix.shell().info("Don't forget to push with tags:\n\n    git push --follow-tags")
   end
@@ -215,6 +216,15 @@ defmodule Mix.Tasks.GitOps.Release do
     else
       Mix.shell().info("""
       If you want to do it on your own, make sure you tag the release with:
+
+      If you want to include your release notes in the tag message, use
+
+          git commit -am "chore: release version #{new_version}"
+          git tag -a #{new_version}
+
+      And replace the contents with your release notes (make sure to escape any # with \#)
+
+      Otherwise, use:
 
           git commit -am "chore: release version #{new_version}"
           git tag -a #{new_version} -m "release #{new_version}"
