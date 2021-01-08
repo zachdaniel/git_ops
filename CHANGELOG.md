@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.4.0](https://github.com/zachdaniel/git_ops/compare/v2.3.0...v2.4.0) (2021-01-08)
+
+
+
+
+### Features:
+
+* Include changelog notes to release tag message (#44)
+
 ## [v2.3.0](https://github.com/zachdaniel/git_ops/compare/v2.2.0...v2.3.0) (2020-12-28)
 
 
