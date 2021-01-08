@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.4.2](https://github.com/zachdaniel/git_ops/compare/v2.4.1...v2.4.2) (2021-01-08)
+
+
+
+
+### Bug Fixes:
+
+* replace headings properly
+
+### Improvements:
+
+* clean empty lines in tag message
+
 ## [v2.4.1](https://github.com/zachdaniel/git_ops/compare/v2.4.0...v2.4.1) (2021-01-08)
 
 
