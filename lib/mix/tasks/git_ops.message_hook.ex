@@ -9,7 +9,7 @@ defmodule Mix.Tasks.GitOps.MessageHook do
   Installs a Git #{@commit_msg_hook_name} hook to automatically check if the commit message follows
   the Conventional Commits spec:
 
-      mix git_ops.msg_hook
+      mix git_ops.message_hook
 
   The actual check is done by using the git_ops.check_message mix task:
 
