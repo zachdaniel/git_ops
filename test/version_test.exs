@@ -82,7 +82,7 @@ defmodule GitOps.Test.VersionTest do
 
     """
 
-    assert capture_io(fn -> new_version("0.1.1", [chore()], ci: true) end) == message
+    assert catch_exit(new_version("0.1.1", [chore()], ci: true)) == :normal
   end
 
   test "if changing the build metadata, a non-version change is not an error" do

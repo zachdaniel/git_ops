@@ -144,6 +144,7 @@ defmodule GitOps.Version do
   defp maybe_raise(msg, opts) do
     if Keyword.fetch(opts, :ci) == {:ok, true} do
       IO.puts(msg)
+      exit(:normal)
     else
       raise msg
     end
