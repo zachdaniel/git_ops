@@ -66,22 +66,6 @@ defmodule GitOps.Test.VersionTest do
   end
 
   test "attempting to release when no commit would yield a new version number with the --ci option is not an error" do
-    message = """
-    No changes should result in a new release version.
-
-    Options:
-
-    * If no fixes or features were added, then perhaps you don't need to release.
-    * If a fix or feature commit was not correctly annotated, you could alter your git
-      history to fix it and run this command again, or create an empty commit via
-      `git commit --allow-empty` that contains an appropriate message.
-    * If you don't care and want a new version, you can use `--force-patch` which
-      will update the patch version regardless.
-    * You can add build metadata using `--build` that will signify that something was
-      unique about this build.
-
-    """
-
     assert catch_exit(new_version("0.1.1", [chore()], ci: true)) == :normal
   end
 
