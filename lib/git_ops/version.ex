@@ -16,7 +16,6 @@ defmodule GitOps.Version do
 
   def determine_new_version(current_version, prefix, commits, opts) do
     parsed = parse!(prefix, prefix <> current_version)
-
     rc? = opts[:rc]
 
     build = opts[:build]
@@ -24,7 +23,7 @@ defmodule GitOps.Version do
     new_version = new_version(commits, parsed, rc?, opts)
 
     if versions_equal?(new_version, parsed) && build == parsed.build do
-      raise """
+      message = """
       No changes should result in a new release version.
 
       Options:
@@ -38,6 +37,8 @@ defmodule GitOps.Version do
       * You can add build metadata using `--build` that will signify that something was
         unique about this build.
       """
+
+      maybe_raise(message, opts)
     end
 
     unprefixed =
@@ -137,6 +138,14 @@ defmodule GitOps.Version do
 
       :error ->
         raise ArgumentError, "Expected: #{text} to be parseable as a version, but it was not."
+    end
+  end
+
+  defp maybe_raise(msg, opts) do
+    if Keyword.fetch(opts, :ci) == {:ok, true} do
+      IO.puts(msg)
+    else
+      raise msg
     end
   end
 end

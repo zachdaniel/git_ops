@@ -56,6 +56,8 @@ defmodule Mix.Tasks.GitOps.Release do
   * `--dry-run` - Allow users to run release process and view changes without committing and tagging
 
   * `--yes` - Don't prompt for confirmation, just perform release.  Useful for your CI run.
+
+  * `--ci` - Do not raise an exception when there is no version to bump. Useful for CI pipelines.
   """
 
   alias GitOps.Changelog
@@ -289,7 +291,8 @@ defmodule Mix.Tasks.GitOps.Release do
           pre_release: :string,
           rc: :boolean,
           dry_run: :boolean,
-          yes: :boolean
+          yes: :boolean,
+          ci: :boolean
         ],
         aliases: [
           i: :initial,
