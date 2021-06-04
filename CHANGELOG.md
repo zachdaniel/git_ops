@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.4.3](https://github.com/zachdaniel/git_ops/compare/v2.4.2...v2.4.3) (2021-06-04)
+
+
+
+
+### Bug Fixes:
+
+* use rc tags for rc releases
+
 ## [v2.4.2](https://github.com/zachdaniel/git_ops/compare/v2.4.1...v2.4.2) (2021-01-08)
 
 
