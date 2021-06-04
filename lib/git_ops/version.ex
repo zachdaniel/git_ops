@@ -14,6 +14,15 @@ defmodule GitOps.Version do
     end)
   end
 
+  @spec last_valid_version([String.t()], String.t()) :: String.t() | nil
+  def last_valid_version(versions, prefix) do
+    versions
+    |> Enum.reject(fn tag -> parse(prefix, tag) == :error end)
+    |> Enum.find(fn version ->
+      match?({:ok, %{}}, parse(prefix, version))
+    end)
+  end
+
   def determine_new_version(current_version, prefix, commits, opts) do
     parsed = parse!(prefix, prefix <> current_version)
 
@@ -87,9 +96,9 @@ defmodule GitOps.Version do
 
   defp new_version_patch(parsed, pre, rc?) do
     case {parsed, pre, rc?} do
+      {parsed, _, true} -> %{parsed | pre: increment_rc!(parsed.pre)}
       {parsed, [], _} -> %{parsed | patch: parsed.patch + 1, pre: []}
       {parsed = %{pre: []}, pre, _} -> %{parsed | patch: parsed.patch + 1, pre: pre}
-      {parsed, _, true} -> %{parsed | pre: increment_rc!(parsed.pre)}
       {parsed = %{pre: ["rc" <> _]}, pre, nil} -> %{parsed | patch: parsed.patch + 1, pre: pre}
       {parsed, pre, _} -> %{parsed | pre: pre}
     end

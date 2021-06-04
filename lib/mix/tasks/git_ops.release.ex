@@ -149,7 +149,12 @@ defmodule Mix.Tasks.GitOps.Release do
       commits = Git.get_initial_commits!(repo)
       {commits, commits}
     else
-      tag = GitOps.Version.last_valid_non_rc_version(tags, prefix)
+      tag =
+        if opts[:rc] do
+          GitOps.Version.last_valid_version(tags, prefix)
+        else
+          GitOps.Version.last_valid_non_rc_version(tags, prefix)
+        end
 
       commits_for_version = Git.commit_messages_since_tag(repo, tag)
       last_version_after = GitOps.Version.last_version_greater_than(tags, tag, prefix)
