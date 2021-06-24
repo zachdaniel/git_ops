@@ -117,27 +117,35 @@ defmodule GitOps.Test.VersionTest do
   end
 
   test "a release candidate starts at 0 if requested on patch" do
-    assert new_version("0.1.0", [patch()], rc: true) == "0.1.1-rc0"
+    assert new_version("0.1.0", [patch()], rc: true) == "0.1.0-rc.0"
   end
 
   test "a release candidate starts at 0 if requested on minor" do
-    assert new_version("0.1.0", [minor()], rc: true) == "0.2.0-rc0"
+    assert new_version("0.1.0", [minor()], rc: true) == "0.2.0-rc.0"
   end
 
   test "a release candidate starts at 0 if requested on break" do
-    assert new_version("0.1.0", [break()], rc: true) == "1.0.0-rc0"
+    assert new_version("0.1.0", [break()], rc: true) == "1.0.0-rc.0"
   end
 
-  test "a release candidate increments by one on patch" do
+  test "an old style release candidate increments by one on patch" do
     assert new_version("0.1.1-rc0", [patch()], rc: true) == "0.1.1-rc1"
   end
 
+  test "an old style release candidate increments by one on patch and retains the lack of a dot" do
+    assert new_version("0.1.1-rc1", [patch()], rc: true) == "0.1.1-rc2"
+  end
+
+  test "a release candidate increments by one on patch" do
+    assert new_version("0.1.1-rc.0", [patch()], rc: true) == "0.1.1-rc.1"
+  end
+
   test "a release candidate resets on minor" do
-    assert new_version("0.1.1-rc0", [minor()], rc: true) == "0.2.0-rc0"
+    assert new_version("0.1.1-rc.0", [minor()], rc: true) == "0.2.0-rc.0"
   end
 
   test "a release candidate resets on major" do
-    assert new_version("0.1.1-rc0", [break()], rc: true) == "1.0.0-rc0"
+    assert new_version("0.1.1-rc.0", [break()], rc: true) == "1.0.0-rc.0"
   end
 
   test "a release candidate raises correctly when it would not change" do

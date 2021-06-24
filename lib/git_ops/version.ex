@@ -91,30 +91,43 @@ defmodule GitOps.Version do
     end
   end
 
-  defp default_pre_release(true, _pre_release), do: ["rc0"]
+  defp default_pre_release(true, _pre_release), do: ["rc.0"]
   defp default_pre_release(_rc?, pre_release), do: List.wrap(pre_release)
 
   defp new_version_patch(parsed, pre, rc?) do
     case {parsed, pre, rc?} do
-      {parsed, _, true} -> %{parsed | pre: increment_rc!(parsed.pre)}
-      {parsed, [], _} -> %{parsed | patch: parsed.patch + 1, pre: []}
-      {parsed = %{pre: []}, pre, _} -> %{parsed | patch: parsed.patch + 1, pre: pre}
-      {parsed = %{pre: ["rc" <> _]}, pre, nil} -> %{parsed | patch: parsed.patch + 1, pre: pre}
-      {parsed, pre, _} -> %{parsed | pre: pre}
+      {parsed, _, true} ->
+        %{parsed | pre: increment_rc!(parsed.pre)}
+
+      {parsed, [], _} ->
+        %{parsed | patch: parsed.patch + 1, pre: []}
+
+      {parsed = %{pre: []}, pre, _} ->
+        %{parsed | patch: parsed.patch + 1, pre: pre}
+
+      {parsed = %{pre: ["rc." <> _]}, pre, nil} ->
+        %{parsed | patch: parsed.patch + 1, pre: pre}
+
+      {parsed = %{pre: ["rc" <> _]}, pre, nil} ->
+        %{parsed | patch: parsed.patch + 1, pre: pre}
+
+      {parsed, pre, _} ->
+        %{parsed | pre: pre}
     end
   end
 
-  defp increment_rc!(nil), do: "rc0"
-  defp increment_rc!([]), do: ["rc0"]
+  defp increment_rc!(nil), do: ["rc", "0"]
+  defp increment_rc!([]), do: ["rc", "0"]
   defp increment_rc!([rc]), do: List.wrap(increment_rc!(rc))
+  defp increment_rc!([rc, int]) when is_integer(int), do: [rc, int + 1]
 
-  defp increment_rc!(rc = "rc" <> version) do
-    case Integer.parse(version) do
+  defp increment_rc!("rc" <> rc) do
+    case Integer.parse(rc) do
       {int, ""} ->
         "rc#{int + 1}"
 
       :error ->
-        raise "Found an rc version that could not be parsed: #{rc}"
+        raise "Found an rc version that could not be parsed: rc#{rc}"
     end
   end
 
