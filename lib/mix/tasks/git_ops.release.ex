@@ -157,6 +157,7 @@ defmodule Mix.Tasks.GitOps.Release do
         end
 
       commits_for_version = Git.commit_messages_since_tag(repo, tag)
+
       last_version_after = GitOps.Version.last_version_greater_than(tags, tag, prefix)
 
       if last_version_after do
