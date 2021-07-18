@@ -73,9 +73,6 @@ defmodule GitOps.Version do
     pre = default_pre_release(rc?, opts[:pre_release])
 
     cond do
-      match?(["rc" <> _], parsed.pre) && rc? ->
-        %{parsed | pre: increment_rc!(parsed.pre)}
-
       Enum.any?(commits, &Commit.breaking?/1) ->
         if opts[:no_major] do
           %{parsed | minor: parsed.minor + 1, patch: 0, pre: pre}
@@ -87,7 +84,11 @@ defmodule GitOps.Version do
         %{parsed | minor: parsed.minor + 1, patch: 0, pre: pre}
 
       Enum.any?(commits, &Commit.fix?/1) || opts[:force_patch] ->
-        new_version_patch(parsed, pre, rc?)
+        if match?(["rc" <> _], parsed.pre) && rc? do
+          %{parsed | pre: increment_rc!(parsed.pre)}
+        else
+          new_version_patch(parsed, pre, rc?)
+        end
 
       true ->
         parsed
@@ -110,6 +111,9 @@ defmodule GitOps.Version do
 
       {parsed = %{pre: ["rc" <> _]}, pre, nil} ->
         %{parsed | patch: parsed.patch + 1, pre: pre}
+
+      {parsed, _pre, true} ->
+        %{parsed | pre: increment_rc!(parsed.pre)}
 
       {parsed, pre, _} ->
         %{parsed | pre: pre}

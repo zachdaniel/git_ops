@@ -117,7 +117,7 @@ defmodule GitOps.Test.VersionTest do
   end
 
   test "a release candidate starts at 0 if requested on patch" do
-    assert new_version("0.1.0", [patch()], rc: true) == "0.1.0-rc.0"
+    assert new_version("0.1.0", [patch()], rc: true) == "0.1.1-rc.0"
   end
 
   test "a release candidate starts at 0 if requested on minor" do
