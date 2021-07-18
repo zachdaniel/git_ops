@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.4.5](https://github.com/zachdaniel/git_ops/compare/v2.4.4...v2.4.5) (2021-07-18)
+
+
+
+
+### Bug Fixes:
+
+* more rc fixes
+
+* track rcs properly
+
 ## [v2.4.4](https://github.com/zachdaniel/git_ops/compare/v2.4.3...v2.4.4) (2021-06-24)
 
 
