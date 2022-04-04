@@ -188,17 +188,25 @@ defmodule Mix.Tasks.GitOps.Release do
       end
 
     readme_changes =
-      if readme do
-        VersionReplace.update_readme(readme, current_version, new_version, opts)
-      end
+      readme
+      |> List.wrap()
+      |> Enum.map(fn readme ->
+        {readme, VersionReplace.update_readme(readme, current_version, new_version, opts)}
+      end)
 
     if opts[:dry_run] do
       "Below are the contents of files that will change.\n"
       |> append_changes_to_message(changelog_file, changelog_changes)
-      |> append_changes_to_message(readme, readme_changes)
+      |> add_readme_changes(readme_changes)
       |> append_changes_to_message(mix_project_module, mix_project_changes)
       |> Mix.shell().info()
     end
+  end
+
+  defp add_readme_changes(message, readme_changes) do
+    Enum.reduce(readme_changes, message, fn {file, changes}, message ->
+      append_changes_to_message(message, file, changes)
+    end)
   end
 
   defp tag(repo, changelog_file, new_version, new_message) do
