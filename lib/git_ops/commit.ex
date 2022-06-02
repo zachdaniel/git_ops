@@ -124,9 +124,6 @@ defmodule GitOps.Commit do
           end)
 
         {:ok, commits}
-
-      {:error, _message, _remaining, _state, _dunno, _also_dunno} ->
-        :error
     end
   rescue
     _ ->
