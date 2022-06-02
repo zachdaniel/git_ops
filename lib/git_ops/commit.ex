@@ -104,8 +104,8 @@ defmodule GitOps.Commit do
           Enum.map(results, fn {:commit, result} ->
             remaining_lines =
               result[:body]
-              |> Enum.map(&String.trim/1)
-              |> Enum.join("\n")
+              |> Enum.map_join("\n", &String.trim/1)
+              # Remove multiple newlines
               |> String.split("\n")
               |> Enum.map(&String.trim/1)
               |> Enum.reject(&Kernel.==(&1, ""))
