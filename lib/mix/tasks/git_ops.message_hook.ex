@@ -184,9 +184,7 @@ defmodule Mix.Tasks.GitOps.MessageHook do
 
     if opts[:verbose] >= 2 do
       Mix.shell().info("""
-      Git hooks path: #{commit_msg_hook_path} (#{
-        if commit_msg_hook_exists, do: "existing", else: "not existing"
-      })
+      Git hooks path: #{commit_msg_hook_path} (#{if commit_msg_hook_exists, do: "existing", else: "not existing"})
       """)
     end
 
