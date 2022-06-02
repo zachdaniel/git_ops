@@ -78,7 +78,8 @@ defmodule Mix.Tasks.GitOps.Release do
 
     current_version = String.trim(mix_project[:version])
 
-    repo = Git.init!()
+    repo_path = Config.repository_path()
+    repo = Git.init!(repo_path)
 
     if opts[:initial] do
       Changelog.initialize(changelog_path, opts)
@@ -135,11 +136,11 @@ defmodule Mix.Tasks.GitOps.Release do
         :ok
 
       opts[:yes] ->
-        tag(repo, changelog_file, prefixed_new_version, changelog_changes)
+        tag(repo, changelog_path, prefixed_new_version, changelog_changes)
         :ok
 
       true ->
-        confirm_and_tag(repo, changelog_file, prefixed_new_version, changelog_changes)
+        confirm_and_tag(repo, changelog_path, prefixed_new_version, changelog_changes)
         :ok
     end
   end
@@ -190,6 +191,7 @@ defmodule Mix.Tasks.GitOps.Release do
     readme_changes =
       readme
       |> List.wrap()
+      |> Enum.reject(&(&1 == false))
       |> Enum.map(fn readme ->
         {readme, VersionReplace.update_readme(readme, current_version, new_version, opts)}
       end)
@@ -209,8 +211,8 @@ defmodule Mix.Tasks.GitOps.Release do
     end)
   end
 
-  defp tag(repo, changelog_file, new_version, new_message) do
-    Git.add!(repo, "#{changelog_file}")
+  defp tag(repo, changelog_path, new_version, new_message) do
+    Git.add!(repo, [changelog_path])
     Git.commit!(repo, ["-am", "chore: release version #{new_version}"])
 
     new_message =
@@ -226,7 +228,7 @@ defmodule Mix.Tasks.GitOps.Release do
     Mix.shell().info("Don't forget to push with tags:\n\n    git push --follow-tags")
   end
 
-  defp confirm_and_tag(repo, changelog_file, new_version, new_message) do
+  defp confirm_and_tag(repo, changelog_path, new_version, new_message) do
     message = """
     Shall we commit and tag?
 
@@ -234,7 +236,7 @@ defmodule Mix.Tasks.GitOps.Release do
     """
 
     if Mix.shell().yes?(message) do
-      tag(repo, changelog_file, new_version, new_message)
+      tag(repo, changelog_path, new_version, new_message)
     else
       Mix.shell().info("""
       If you want to do it on your own, make sure you tag the release with:

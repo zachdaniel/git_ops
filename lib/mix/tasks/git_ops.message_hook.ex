@@ -31,7 +31,7 @@ defmodule Mix.Tasks.GitOps.MessageHook do
   * `--verbose|-v` - Be more verbose. Pass this option twice to be even more verbose.
   """
 
-  alias GitOps.Git
+  alias GitOps.{Config, Git}
 
   @doc false
   def run(args) do
@@ -175,7 +175,8 @@ defmodule Mix.Tasks.GitOps.MessageHook do
       if commit_msg_hook_path_override && is_binary(commit_msg_hook_path_override) do
         commit_msg_hook_path_override
       else
-        Git.init!()
+        Config.repository_path()
+        |> Git.init!()
         |> Git.hooks_path()
         |> Path.join(@commit_msg_hook_name)
       end

@@ -5,9 +5,9 @@ defmodule GitOps.Git do
 
   @default_githooks_path ".git/hooks"
 
-  @spec init!() :: Git.Repository.t()
-  def init! do
-    Git.init!(File.cwd!())
+  @spec init!(String.t()) :: Git.Repository.t()
+  def init!(repo_path) do
+    Git.init!(repo_path)
   end
 
   @spec add!(Git.Repository.t(), [String.t()]) :: String.t()

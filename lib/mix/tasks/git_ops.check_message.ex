@@ -18,6 +18,14 @@ defmodule Mix.Tasks.GitOps.CheckMessage do
 
   @doc false
   def run([path]) do
+    # Full paths do not need to be wrapped with repo root
+    path =
+      if path == Path.absname(path) do
+        path
+      else
+        Path.join(Config.repository_path(), path)
+      end
+
     message = File.read!(path)
 
     case Commit.parse(message) do

@@ -60,6 +60,10 @@ defmodule GitOps.Test.ConfigTest do
     assert Config.repository_url() == "repo/url.git"
   end
 
+  test "repository_path returns correctly" do
+    assert Config.repository_path() == File.cwd!()
+  end
+
   test "manage_mix_version? returns correctly" do
     assert Config.manage_mix_version?() == false
   end
