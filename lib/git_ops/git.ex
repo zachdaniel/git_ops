@@ -5,12 +5,12 @@ defmodule GitOps.Git do
 
   @default_githooks_path ".git/hooks"
 
-  @spec init!() :: Git.Repository.t()
-  def init! do
-    Git.init!(File.cwd!())
+  @spec init!(String.t()) :: Git.Repository.t()
+  def init!(repo_path) do
+    Git.init!(repo_path)
   end
 
-  @spec add!(Git.Repositor.t(), [String.t()]) :: String.t()
+  @spec add!(Git.Repository.t(), [String.t()]) :: String.t()
   def add!(repo, args) do
     Git.add!(repo, args)
   end
@@ -70,18 +70,8 @@ defmodule GitOps.Git do
   @spec hooks_path(Git.Repository.t()) :: String.t() | no_return
   def hooks_path(repo) do
     case Git.config(repo, ["core.hookspath"]) do
-      {:error, %Git.Error{message: "", code: 1}} ->
-        # no custom config for core.hookspath
-        if File.dir?(@default_githooks_path) do
-          @default_githooks_path
-        else
-          raise """
-          Could not find the default git hooks path #{inspect(@default_githooks_path)}. Is this a git repo?
-          """
-        end
-
-      {:error, %Git.Error{message: message}} ->
-        raise message
+      {:error, error} ->
+        handle_hooks_path_error(error)
 
       {:ok, path} ->
         hookspath = String.trim_trailing(path, "\n")
@@ -93,6 +83,21 @@ defmodule GitOps.Git do
           Could not find the directory configured as git hooks path #{inspect(path)}. Ensure the git core.hookspath is set correctly.
           """
         end
+    end
+  end
+
+  defp handle_hooks_path_error(error) do
+    with "" <- error.error,
+         1 <- error.code do
+      if File.dir?(@default_githooks_path) do
+        @default_githooks_path
+      else
+        raise """
+        Could not find the default git hooks path #{inspect(@default_githooks_path)}. Is this a git repo?
+        """
+      end
+    else
+      _ -> raise error.message
     end
   end
 end

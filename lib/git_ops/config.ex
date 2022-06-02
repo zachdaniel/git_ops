@@ -58,6 +58,7 @@ defmodule GitOps.Config do
   def mix_project, do: Application.get_env(:git_ops, :mix_project)
   def changelog_file, do: Application.get_env(:git_ops, :changelog_file) || "CHANGELOG.md"
   def repository_url, do: Application.get_env(:git_ops, :repository_url)
+  def repository_path, do: Application.get_env(:git_ops, :repository_path) || File.cwd!()
   def manage_mix_version?, do: truthy?(Application.get_env(:git_ops, :manage_mix_version?))
 
   def manage_readme_version do
