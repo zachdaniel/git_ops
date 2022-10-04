@@ -109,6 +109,7 @@ defmodule Mix.Tasks.GitOps.Release do
           current_version,
           prefix,
           commits_for_version,
+          GitOps.Version.last_valid_non_rc_version(tags, prefix),
           opts
         )
       end

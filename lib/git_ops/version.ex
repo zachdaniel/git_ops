@@ -23,14 +23,28 @@ defmodule GitOps.Version do
     end)
   end
 
-  def determine_new_version(current_version, prefix, commits, opts) do
+  def determine_new_version(current_version, prefix, commits, last_valid_non_rc_version, opts) do
     parsed = parse!(prefix, prefix <> current_version)
 
     rc? = opts[:rc]
 
     build = opts[:build]
 
-    new_version = new_version(commits, parsed, rc?, opts)
+    last_valid_non_rc_version =
+      if last_valid_non_rc_version && prefix && prefix != "" do
+        String.trim_leading(last_valid_non_rc_version, prefix)
+      else
+        last_valid_non_rc_version
+      end
+
+    new_version =
+      new_version(
+        commits,
+        parsed,
+        rc?,
+        last_valid_non_rc_version,
+        opts
+      )
 
     if versions_equal?(new_version, parsed) && build == parsed.build do
       raise """
@@ -69,18 +83,26 @@ defmodule GitOps.Version do
     end)
   end
 
-  defp new_version(commits, parsed, rc?, opts) do
+  defp new_version(commits, parsed, rc?, last_valid_non_rc_version, opts) do
     pre = default_pre_release(rc?, opts[:pre_release])
 
+    last_valid_non_rc_version =
+      last_valid_non_rc_version && Version.parse!(last_valid_non_rc_version)
+
     cond do
-      Enum.any?(commits, &Commit.breaking?/1) ->
+      Enum.any?(commits, &Commit.breaking?/1) &&
+          !(rc? && last_valid_non_rc_version &&
+                last_valid_non_rc_version.major != parsed.major) ->
         if opts[:no_major] do
           %{parsed | minor: parsed.minor + 1, patch: 0, pre: pre}
         else
           %{parsed | major: parsed.major + 1, minor: 0, patch: 0, pre: pre}
         end
 
-      Enum.any?(commits, &Commit.feature?/1) ->
+      Enum.any?(commits, &Commit.feature?/1) &&
+          !(rc? && last_valid_non_rc_version &&
+                (last_valid_non_rc_version.major != parsed.major ||
+                   last_valid_non_rc_version.minor != parsed.minor)) ->
         %{parsed | minor: parsed.minor + 1, patch: 0, pre: pre}
 
       Enum.any?(commits, &Commit.fix?/1) || opts[:force_patch] ->
