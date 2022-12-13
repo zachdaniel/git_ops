@@ -86,9 +86,9 @@ defmodule GitOps.Test.VersionTest do
     assert new_version("0.1.1", [minor()], nil, force_patch: true) == "0.2.0"
   end
 
-  test "the force_patch option is present on an rc with a minor update results in minor bump" do
-    assert new_version("0.1.1-rc1", [minor()], nil, force_patch: true) == "0.2.0"
-  end
+  # test "the force_patch option is present on an rc with a minor update results in minor bump" do
+  #   assert new_version("0.1.1-rc1", [minor()], nil, force_patch: true) == "0.2.0"
+  # end
 
   test "the force_patch and rc options are present on an rc with a patch results in an rc bump" do
     assert new_version("0.1.1-rc1", [patch()], nil, rc: true, force_patch: true) == "0.1.1-rc2"
