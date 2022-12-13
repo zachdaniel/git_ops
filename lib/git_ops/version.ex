@@ -104,7 +104,7 @@ defmodule GitOps.Version do
             !(rc? && last_valid_non_rc_version &&
                   (last_valid_non_rc_version.major != parsed.major ||
                      last_valid_non_rc_version.minor != parsed.minor)) ->
-          if match?(["rc" <> _], parsed.pre) && !rc? do
+          if match?(["rc" <> _ | _], parsed.pre) && !rc? do
             parsed
           else
             %{parsed | minor: parsed.minor + 1, patch: 0, pre: pre}
@@ -121,7 +121,7 @@ defmodule GitOps.Version do
           parsed
       end
 
-    if match?(["rc" <> _], parsed.pre) && !rc? do
+    if match?(["rc" <> _ | _], parsed.pre) && !rc? do
       %{new_version | pre: List.wrap(opts[:pre_release])}
     else
       new_version
