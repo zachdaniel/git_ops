@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.5.1](https://github.com/zachdaniel/git_ops/compare/v2.5.0...v2.5.1) (2022-10-04)
+
+
+
+
+### Improvements:
+
+* handle incrementing rc versions more gracefully
+
 ## [v2.5.0](https://github.com/zachdaniel/git_ops/compare/v2.4.5...v2.5.0) (2022-09-28)
 
 
