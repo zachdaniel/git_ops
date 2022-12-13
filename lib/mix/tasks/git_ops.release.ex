@@ -147,7 +147,7 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp get_commit_messages(repo, prefix, tags, from_rc?, opts) do
+  defp get_commit_messages(repo, prefix, tags, _from_rc?, opts) do
     if opts[:initial] do
       commits = Git.get_initial_commits!(repo)
       {commits, commits}
