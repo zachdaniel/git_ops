@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.5.4](https://github.com/zachdaniel/git_ops/compare/v2.5.3...v2.5.4) (2022-12-13)
+
+
+
+
+### Bug Fixes:
+
+* detect rcs properly
+
 ## [v2.5.3](https://github.com/zachdaniel/git_ops/compare/v2.5.2...v2.5.3) (2022-12-13)
 
 
