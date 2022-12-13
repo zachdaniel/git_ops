@@ -90,9 +90,10 @@ defmodule Mix.Tasks.GitOps.Release do
     prefix = Config.prefix()
 
     config_types = Config.types()
+    from_rc? = Version.parse!(current_version).pre != []
 
     {commit_messages_for_version, commit_messages_for_changelog} =
-      get_commit_messages(repo, prefix, tags, opts)
+      get_commit_messages(repo, prefix, tags, from_rc?, opts)
 
     log_for_version? = !opts[:initial]
 
@@ -146,7 +147,7 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp get_commit_messages(repo, prefix, tags, opts) do
+  defp get_commit_messages(repo, prefix, tags, from_rc?, opts) do
     if opts[:initial] do
       commits = Git.get_initial_commits!(repo)
       {commits, commits}

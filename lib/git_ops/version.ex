@@ -89,31 +89,38 @@ defmodule GitOps.Version do
     last_valid_non_rc_version =
       last_valid_non_rc_version && Version.parse!(last_valid_non_rc_version)
 
-    cond do
-      Enum.any?(commits, &Commit.breaking?/1) &&
-          !(rc? && last_valid_non_rc_version &&
-                last_valid_non_rc_version.major != parsed.major) ->
-        if opts[:no_major] do
+    new_version =
+      cond do
+        Enum.any?(commits, &Commit.breaking?/1) &&
+            !(rc? && last_valid_non_rc_version &&
+                  last_valid_non_rc_version.major != parsed.major) ->
+          if opts[:no_major] do
+            %{parsed | minor: parsed.minor + 1, patch: 0, pre: pre}
+          else
+            %{parsed | major: parsed.major + 1, minor: 0, patch: 0, pre: pre}
+          end
+
+        Enum.any?(commits, &Commit.feature?/1) &&
+            !(rc? && last_valid_non_rc_version &&
+                  (last_valid_non_rc_version.major != parsed.major ||
+                     last_valid_non_rc_version.minor != parsed.minor)) ->
           %{parsed | minor: parsed.minor + 1, patch: 0, pre: pre}
-        else
-          %{parsed | major: parsed.major + 1, minor: 0, patch: 0, pre: pre}
-        end
 
-      Enum.any?(commits, &Commit.feature?/1) &&
-          !(rc? && last_valid_non_rc_version &&
-                (last_valid_non_rc_version.major != parsed.major ||
-                   last_valid_non_rc_version.minor != parsed.minor)) ->
-        %{parsed | minor: parsed.minor + 1, patch: 0, pre: pre}
+        Enum.any?(commits, &Commit.fix?/1) || opts[:force_patch] ->
+          if match?(["rc" <> _], parsed.pre) && rc? do
+            %{parsed | pre: increment_rc!(parsed.pre)}
+          else
+            new_version_patch(parsed, pre, rc?)
+          end
 
-      Enum.any?(commits, &Commit.fix?/1) || opts[:force_patch] ->
-        if match?(["rc" <> _], parsed.pre) && rc? do
-          %{parsed | pre: increment_rc!(parsed.pre)}
-        else
-          new_version_patch(parsed, pre, rc?)
-        end
+        true ->
+          parsed
+      end
 
-      true ->
-        parsed
+    if !rc? && new_version.pre != List.wrap(opts[:pre_release]) do
+      %{new_version | pre: List.wrap(opts[:pre_release])}
+    else
+      new_version
     end
   end
 
