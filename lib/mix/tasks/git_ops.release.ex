@@ -163,7 +163,7 @@ defmodule Mix.Tasks.GitOps.Release do
 
       last_version_after = GitOps.Version.last_version_greater_than(tags, tag, prefix)
 
-      if last_version_after do
+      if last_version_after && !opts[:rc] do
         commit_messages_for_changelog = Git.commit_messages_since_tag(repo, last_version_after)
 
         {commits_for_version, commit_messages_for_changelog}
