@@ -66,11 +66,11 @@ defmodule GitOps.Config do
       true ->
         "README.md"
 
-      file when is_bitstring(file) ->
-        file
+      nil ->
+        false
 
       other ->
-        truthy?(other)
+        other
     end
   end
 
