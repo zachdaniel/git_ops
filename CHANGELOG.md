@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.5.5](https://github.com/zachdaniel/git_ops/compare/v2.5.4...v2.5.5) (2023-01-18)
+
+
+
+
+### Bug Fixes:
+
+* properly support multiple readme version files
+
+* include all comits for version when not in rc
+
 ## [v2.5.4](https://github.com/zachdaniel/git_ops/compare/v2.5.3...v2.5.4) (2022-12-13)
 
 
