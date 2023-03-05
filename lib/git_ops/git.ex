@@ -87,17 +87,17 @@ defmodule GitOps.Git do
   end
 
   defp handle_hooks_path_error(error) do
-    with "" <- error.error,
-         1 <- error.code do
-      if File.dir?(@default_githooks_path) do
-        @default_githooks_path
-      else
+    with 1 <- error.code,
+         true <- File.dir?(@default_githooks_path) do
+      @default_githooks_path
+    else
+      false ->
         raise """
         Could not find the default git hooks path #{inspect(@default_githooks_path)}. Is this a git repo?
         """
-      end
-    else
-      _ -> raise error.message
+
+      _ ->
+        raise error.message
     end
   end
 end
