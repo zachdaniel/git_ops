@@ -10,8 +10,20 @@ defmodule GitOps.VersionReplace do
     update_file(file, "@version \"#{current_version}\"", "@version \"#{new_version}\"", opts)
   end
 
-  @spec update_readme(String.t(), String.t(), String.t()) :: String.t() | {:error, :bad_replace}
-  def update_readme(readme, current_version, new_version, opts \\ []) do
+  @spec update_readme(
+          String.t()
+          | {String.t(), fun :: (String.t() -> String.t()), fun :: (String.t() -> String.t())},
+          String.t(),
+          String.t()
+        ) :: String.t() | {:error, :bad_replace}
+  def update_readme(readme, current_version, new_version, opts \\ [])
+
+  def update_readme({readme, replace, pattern}, current_version, new_version, opts)
+      when is_function(replace, 1) and is_function(pattern, 1) do
+    update_file(readme, replace.(current_version), pattern.(new_version), opts)
+  end
+
+  def update_readme(readme, current_version, new_version, opts) do
     update_file(readme, ", \"~> #{current_version}\"", ", \"~> #{new_version}\"", opts)
   end
 
