@@ -22,6 +22,14 @@ defmodule GitOps.Test.VersionReplaceTest do
     """
   end
 
+  def package_json_contents(version) do
+    """
+    {
+      "version": "#{version}"
+    }
+    """
+  end
+
   setup do
     readme = "TEST_README.md"
     version = "0.1.1"
@@ -30,9 +38,15 @@ defmodule GitOps.Test.VersionReplaceTest do
 
     File.write!(readme, readme_contents)
 
-    on_exit(fn -> File.rm!(readme) end)
+    package_json = "package.json"
+    File.write!(package_json, package_json_contents(version))
 
-    %{readme: readme, version: version}
+    on_exit(fn ->
+      File.rm!(readme)
+      File.rm!(package_json)
+    end)
+
+    %{readme: readme, package_json: package_json, version: version}
   end
 
   test "that README gets written to properly", context do
@@ -53,5 +67,19 @@ defmodule GitOps.Test.VersionReplaceTest do
     VersionReplace.update_readme(readme, version, new_version, dry_run: true)
 
     assert File.read!(readme) == readme_contents(version)
+  end
+
+  test "custom replace/pattern", context do
+    readme = context.package_json
+    version = context.version
+    new_version = "1.0.0"
+
+    VersionReplace.update_readme(
+      {readme, fn v -> "\"version\": \"#{v}\"" end, fn v -> "\"version\": \"#{v}\"" end},
+      version,
+      new_version
+    )
+
+    assert File.read!(readme) == package_json_contents(new_version)
   end
 end
