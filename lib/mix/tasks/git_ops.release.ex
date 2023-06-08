@@ -90,6 +90,7 @@ defmodule Mix.Tasks.GitOps.Release do
     prefix = Config.prefix()
 
     config_types = Config.types()
+    allowed_tags = Config.allowed_tags()
     from_rc? = Version.parse!(current_version).pre != []
 
     {commit_messages_for_version, commit_messages_for_changelog} =
@@ -98,9 +99,10 @@ defmodule Mix.Tasks.GitOps.Release do
     log_for_version? = !opts[:initial]
 
     commits_for_version =
-      parse_commits(commit_messages_for_version, config_types, log_for_version?)
+      parse_commits(commit_messages_for_version, config_types, allowed_tags, log_for_version?)
 
-    commits_for_changelog = parse_commits(commit_messages_for_changelog, config_types, false)
+    commits_for_changelog =
+      parse_commits(commit_messages_for_changelog, config_types, allowed_tags, false)
 
     prefixed_new_version =
       if opts[:initial] do
@@ -259,14 +261,16 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp parse_commits(messages, config_types, log?) do
-    Enum.flat_map(messages, &parse_commit(&1, config_types, log?))
+  defp parse_commits(messages, config_types, allowed_tags, log?) do
+    Enum.flat_map(messages, &parse_commit(&1, config_types, allowed_tags, log?))
   end
 
-  defp parse_commit(text, config_types, log?) do
+  defp parse_commit(text, config_types, allowed_tags, log?) do
     case Commit.parse(text) do
       {:ok, commits} ->
-        commits_with_type(config_types, commits, text, log?)
+        commits
+        |> commits_with_allowed_tags(allowed_tags)
+        |> commits_with_type(config_types, text, log?)
 
       _ ->
         error_if_log("Unparseable commit: #{text}", log?)
@@ -275,7 +279,26 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp commits_with_type(config_types, commits, text, log?) do
+  defp commits_with_allowed_tags(commits, :any), do: commits
+
+  defp commits_with_allowed_tags(commits, allowed_tags) do
+    case Enum.find(commits, fn %{type: type} -> type == "TAGS" end) do
+      nil ->
+        # If the commits don't have a tag, we allow it to go through by default
+        commits
+
+      commit ->
+        tags = commit.message |> String.split(",", trim: true) |> Enum.map(&String.trim/1)
+
+        if Enum.any?(tags, fn tag -> tag in allowed_tags end) do
+          commits
+        else
+          []
+        end
+    end
+  end
+
+  defp commits_with_type(commits, config_types, text, log?) do
     Enum.flat_map(commits, fn commit ->
       if Map.has_key?(config_types, String.downcase(commit.type)) do
         [commit]

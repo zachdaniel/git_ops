@@ -89,6 +89,8 @@ defmodule GitOps.Config do
     end)
   end
 
+  def allowed_tags, do: Application.get_env(:git_ops, :allowed_tags) || :any
+
   def prefix, do: Application.get_env(:git_ops, :version_tag_prefix) || ""
 
   defp truthy?(nil), do: false
