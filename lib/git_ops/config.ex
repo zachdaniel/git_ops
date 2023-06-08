@@ -91,6 +91,9 @@ defmodule GitOps.Config do
 
   def allowed_tags, do: :git_ops |> Application.get_env(:tags, []) |> Keyword.get(:allowed, :any)
 
+  def allow_untagged?,
+    do: :git_ops |> Application.get_env(:tags, []) |> Keyword.get(:allow_untagged?, true)
+
   def prefix, do: Application.get_env(:git_ops, :version_tag_prefix) || ""
 
   defp truthy?(nil), do: false

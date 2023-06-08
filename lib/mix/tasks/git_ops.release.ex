@@ -91,6 +91,7 @@ defmodule Mix.Tasks.GitOps.Release do
 
     config_types = Config.types()
     allowed_tags = Config.allowed_tags()
+    allow_untagged? = Config.allow_untagged?()
     from_rc? = Version.parse!(current_version).pre != []
 
     {commit_messages_for_version, commit_messages_for_changelog} =
@@ -99,10 +100,10 @@ defmodule Mix.Tasks.GitOps.Release do
     log_for_version? = !opts[:initial]
 
     commits_for_version =
-      parse_commits(commit_messages_for_version, config_types, allowed_tags, log_for_version?)
+      parse_commits(commit_messages_for_version, config_types, allowed_tags, allow_untagged?, log_for_version?)
 
     commits_for_changelog =
-      parse_commits(commit_messages_for_changelog, config_types, allowed_tags, false)
+      parse_commits(commit_messages_for_changelog, config_types, allowed_tags, allow_untagged?, false)
 
     prefixed_new_version =
       if opts[:initial] do
@@ -261,15 +262,15 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp parse_commits(messages, config_types, allowed_tags, log?) do
-    Enum.flat_map(messages, &parse_commit(&1, config_types, allowed_tags, log?))
+  defp parse_commits(messages, config_types, allowed_tags, allow_untagged?, log?) do
+    Enum.flat_map(messages, &parse_commit(&1, config_types, allowed_tags, allow_untagged?, log?))
   end
 
-  defp parse_commit(text, config_types, allowed_tags, log?) do
+  defp parse_commit(text, config_types, allowed_tags, allow_untagged?, log?) do
     case Commit.parse(text) do
       {:ok, commits} ->
         commits
-        |> commits_with_allowed_tags(allowed_tags)
+        |> commits_with_allowed_tags(allowed_tags, allow_untagged?)
         |> commits_with_type(config_types, text, log?)
 
       _ ->
@@ -279,13 +280,12 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp commits_with_allowed_tags(commits, :any), do: commits
+  defp commits_with_allowed_tags(commits, :any, _), do: commits
 
-  defp commits_with_allowed_tags(commits, allowed_tags) do
+  defp commits_with_allowed_tags(commits, allowed_tags, allow_untagged?) do
     case Enum.find(commits, fn %{type: type} -> type == "TAGS" end) do
       nil ->
-        # If the commits don't have a tag, we allow it to go through by default
-        commits
+        if allow_untagged?, do: commits, else: []
 
       commit ->
         tags = commit.message |> String.split(",", trim: true) |> Enum.map(&String.trim/1)
