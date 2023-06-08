@@ -93,17 +93,13 @@ defmodule GitOps.Test.ConfigTest do
   end
 
   test "Allowed tags configuration returns correcly" do
-    allowed_tags = Config.allowed_tags()
-
-    assert allowed_tags == ["tag_1", "tag_2"]
+    assert Config.allowed_tags() == ["tag_1", "tag_2"]
   end
 
-  test "Allowed tags without being set in configuration returns :any" do
-    Application.delete_env(:git_ops, :allowed_tags)
+  test "Allowed tags configuration returns :any if not set" do
+    Application.delete_env(:git_ops, :tags)
 
-    allowed_tags = Config.allowed_tags()
-
-    assert allowed_tags == :any
+    assert Config.allowed_tags() == :any
   end
 
   test "custom prefixes returns correctly" do
