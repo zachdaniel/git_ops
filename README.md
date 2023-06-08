@@ -65,9 +65,9 @@ config :git_ops,
       header: "Important Changes"
     ]
   ],
-  # Only add commits to the changelog that has the "backend" tag
-  allowed_tags: [
-    "backend"
+  tags: [
+    # Only add commits to the changelog that has the "backend" tag
+    allowed: ["backend"],
   ]
   # Instructs the tool to manage your mix version in your `mix.exs` file
   # See below for more information

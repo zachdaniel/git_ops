@@ -89,7 +89,7 @@ defmodule GitOps.Config do
     end)
   end
 
-  def allowed_tags, do: Application.get_env(:git_ops, :allowed_tags) || :any
+  def allowed_tags, do: :git_ops |> Application.get_env(:tags, []) |> Keyword.get(:allowed, :any)
 
   def prefix, do: Application.get_env(:git_ops, :version_tag_prefix) || ""
 
