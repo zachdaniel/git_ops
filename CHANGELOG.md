@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.6.0](https://github.com/zachdaniel/git_ops/compare/v2.5.6...v2.6.0) (2023-06-09)
+
+
+
+
+### Features:
+
+* AllowedTags: Adds allowed_tags option (#59)
+
+* AllowedTags: Add config allow_untagged? to tags
+
+* enable custom replace/pattern for readme versioning (#56)
+
 ## [v2.5.6](https://github.com/zachdaniel/git_ops/compare/v2.5.5...v2.5.6) (2023-03-07)
 
 
