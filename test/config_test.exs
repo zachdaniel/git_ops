@@ -10,6 +10,7 @@ defmodule GitOps.Test.ConfigTest do
     Application.put_env(:git_ops, :changelog_file, "CUSTOM_CHANGELOG.md")
     Application.put_env(:git_ops, :manage_readme_version, true)
     Application.put_env(:git_ops, :types, custom: [header: "Custom"], docs: [hidden?: false])
+    Application.put_env(:git_ops, :tags, [allowed: ["tag_1", "tag_2"], allow_untagged?: false])
     Application.put_env(:git_ops, :version_tag_prefix, "v")
   end
 
@@ -89,6 +90,26 @@ defmodule GitOps.Test.ConfigTest do
 
     assert types["docs"][:hidden?] == false
     assert types["custom"][:header] == "Custom"
+  end
+
+  test "Allowed tags configuration returns correcly" do
+    assert Config.allowed_tags() == ["tag_1", "tag_2"]
+  end
+
+  test "Allowed tags configuration returns :any if not set" do
+    Application.delete_env(:git_ops, :tags)
+
+    assert Config.allowed_tags() == :any
+  end
+
+  test "Allow untagged? configuration returns correcly" do
+    assert Config.allow_untagged?() == false
+  end
+
+  test "Allow untagged? configuration returns true if not set" do
+    Application.delete_env(:git_ops, :tags)
+
+    assert Config.allow_untagged?() == true
   end
 
   test "custom prefixes returns correctly" do
