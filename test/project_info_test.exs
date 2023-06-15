@@ -52,8 +52,8 @@ defmodule GitOps.Mix.Tasks.Test.ProjectInfoTest do
       actual = run(["--format", "github-actions"])
 
       expected = """
-      ::set-output name=app_name::#{name}
-      ::set-output name=app_version::#{version}
+      echo "app_name=#{name}" >> $GITHUB_OUTPUT
+      echo "app_version=#{version}" >> $GITHUB_OUTPUT
       """
 
       assert actual == expected
