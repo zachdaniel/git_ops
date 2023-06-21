@@ -48,15 +48,22 @@ defmodule GitOps.Mix.Tasks.Test.ProjectInfoTest do
   end
 
   describe "Github Actions format" do
-    test "it is correctly formatted", %{name: name, version: version} do
-      actual = run(["--format", "github-actions"])
+    test "it correctly formats data to the ENV file", %{name: name, version: version} do
+      file = "#{System.tmp_dir()}/test_github_actions_format"
+      System.put_env("GITHUB_OUTPUT", file)
+
+      run(["--format", "github-actions"])
+
+      actual = File.read!(file)
 
       expected = """
-      ::set-output name=app_name::#{name}
-      ::set-output name=app_version::#{version}
+      app_name=#{name}
+      app_version=#{version}
       """
 
       assert actual == expected
+
+      on_exit(fn -> File.rm!(file) end)
     end
   end
 
