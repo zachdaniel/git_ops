@@ -7,7 +7,6 @@
 [![Build Status](https://travis-ci.com/zachdaniel/git_ops.svg?branch=master)](https://travis-ci.com/zachdaniel/git_ops)
 [![Inline docs](http://inch-ci.org/github/zachdaniel/git_ops.svg?branch=master)](http://inch-ci.org/github/zachdaniel/git_ops)
 [![Coverage Status](https://coveralls.io/repos/github/zachdaniel/git_ops/badge.svg?branch=master)](https://coveralls.io/github/zachdaniel/git_ops?branch=master)
-[![Ebert](https://ebertapp.io/github/zachdaniel/git_ops.svg)](https://ebertapp.io/github/zachdaniel/git_ops)
 
 A small tool to help generate changelogs from conventional commit messages.
 For more information, see [conventional
