@@ -5,6 +5,23 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.6.1](https://github.com/zachdaniel/git_ops/compare/v2.6.0...v2.6.1) (2024-05-10)
+
+
+
+
+### Bug Fixes:
+
+* Update deprecated `set-output` format for GitHub Actions to use environment variables (#61)
+
+* Update deprecated `set-output` format for GitHub Actions to use environment variables
+
+* Write output vars to the temp file stored in `GITHUB_OUTPUT`
+
+### Improvements:
+
+* support override option
+
 ## [v2.6.0](https://github.com/zachdaniel/git_ops/compare/v2.5.6...v2.6.0) (2023-06-09)
 
 
