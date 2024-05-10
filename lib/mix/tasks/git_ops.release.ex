@@ -56,6 +56,8 @@ defmodule Mix.Tasks.GitOps.Release do
   * `--dry-run` - Allow users to run release process and view changes without committing and tagging
 
   * `--yes` - Don't prompt for confirmation, just perform release.  Useful for your CI run.
+
+  * `--override` - Provide an explicit version override
   """
 
   alias GitOps.Changelog
@@ -100,10 +102,22 @@ defmodule Mix.Tasks.GitOps.Release do
     log_for_version? = !opts[:initial]
 
     commits_for_version =
-      parse_commits(commit_messages_for_version, config_types, allowed_tags, allow_untagged?, log_for_version?)
+      parse_commits(
+        commit_messages_for_version,
+        config_types,
+        allowed_tags,
+        allow_untagged?,
+        log_for_version?
+      )
 
     commits_for_changelog =
-      parse_commits(commit_messages_for_changelog, config_types, allowed_tags, allow_untagged?, false)
+      parse_commits(
+        commit_messages_for_changelog,
+        config_types,
+        allowed_tags,
+        allow_untagged?,
+        false
+      )
 
     prefixed_new_version =
       if opts[:initial] do
@@ -330,7 +344,8 @@ defmodule Mix.Tasks.GitOps.Release do
           pre_release: :string,
           rc: :boolean,
           dry_run: :boolean,
-          yes: :boolean
+          yes: :boolean,
+          override: :string
         ],
         aliases: [
           i: :initial,
@@ -339,7 +354,8 @@ defmodule Mix.Tasks.GitOps.Release do
           f: :force_patch,
           n: :no_major,
           d: :dry_run,
-          y: :yes
+          y: :yes,
+          o: :override
         ]
       )
 

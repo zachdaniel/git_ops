@@ -24,51 +24,55 @@ defmodule GitOps.Version do
   end
 
   def determine_new_version(current_version, prefix, commits, last_valid_non_rc_version, opts) do
-    parsed = parse!(prefix, prefix <> current_version)
+    if opts[:override] do
+      opts[:override]
+    else
+      parsed = parse!(prefix, prefix <> current_version)
 
-    rc? = opts[:rc]
+      rc? = opts[:rc]
 
-    build = opts[:build]
+      build = opts[:build]
 
-    last_valid_non_rc_version =
-      if last_valid_non_rc_version && prefix && prefix != "" do
-        String.trim_leading(last_valid_non_rc_version, prefix)
-      else
-        last_valid_non_rc_version
+      last_valid_non_rc_version =
+        if last_valid_non_rc_version && prefix && prefix != "" do
+          String.trim_leading(last_valid_non_rc_version, prefix)
+        else
+          last_valid_non_rc_version
+        end
+
+      new_version =
+        new_version(
+          commits,
+          parsed,
+          rc?,
+          last_valid_non_rc_version,
+          opts
+        )
+
+      if versions_equal?(new_version, parsed) && build == parsed.build do
+        raise """
+        No changes should result in a new release version.
+
+        Options:
+
+        * If no fixes or features were added, then perhaps you don't need to release.
+        * If a fix or feature commit was not correctly annotated, you could alter your git
+          history to fix it and run this command again, or create an empty commit via
+          `git commit --allow-empty` that contains an appropriate message.
+        * If you don't care and want a new version, you can use `--force-patch` which
+          will update the patch version regardless.
+        * You can add build metadata using `--build` that will signify that something was
+          unique about this build.
+        """
       end
 
-    new_version =
-      new_version(
-        commits,
-        parsed,
-        rc?,
-        last_valid_non_rc_version,
-        opts
-      )
+      unprefixed =
+        new_version
+        |> Map.put(:build, build)
+        |> to_string()
 
-    if versions_equal?(new_version, parsed) && build == parsed.build do
-      raise """
-      No changes should result in a new release version.
-
-      Options:
-
-      * If no fixes or features were added, then perhaps you don't need to release.
-      * If a fix or feature commit was not correctly annotated, you could alter your git
-        history to fix it and run this command again, or create an empty commit via
-        `git commit --allow-empty` that contains an appropriate message.
-      * If you don't care and want a new version, you can use `--force-patch` which
-        will update the patch version regardless.
-      * You can add build metadata using `--build` that will signify that something was
-        unique about this build.
-      """
+      prefix <> unprefixed
     end
-
-    unprefixed =
-      new_version
-      |> Map.put(:build, build)
-      |> to_string()
-
-    prefix <> unprefixed
   end
 
   def last_version_greater_than(versions, last_version, prefix) do

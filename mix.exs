@@ -52,8 +52,7 @@ defmodule GitOps.MixProject do
       source_url: @source_url,
       source_ref: "v#{@version}",
       extras: [
-        "README.md",
-        "CHANGELOG.md"
+        "README.md"
       ]
     ]
   end
