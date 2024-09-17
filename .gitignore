@@ -23,3 +23,4 @@ erl_crash.dump
 git_ops-*.tar
 
 /.elixir_ls/
+/.elixir-tools/
