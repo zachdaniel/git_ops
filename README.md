@@ -15,12 +15,12 @@ For an example, see this project's [CHANGELOG.md](https://github.com/zachdaniel/
 
 Roadmap (in no particular order):
 
-  * More tests
-  * Automatically parse issue numbers and github mentions into the correct format, linking the issue
-  * A task to build a compliant commit
-  * Validation of commits
-  * Automatically link to the PR that merged a given commit in the changelog
-  * A hundred other things I forgot to write down while writing the initial version
+- More tests
+- Automatically parse issue numbers and github mentions into the correct format, linking the issue
+- A task to build a compliant commit
+- Validation of commits
+- Automatically link to the PR that merged a given commit in the changelog
+- A hundred other things I forgot to write down while writing the initial version
 
 Important addendums:
 
@@ -30,7 +30,7 @@ change, instead of adding `BREAKING CHANGE: description` in your commit message.
 For example: `fix(Spline Reticulator)!: `
 
 The spec doesn't specify behavior around multiple scopes. This library parses
-scopes *as a comma separated list*. This allows for easily readable multiple
+scopes _as a comma separated list_. This allows for easily readable multiple
 word lists `feat(Something Special, Something Else Special): message`. Keep in
 mind that you are very limited on space in these messages, and if you find
 yourself using multiple scopes your commit is probably too big.
@@ -47,7 +47,7 @@ end
 
 ## Configuration
 
-``` elixir
+```elixir
 config :git_ops,
   mix_project: Mix.Project.get!(),
   changelog_file: "CHANGELOG.md",
@@ -89,7 +89,7 @@ Commit the result of that, using a message like `chore: Initial Release`
 
 Then when you want to release again, use:
 
-``` bash
+```bash
 mix git_ops.release
 ```
 
@@ -117,13 +117,12 @@ project root.
 ## Using this with open source projects
 
 If you'd like your contributors to use the conventional commit format, you can
-use a [PULL_REQUEST_TEMPLATE.md](PULL_REQUEST_TEMPLATE.md) like ours. However,
+use a PULL_REQUEST_TEMPLATE.md like the one in our repo. However,
 it is also possible to manage it as the maintainers of a project by altering
 either the merge commit or alter the commit when merging/squashing (recommended)
 
-
 ## Similar projects
 
-  * https://github.com/glasnoster/eliver
-  * https://github.com/oo6/mix-bump
-  * https://github.com/mpanarin/versioce
+- https://github.com/glasnoster/eliver
+- https://github.com/oo6/mix-bump
+- https://github.com/mpanarin/versioce
