@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.6.3](https://github.com/zachdaniel/git_ops/compare/v2.6.2...v2.6.3) (2024-10-14)
+
+
+
+
+### Improvements:
+
+* Enable `git_ops.check_message` to check the latest commit message. (#68)
+
 ## [v2.6.1](https://github.com/zachdaniel/git_ops/compare/v2.6.0...v2.6.1) (2024-05-10)
 
 
