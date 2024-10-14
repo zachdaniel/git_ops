@@ -37,8 +37,8 @@ defmodule GitOps.MixProject do
   defp package do
     [
       name: :git_ops,
-      maintainers: "Zachary Daniel",
-      licenses: ["MIT License"],
+      maintainers: "Zach Daniel",
+      licenses: ["MIT"],
       links: %{
         "Changelog" => "#{@source_url}/blob/master/CHANGELOG.md",
         "GitHub" => @source_url
