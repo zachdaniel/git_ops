@@ -10,7 +10,7 @@ defmodule GitOps.Test.ConfigTest do
     Application.put_env(:git_ops, :changelog_file, "CUSTOM_CHANGELOG.md")
     Application.put_env(:git_ops, :manage_readme_version, true)
     Application.put_env(:git_ops, :types, custom: [header: "Custom"], docs: [hidden?: false])
-    Application.put_env(:git_ops, :tags, [allowed: ["tag_1", "tag_2"], allow_untagged?: false])
+    Application.put_env(:git_ops, :tags, allowed: ["tag_1", "tag_2"], allow_untagged?: false)
     Application.put_env(:git_ops, :version_tag_prefix, "v")
   end
 

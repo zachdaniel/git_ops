@@ -4,9 +4,15 @@ defmodule Mix.Tasks.GitOps.CheckMessage do
   @shortdoc "Check if a file's content follows the Conventional Commits spec"
 
   @moduledoc """
-  Receives a file path and validates if it's content follows the Conventional Commits specification.
+  Validates a commit message against the Conventional Commits specification.
+
+  Check a file containing a commit message using:
 
       mix git_ops.check_message <path/to/file>
+      
+  or to check the most recent commit on the current branch:
+    
+      mix git_ops.check_message --head
 
   Logs an error if the commit message is not parse-able.
 
@@ -17,6 +23,15 @@ defmodule Mix.Tasks.GitOps.CheckMessage do
   alias GitOps.Config
 
   @doc false
+  def run(["--head"]) do
+    message =
+      Config.repository_path()
+      |> Git.init!()
+      |> Git.log!(["-1", "--format=%s"])
+
+    validate(message)
+  end
+
   def run([path]) do
     # Full paths do not need to be wrapped with repo root
     path =
@@ -26,8 +41,17 @@ defmodule Mix.Tasks.GitOps.CheckMessage do
         Path.join(Config.repository_path(), path)
       end
 
-    message = File.read!(path)
+    path
+    |> File.read!()
+    |> validate()
+  end
 
+  def run(_), do: error_exit("Invalid usage. See `mix help git_ops.check_message`")
+
+  @spec error_exit(String.t()) :: no_return
+  defp error_exit(message), do: raise(Mix.Error, message: message)
+
+  defp validate(message) do
     case Commit.parse(message) do
       {:ok, _} ->
         :ok
@@ -70,9 +94,4 @@ defmodule Mix.Tasks.GitOps.CheckMessage do
         """)
     end
   end
-
-  def run(_), do: error_exit("Invalid usage. See `mix help git_ops.check_message`")
-
-  @spec error_exit(String.t()) :: no_return
-  defp error_exit(message), do: raise(Mix.Error, message: message)
 end
