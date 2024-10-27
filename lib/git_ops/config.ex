@@ -89,6 +89,14 @@ defmodule GitOps.Config do
     end)
   end
 
+  def type_keys do
+    types()
+    |> Map.keys()
+    |> Enum.uniq()
+    |> Enum.sort()
+    |> Enum.join(" ")
+  end
+
   def allowed_tags, do: :git_ops |> Application.get_env(:tags, []) |> Keyword.get(:allowed, :any)
 
   def allow_untagged?,
