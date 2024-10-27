@@ -4,7 +4,7 @@ defmodule Mix.Tasks.GitOps.ProjectInfo do
   @shortdoc "Return information about the project."
 
   @moduledoc """
-  A handy helper which prints out the app name and version number.
+  A handy helper which prints out the app name, version number and valid message types.
 
   May be useful in your CI system.
 
@@ -26,7 +26,11 @@ defmodule Mix.Tasks.GitOps.ProjectInfo do
       @default_opts
       |> parse(args)
 
-    project = Config.mix_project().project()
+    types = Config.type_keys()
+
+    project =
+      Config.mix_project().project()
+      |> Keyword.merge(types: types)
 
     opts
     |> Keyword.get(:format)
@@ -62,42 +66,44 @@ defmodule Mix.Tasks.GitOps.ProjectInfo do
   end
 
   defp format_toml(project, _opts) do
-    {name, version} = extract_name_and_version_from_project(project)
+    {name, version, types} = extract_info_from_project(project)
 
-    IO.write("[app]\nname = #{name}\nversion = #{version}\n")
+    IO.write("[app]\nname = #{name}\nversion = #{version}\ntypes = \"#{types}\"\n")
   end
 
   defp format_json(project, _opts) do
-    {name, version} = extract_name_and_version_from_project(project)
+    {name, version, types} = extract_info_from_project(project)
 
-    IO.write(~s|{"app":{"name":"#{name}","version":"#{version}"}}\n|)
+    IO.write(~s|{"app":{"name":"#{name}","version":"#{version}","types":"#{types}"}}\n|)
   end
 
   defp format_github_actions(project, _opts) do
-    {name, version} = extract_name_and_version_from_project(project)
+    {name, version, types} = extract_info_from_project(project)
 
     System.fetch_env!("GITHUB_OUTPUT")
-    |> File.write("app_name=#{name}\napp_version=#{version}\n", [:append])
+    |> File.write("app_name=#{name}\napp_version=#{version}\napp_types=\"#{types}\"\n", [:append])
   end
 
   defp format_shell(project, _opts) do
-    {name, version} = extract_name_and_version_from_project(project)
+    {name, version, types} = extract_info_from_project(project)
 
-    IO.write(~s|export APP_NAME="#{name}"\nexport APP_VERSION="#{version}"\n|)
+    IO.write(
+      ~s|export APP_NAME="#{name}"\nexport APP_VERSION="#{version}"\nexport APP_TYPES="#{types}"\n|
+    )
   end
 
   defp format_dotenv(project, _opts) do
-    {name, version} = extract_name_and_version_from_project(project)
+    {name, version, types} = extract_info_from_project(project)
 
-    IO.write(~s|APP_NAME="#{name}"\nAPP_VERSION="#{version}"\n|)
+    IO.write(~s|APP_NAME="#{name}"\nAPP_VERSION="#{version}"\nAPP_TYPES="#{types}"\n|)
   end
 
-  defp extract_name_and_version_from_project(project) do
-    %{app: name, version: version} =
+  defp extract_info_from_project(project) do
+    %{app: name, version: version, types: types} =
       project
-      |> Keyword.take(~w[app version]a)
+      |> Keyword.take(~w[app version types]a)
       |> Enum.into(%{})
 
-    {name, version}
+    {name, version, types}
   end
 end
