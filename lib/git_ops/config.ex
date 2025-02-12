@@ -44,13 +44,13 @@ defmodule GitOps.Config do
   ]
 
   def mix_project_check(opts \\ []) do
-    unless mix_project().project()[:version] do
+    if !mix_project().project()[:version] do
       raise "mix_project must be configured in order to use git_ops. Please see the configuration in the README.md for an example."
     end
 
     changelog_path = Path.expand(changelog_file())
 
-    unless opts[:initial] || File.exists?(changelog_path) do
+    if !(opts[:initial] || File.exists?(changelog_path)) do
       raise "\nFile: #{changelog_path} did not exist. Please use the `--initial` command to initialize."
     end
   end

@@ -35,7 +35,7 @@ defmodule GitOps.VersionReplace do
     if new_contents == contents do
       {:error, :bad_replace}
     else
-      unless opts[:dry_run] do
+      if !opts[:dry_run] do
         File.write!(file, new_contents)
       end
 
