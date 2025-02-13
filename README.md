@@ -35,7 +35,25 @@ word lists `feat(Something Special, Something Else Special): message`. Keep in
 mind that you are very limited on space in these messages, and if you find
 yourself using multiple scopes your commit is probably too big.
 
-## Installation
+## Installation with Igniter
+
+If `Igniter` is not already in your project, add it to your deps:
+
+```elixir
+def deps do
+  [
+    {:igniter, "~> 0.5", only: [:dev, :test]}
+  ]
+end
+```
+
+Then, run the installer:
+
+```sh
+mix igniter.install git_ops
+```
+
+## Manual Installation
 
 ```elixir
 def deps do
