@@ -16,7 +16,7 @@ defmodule GitOps.Mix.Tasks.Test.InstallTest do
 
       [app_name: :my_app, files: files]
       |> test_project()
-      |> Igniter.compose_task("git_ops.install", ["--manage-readme", "--manage-mix"])
+      |> Igniter.compose_task("git_ops.install", [])
       |> assert_has_patch("config/config.exs", """
         2 + |import_config "\#{config_env()}.exs"
       """)
@@ -30,10 +30,24 @@ defmodule GitOps.Mix.Tasks.Test.InstallTest do
       """)
     end
 
+    test "opt out of managed files" do
+      [app_name: :my_app, files: %{}]
+      |> test_project()
+      |> Igniter.compose_task("git_ops.install", ["--no-manage-readme", "--no-manage-mix"])
+      |> assert_has_patch("config/dev.exs", """
+      3 |config :git_ops,
+      4 |  mix_project: Mix.Project.get!(),
+      5 |  types: [types: [tidbit: [hidden?: true], important: [header: "Important Changes"]]],
+      6 |  version_tag_prefix: "v",
+      7 |  manage_mix_verions?: false,
+      8 |  manage_readme_version: false
+      """)
+    end
+
     test "patches project version" do
       [app_name: :my_app, files: %{}]
       |> test_project()
-      |> Igniter.compose_task("git_ops.install", ["--manage-mix"])
+      |> Igniter.compose_task("git_ops.install", [])
       |> assert_has_patch("mix.exs", """
       2  2   |  use Mix.Project
       3  3   |

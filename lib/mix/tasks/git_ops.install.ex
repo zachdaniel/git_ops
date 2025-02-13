@@ -6,7 +6,7 @@ defmodule Mix.Tasks.GitOps.Install.Docs do
   end
 
   def example do
-    "mix igniter.install git_ops --manage_readme --manage_mix"
+    "mix igniter.install git_ops"
   end
 
   def long_doc do
@@ -18,6 +18,11 @@ defmodule Mix.Tasks.GitOps.Install.Docs do
     ```bash
     #{example()}
     ```
+
+    ## Switches
+
+    - `--no-manage-readme` - Disables mangaging the package version in the README file.
+    - `--no-manage-mix` - Disables mangaging the package version in the `mix.exs` file.
     """
   end
 end
@@ -44,7 +49,7 @@ if Code.ensure_loaded?(Igniter) do
           manage_readme: :boolean,
           manage_mix: :boolean
         ],
-        defaults: [],
+        defaults: [manage_readme: true, manage_mix: true],
         aliases: [],
         required: []
       }
