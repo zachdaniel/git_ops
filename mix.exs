@@ -2,7 +2,7 @@ defmodule GitOps.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/zachdaniel/git_ops"
-  @version "2.6.3"
+  @version "2.7.0"
 
   def project do
     [

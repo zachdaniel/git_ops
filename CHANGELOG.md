@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.7.0](https://github.com/zachdaniel/git_ops/compare/v2.6.3...v2.7.0) (2025-02-14)
+
+
+
+
+### Features:
+
+* add igniter installer (#71)
+
+### Improvements:
+
+* add types to project.info (#69) (#70)
+
 ## [v2.6.3](https://github.com/zachdaniel/git_ops/compare/v2.6.2...v2.6.3) (2024-10-14)
 
 
