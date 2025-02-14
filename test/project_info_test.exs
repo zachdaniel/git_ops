@@ -45,7 +45,8 @@ defmodule GitOps.Mix.Tasks.Test.ProjectInfoTest do
       """
 
       # The output is has whitespace removed for brevity
-      assert "#{String.replace(actual, ~r/\s+/, "")}\n" == "#{String.replace(expected, ~r/\s+/, "")}\n"
+      assert "#{String.replace(actual, ~r/\s+/, "")}\n" ==
+               "#{String.replace(expected, ~r/\s+/, "")}\n"
     end
   end
 

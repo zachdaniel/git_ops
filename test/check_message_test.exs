@@ -17,32 +17,33 @@ defmodule GitOps.Mix.Tasks.Test.CheckMessageTest do
       CheckMessage.run(["path/to/nowhere"])
     end
   end
-  
+
   describe "with --head" do
     setup do
-      repo_path = System.tmp_dir!()
+      repo_path =
+        System.tmp_dir!()
         |> Path.join("repo")
-        
+
       repo = Git.init!(repo_path)
 
       Application.put_env(:git_ops, :repository_path, repo_path)
-        
+
       on_exit(fn ->
         Application.delete_env(:git_ops, :repository_path)
         File.rm_rf!(repo_path)
-        
+
         :ok
       end)
-      
+
       {:ok, repo: repo}
     end
-    
+
     test "it fails when the repo contains no commits" do
       assert_raise(Git.Error, ~r/does not have any commits/, fn ->
         CheckMessage.run(["--head"])
       end)
     end
-    
+
     test "it fails when the latest commit does not have a valid message", %{repo: repo} do
       Git.commit!(repo, ["-m 'invalid message'", "--allow-empty"])
 
@@ -50,7 +51,7 @@ defmodule GitOps.Mix.Tasks.Test.CheckMessageTest do
         CheckMessage.run(["--head"])
       end)
     end
-    
+
     test "it succeeds when the latest commit has a valid message", %{repo: repo} do
       Git.commit!(repo, ["-m 'chore: counting toes'", "--allow-empty"])
 

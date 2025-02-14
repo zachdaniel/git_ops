@@ -119,7 +119,7 @@ defmodule GitOps.Commit do
               message: Enum.at(result[:message], 0),
               body: body,
               footer: footer,
-              breaking?: is_breaking?(result[:breaking?], body, footer)
+              breaking?: breaking?(result[:breaking?], body, footer)
             }
           end)
 
@@ -143,8 +143,8 @@ defmodule GitOps.Commit do
   defp scopes([value]) when is_bitstring(value), do: String.split(value, ",")
   defp scopes(_), do: nil
 
-  defp is_breaking?(breaking, _, _) when not is_nil(breaking), do: true
-  defp is_breaking?(_, "BREAKING CHANGE:" <> _, _), do: true
-  defp is_breaking?(_, _, "BREAKING CHANGE:" <> _), do: true
-  defp is_breaking?(_, _, _), do: false
+  defp breaking?(breaking, _, _) when not is_nil(breaking), do: true
+  defp breaking?(_, "BREAKING CHANGE:" <> _, _), do: true
+  defp breaking?(_, _, "BREAKING CHANGE:" <> _), do: true
+  defp breaking?(_, _, _), do: false
 end

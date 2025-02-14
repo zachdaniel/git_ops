@@ -73,7 +73,7 @@ defmodule GitOps.Changelog do
         rest
       ])
 
-    unless opts[:dry_run] do
+    if !opts[:dry_run] do
       File.write!(path, new_contents)
     end
 
@@ -95,7 +95,7 @@ defmodule GitOps.Changelog do
       raise "\nFile already exists: #{path}. Please remove it to initialize."
     end
 
-    unless opts[:dry_run] do
+    if !opts[:dry_run] do
       File.write!(path, String.trim_leading(contents))
     end
 

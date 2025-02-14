@@ -25,7 +25,7 @@ defmodule GitOps.Test.ChangelogTest do
       }
     ]
 
-    unless context[:no_rm_on_exit] do
+    if !context[:no_rm_on_exit] do
       on_exit(fn -> File.rm!(changelog) end)
     end
 
