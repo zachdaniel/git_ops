@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.7.1](https://github.com/zachdaniel/git_ops/compare/v2.7.0...v2.7.1) (2025-02-24)
+
+
+
+
+### Bug Fixes:
+
+* allow disabling the compilation of igniter code
+
+### Improvements:
+
+* add `runtime: false` while installing
+
 ## [v2.7.0](https://github.com/zachdaniel/git_ops/compare/v2.6.3...v2.7.0) (2025-02-14)
 
 
