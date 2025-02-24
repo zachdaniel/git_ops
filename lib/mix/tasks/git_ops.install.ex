@@ -27,7 +27,7 @@ defmodule Mix.Tasks.GitOps.Install.Docs do
   end
 end
 
-if Code.ensure_loaded?(Igniter) do
+if !Application.compile_env(:git_ops, :no_igniter?) && Code.ensure_loaded?(Igniter) do
   defmodule Mix.Tasks.GitOps.Install do
     @shortdoc "#{__MODULE__.Docs.short_doc()}"
 
@@ -43,6 +43,7 @@ if Code.ensure_loaded?(Igniter) do
         installs: [],
         example: __MODULE__.Docs.example(),
         only: [:dev],
+        dep_opts: [runtime: false],
         positional: [],
         composes: [],
         schema: [

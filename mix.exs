@@ -70,7 +70,7 @@ defmodule GitOps.MixProject do
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:excoveralls, "~> 0.6", only: :test},
       {:git_cli, "~> 0.2"},
-      {:igniter, "~> 0.5", optional: true},
+      {:igniter, "~> 0.5 and >= 0.5.27", optional: true},
       {:nimble_parsec, "~> 1.0"}
     ]
   end
