@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.7.2](https://github.com/zachdaniel/git_ops/compare/v2.7.1...v2.7.2) (2025-03-06)
+
+
+
+
+### Bug Fixes:
+
+* typo in igniter installer. (#72)
+
 ## [v2.7.1](https://github.com/zachdaniel/git_ops/compare/v2.7.0...v2.7.1) (2025-02-24)
 
 
