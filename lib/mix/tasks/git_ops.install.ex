@@ -99,7 +99,7 @@ if !Application.compile_env(:git_ops, :no_igniter?) && Code.ensure_loaded?(Ignit
         |> Igniter.Project.Config.configure(
           "dev.exs",
           :git_ops,
-          [:manage_mix_verions?],
+          [:manage_mix_version?],
           manage_mix?
         )
       end)
