@@ -23,7 +23,8 @@ defmodule GitOps.Test.CommitTest do
 
   describe "format_author/2" do
     test "formats GitHub noreply email with ID" do
-      assert Commit.format_author("John Doe", "12345678+johndoe@users.noreply.github.com") == "@johndoe"
+      assert Commit.format_author("John Doe", "12345678+johndoe@users.noreply.github.com") ==
+               "@johndoe"
     end
 
     test "formats standard GitHub noreply email" do
@@ -106,7 +107,7 @@ defmodule GitOps.Test.CommitTest do
       author_name: "John Doe",
       author_email: "johndoe@users.noreply.github.com"
     }
-    
+
     assert Commit.format(commit) == "* add new feature by @johndoe"
   end
 
@@ -115,7 +116,7 @@ defmodule GitOps.Test.CommitTest do
       type: "feat",
       message: "add new feature"
     }
-    
+
     assert Commit.format(commit) == "* add new feature"
   end
 end

@@ -9,6 +9,8 @@ defmodule GitOps.Commit do
   """
   import NimbleParsec
 
+  alias GitOps.{Config, GitHub}
+
   defstruct [:type, :scope, :message, :body, :footer, :breaking?, :author_name, :author_email]
 
   @type t :: %__MODULE__{}
@@ -94,7 +96,7 @@ defmodule GitOps.Commit do
       end
 
     author_text = format_author(author_name, author_email)
-    
+
     if author_text != "" do
       "* #{scope_text}#{message}#{body_text}#{footer_text} by #{author_text}"
     else
@@ -103,27 +105,47 @@ defmodule GitOps.Commit do
   end
 
   @doc """
-  Formats the author information as a GitHub username if possible.
+  Formats the author information as a GitHub username.
+  If GitHub handle lookup is enabled, tries to find the user via GitHub API.
   If the email is a GitHub noreply email, extracts the username.
   Otherwise, just uses the author name.
   """
   def format_author(nil, _), do: ""
   def format_author(_, nil), do: ""
+
   def format_author(name, email) do
+    cond do
+      # Try GitHub API lookup if enabled
+      Config.github_handle_lookup?() ->
+        case GitHub.find_user_by_email(email) do
+          {:ok, user} -> "@#{user.username}"
+          {:error, _} -> format_author_fallback(name, email)
+        end
+
+      # Otherwise use fallback
+      true ->
+        format_author_fallback(name, email)
+    end
+  end
+
+  # Fallback to existing logic for handling author information
+  defp format_author_fallback(name, email) do
     cond do
       # Match GitHub noreply emails like 12345678+username@users.noreply.github.com
       String.match?(email, ~r/\d+\+(.+)@users\.noreply\.github\.com/) ->
-        captures = Regex.named_captures(~r/\d+\+(?<username>.+)@users\.noreply\.github\.com/, email)
+        captures =
+          Regex.named_captures(~r/\d+\+(?<username>.+)@users\.noreply\.github\.com/, email)
+
         "@#{captures["username"]}"
-      
+
       # Match standard GitHub emails like username@users.noreply.github.com
       String.match?(email, ~r/(.+)@users\.noreply\.github\.com/) ->
         captures = Regex.named_captures(~r/(?<username>.+)@users\.noreply\.github\.com/, email)
         "@#{captures["username"]}"
-      
+
       # For other emails, just use the author name
       true ->
-        "@#{String.replace(name, " ", "")}"
+        "@#{name}"
     end
   end
 

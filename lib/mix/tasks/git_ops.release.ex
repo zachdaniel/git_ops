@@ -284,7 +284,7 @@ defmodule Mix.Tasks.GitOps.Release do
   defp parse_commits(messages, authors, config_types, allowed_tags, allow_untagged?, log?) do
     messages
     |> Enum.zip(authors)
-    |> Enum.flat_map(fn {message, author} -> 
+    |> Enum.flat_map(fn {message, author} ->
       parse_commit(message, author, config_types, allowed_tags, allow_untagged?, log?)
     end)
   end
