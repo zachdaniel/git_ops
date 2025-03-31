@@ -9,7 +9,7 @@ defmodule GitOps.Commit do
   """
   import NimbleParsec
 
-  defstruct [:type, :scope, :message, :body, :footer, :breaking?]
+  defstruct [:type, :scope, :message, :body, :footer, :breaking?, :author_name, :author_email]
 
   @type t :: %__MODULE__{}
 
@@ -67,7 +67,9 @@ defmodule GitOps.Commit do
       message: message,
       body: body,
       footer: footer,
-      breaking?: breaking?
+      breaking?: breaking?,
+      author_name: author_name,
+      author_email: author_email
     } = commit
 
     scope = Enum.join(scopes || [], ",")
@@ -91,10 +93,41 @@ defmodule GitOps.Commit do
         ""
       end
 
-    "* #{scope_text}#{message}#{body_text}#{footer_text}"
+    author_text = format_author(author_name, author_email)
+    
+    if author_text != "" do
+      "* #{scope_text}#{message}#{body_text}#{footer_text} by #{author_text}"
+    else
+      "* #{scope_text}#{message}#{body_text}#{footer_text}"
+    end
   end
 
-  def parse(text) do
+  @doc """
+  Formats the author information as a GitHub username if possible.
+  If the email is a GitHub noreply email, extracts the username.
+  Otherwise, just uses the author name.
+  """
+  def format_author(nil, _), do: ""
+  def format_author(_, nil), do: ""
+  def format_author(name, email) do
+    cond do
+      # Match GitHub noreply emails like 12345678+username@users.noreply.github.com
+      String.match?(email, ~r/\d+\+(.+)@users\.noreply\.github\.com/) ->
+        captures = Regex.named_captures(~r/\d+\+(?<username>.+)@users\.noreply\.github\.com/, email)
+        "@#{captures["username"]}"
+      
+      # Match standard GitHub emails like username@users.noreply.github.com
+      String.match?(email, ~r/(.+)@users\.noreply\.github\.com/) ->
+        captures = Regex.named_captures(~r/(?<username>.+)@users\.noreply\.github\.com/, email)
+        "@#{captures["username"]}"
+      
+      # For other emails, just use the author name
+      true ->
+        "@#{String.replace(name, " ", "")}"
+    end
+  end
+
+  def parse(text, author_info \\ nil) do
     case commits(text) do
       {:ok, [], _, _, _, _} ->
         :error
@@ -113,13 +146,17 @@ defmodule GitOps.Commit do
             body = Enum.at(remaining_lines, 0)
             footer = Enum.at(remaining_lines, 1)
 
+            {author_name, author_email} = author_info || {nil, nil}
+
             %__MODULE__{
               type: Enum.at(result[:type], 0),
               scope: scopes(result[:scope]),
               message: Enum.at(result[:message], 0),
               body: body,
               footer: footer,
-              breaking?: breaking?(result[:breaking?], body, footer)
+              breaking?: breaking?(result[:breaking?], body, footer),
+              author_name: author_name,
+              author_email: author_email
             }
           end)
 

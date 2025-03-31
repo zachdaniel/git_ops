@@ -21,6 +21,26 @@ defmodule GitOps.Test.CommitTest do
     commits
   end
 
+  describe "format_author/2" do
+    test "formats GitHub noreply email with ID" do
+      assert Commit.format_author("John Doe", "12345678+johndoe@users.noreply.github.com") == "@johndoe"
+    end
+
+    test "formats standard GitHub noreply email" do
+      assert Commit.format_author("John Doe", "johndoe@users.noreply.github.com") == "@johndoe"
+    end
+
+    test "formats regular name by removing spaces" do
+      assert Commit.format_author("John Doe", "john.doe@example.com") == "@JohnDoe"
+    end
+
+    test "returns empty string for nil values" do
+      assert Commit.format_author(nil, "email@example.com") == ""
+      assert Commit.format_author("Name", nil) == ""
+      assert Commit.format_author(nil, nil) == ""
+    end
+  end
+
   test "a simple feature is parsed with the correct type" do
     assert parse_one!("feat: An awesome new feature!").type == "feat"
   end
@@ -77,5 +97,25 @@ defmodule GitOps.Test.CommitTest do
                footer: "some even more text about it"
              }
            ] = parse_many!(text)
+  end
+
+  test "includes author information in formatted commit" do
+    commit = %Commit{
+      type: "feat",
+      message: "add new feature",
+      author_name: "John Doe",
+      author_email: "johndoe@users.noreply.github.com"
+    }
+    
+    assert Commit.format(commit) == "* add new feature by @johndoe"
+  end
+
+  test "formats commit without author information when not available" do
+    commit = %Commit{
+      type: "feat",
+      message: "add new feature"
+    }
+    
+    assert Commit.format(commit) == "* add new feature"
   end
 end
