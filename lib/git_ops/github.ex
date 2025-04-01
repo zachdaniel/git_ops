@@ -43,7 +43,7 @@ defmodule GitOps.GitHub do
     url = ~c"https://api.github.com/search/users?q=#{email}%20in:email&per_page=2"
 
     headers = [
-      {~c"accept", 'application/vnd.github.v3+json'},
+      {~c"accept", ~c"application/vnd.github.v3+json"},
       {~c"user-agent", ~c"Elixir.GitOps"},
       {~c"X-GitHub-Api-Version", ~c"2022-11-28"}
     ]

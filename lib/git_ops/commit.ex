@@ -114,14 +114,11 @@ defmodule GitOps.Commit do
   def format_author(_, nil), do: ""
 
   def format_author(name, email) do
-
     cond do
       # Try GitHub API lookup if enabled
       Config.github_handle_lookup?() ->
-
         case GitHub.find_user_by_email(email) do
           {:ok, user} ->
-
             "@#{user.username}"
 
           {:error, _error} ->
