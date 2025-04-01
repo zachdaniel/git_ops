@@ -25,7 +25,7 @@ defmodule GitOps.Mix.Tasks.Test.InstallTest do
       4 |  mix_project: Mix.Project.get!(),
       5 |  types: [types: [tidbit: [hidden?: true], important: [header: "Important Changes"]]],
       6 |  version_tag_prefix: "v",
-      7 |  manage_mix_verions?: true,
+      7 |  manage_mix_version?: true,
       8 |  manage_readme_version: true
       """)
     end
@@ -39,7 +39,7 @@ defmodule GitOps.Mix.Tasks.Test.InstallTest do
       4 |  mix_project: Mix.Project.get!(),
       5 |  types: [types: [tidbit: [hidden?: true], important: [header: "Important Changes"]]],
       6 |  version_tag_prefix: "v",
-      7 |  manage_mix_verions?: false,
+      7 |  manage_mix_version?: false,
       8 |  manage_readme_version: false
       """)
     end

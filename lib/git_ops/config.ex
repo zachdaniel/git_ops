@@ -61,6 +61,13 @@ defmodule GitOps.Config do
   def repository_path, do: Application.get_env(:git_ops, :repository_path) || File.cwd!()
   def manage_mix_version?, do: truthy?(Application.get_env(:git_ops, :manage_mix_version?))
 
+  @doc """
+  Returns whether GitHub handle lookup is enabled for contributors.
+  When enabled, the system will attempt to find GitHub usernames for commit authors.
+  When disabled or if lookup fails, it will use the author's name directly.
+  """
+  def github_handle_lookup?, do: truthy?(Application.get_env(:git_ops, :github_handle_lookup?))
+
   def manage_readme_version do
     case Application.get_env(:git_ops, :manage_readme_version) do
       true ->

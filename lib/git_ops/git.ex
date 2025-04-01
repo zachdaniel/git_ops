@@ -67,6 +67,36 @@ defmodule GitOps.Git do
     |> Enum.reject(&Kernel.==(&1, ""))
   end
 
+  @spec commit_authors_since_tag(Git.Repository.t(), String.t()) :: [{String.t(), String.t()}]
+  def commit_authors_since_tag(repo, tag) do
+    repo
+    |> Git.log!(["#{tag}..HEAD", "--format=%an--author--%ae--gitops--"])
+    |> String.split("--gitops--")
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&Kernel.==(&1, ""))
+    |> Enum.map(fn author_string ->
+      case String.split(author_string, "--author--") do
+        [name, email] -> {name, email}
+        _ -> {nil, nil}
+      end
+    end)
+  end
+
+  @spec get_initial_commit_authors!(Git.Repository.t()) :: [{String.t(), String.t()}]
+  def get_initial_commit_authors!(repo) do
+    repo
+    |> Git.log!(["--format=%an--author--%ae--gitops--"])
+    |> String.split("--gitops--")
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&Kernel.==(&1, ""))
+    |> Enum.map(fn author_string ->
+      case String.split(author_string, "--author--") do
+        [name, email] -> {name, email}
+        _ -> {nil, nil}
+      end
+    end)
+  end
+
   @spec hooks_path(Git.Repository.t()) :: String.t() | no_return
   def hooks_path(repo) do
     case Git.config(repo, ["core.hookspath"]) do
