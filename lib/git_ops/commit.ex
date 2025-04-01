@@ -114,12 +114,18 @@ defmodule GitOps.Commit do
   def format_author(_, nil), do: ""
 
   def format_author(name, email) do
+
     cond do
       # Try GitHub API lookup if enabled
       Config.github_handle_lookup?() ->
+
         case GitHub.find_user_by_email(email) do
-          {:ok, user} -> "@#{user.username}"
-          {:error, _} -> format_author_fallback(name, email)
+          {:ok, user} ->
+
+            "@#{user.username}"
+
+          {:error, _error} ->
+            format_author_fallback(name, email)
         end
 
       # Otherwise use fallback
@@ -136,16 +142,16 @@ defmodule GitOps.Commit do
         captures =
           Regex.named_captures(~r/\d+\+(?<username>.+)@users\.noreply\.github\.com/, email)
 
-        "@#{captures["username"]}"
+        "#{captures["username"]}"
 
       # Match standard GitHub emails like username@users.noreply.github.com
       String.match?(email, ~r/(.+)@users\.noreply\.github\.com/) ->
         captures = Regex.named_captures(~r/(?<username>.+)@users\.noreply\.github\.com/, email)
-        "@#{captures["username"]}"
+        "#{captures["username"]}"
 
       # For other emails, just use the author name
       true ->
-        "@#{name}"
+        "#{name}"
     end
   end
 
