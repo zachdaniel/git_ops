@@ -56,5 +56,45 @@ defmodule GitOps.Mix.Tasks.Test.InstallTest do
          8 + |      version: @version,
       """)
     end
+
+    test "skips project version patch if exists" do
+      mix = """
+      defmodule Elixir.MyApp.MixProject do
+        use Mix.Project
+
+        @version "0.1.0"
+        def project do
+          [
+            app: :my_app,
+            version: @version,
+            elixir: "~> 1.17",
+            start_permanent: Mix.env() == :prod,
+            deps: deps()
+          ]
+        end
+
+        # Run "mix help compile.app" to learn about applications.
+        def application do
+          [
+            extra_applications: [:logger]
+          ]
+        end
+
+        # Run "mix help deps" to learn about dependencies.
+        defp deps do
+          [
+            # {:dep_from_hexpm, "~> 0.3.0"},
+            # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+          ]
+        end
+      end
+      """
+
+      [app_name: :my_app, files: %{"mix.exs" => mix}]
+      |> test_project()
+      # |> dbg(structs: false)
+      |> Igniter.compose_task("git_ops.install", [])
+      |> assert_unchanged("mix.exs")
+    end
   end
 end

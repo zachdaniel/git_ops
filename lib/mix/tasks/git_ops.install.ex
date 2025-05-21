@@ -78,18 +78,30 @@ if !Application.compile_env(:git_ops, :no_igniter?) && Code.ensure_loaded?(Ignit
         igniter =
           if manage_mix? do
             Igniter.Project.MixProject.update(igniter, :project, [:version], fn zipper ->
-              version = zipper.node
+              maybe_existing_version_zipper =
+                zipper
+                |> Sourceror.Zipper.top()
+                |> Sourceror.Zipper.find(:next, fn
+                  {:@, _, [{:version, _, _}]} -> true
+                  _ -> false
+                end)
 
-              zipper
-              |> Igniter.Code.Common.replace_code("@version")
-              |> Sourceror.Zipper.top()
-              |> Sourceror.Zipper.move_to_cursor("""
-              defmodule __ do
-                use __
-                __cursor__()
+              if maybe_existing_version_zipper do
+                zipper
+              else
+                version = zipper.node
+
+                zipper
+                |> Igniter.Code.Common.replace_code("@version")
+                |> Sourceror.Zipper.top()
+                |> Sourceror.Zipper.move_to_cursor("""
+                defmodule __ do
+                  use __
+                  __cursor__()
+                end
+                """)
+                |> Igniter.Code.Common.add_code("@version \"#{version}\"", placement: :before)
               end
-              """)
-              |> Igniter.Code.Common.add_code("@version \"#{version}\"", placement: :before)
             end)
           else
             igniter
