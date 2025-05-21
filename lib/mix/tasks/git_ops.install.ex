@@ -100,13 +100,13 @@ if !Application.compile_env(:git_ops, :no_igniter?) && Code.ensure_loaded?(Ignit
         else
           igniter
         end
-        |> Igniter.Project.Config.configure(
-          "config.exs",
-          :git_ops,
-          [:manage_mix_version?],
-          manage_mix?
-        )
       end)
+      |> Igniter.Project.Config.configure(
+        "config.exs",
+        :git_ops,
+        [:manage_mix_version?],
+        manage_mix?
+      )
       |> Igniter.Project.Config.configure(
         "config.exs",
         :git_ops,
