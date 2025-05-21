@@ -75,39 +75,31 @@ if !Application.compile_env(:git_ops, :no_igniter?) && Code.ensure_loaded?(Ignit
       )
       |> Igniter.Project.Config.configure_new("config.exs", :git_ops, [:version_tag_prefix], "v")
       |> then(fn igniter ->
-        igniter =
-          if manage_mix? do
-            Igniter.Project.MixProject.update(igniter, :project, [:version], fn zipper ->
-              maybe_existing_version_zipper =
-                zipper
-                |> Sourceror.Zipper.top()
-                |> Sourceror.Zipper.find(:next, fn
-                  {:@, _, [{:version, _, _}]} -> true
-                  _ -> false
-                end)
+        if manage_mix? do
+          Igniter.Project.MixProject.update(igniter, :project, [:version], fn zipper ->
+            version_attribute_exists? =
+              zipper
+              |> Sourceror.Zipper.top()
+              |> Igniter.Code.Module.move_to_attribute_definition(:version) == :error
 
-              if maybe_existing_version_zipper do
-                zipper
-              else
-                version = zipper.node
-
-                zipper
-                |> Igniter.Code.Common.replace_code("@version")
-                |> Sourceror.Zipper.top()
-                |> Sourceror.Zipper.move_to_cursor("""
-                defmodule __ do
-                  use __
-                  __cursor__()
-                end
-                """)
-                |> Igniter.Code.Common.add_code("@version \"#{version}\"", placement: :before)
+            if version_attribute_exists? do
+              zipper
+              |> Igniter.Code.Common.replace_code("@version")
+              |> Sourceror.Zipper.top()
+              |> Sourceror.Zipper.move_to_cursor("""
+              defmodule __ do
+                use __
+                __cursor__()
               end
-            end)
-          else
-            igniter
-          end
-
-        igniter
+              """)
+              |> Igniter.Code.Common.add_code("@version \"#{zipper.node}\"", placement: :before)
+            else
+              zipper
+            end
+          end)
+        else
+          igniter
+        end
         |> Igniter.Project.Config.configure(
           "config.exs",
           :git_ops,
