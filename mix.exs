@@ -24,7 +24,8 @@ defmodule GitOps.MixProject do
         "coveralls.detail": :test,
         "coveralls.post": :test,
         "coveralls.html": :test
-      ]
+      ],
+      aliases: [interactive_tasks: ["test", "credo"]]
     ]
   end
 
@@ -67,6 +68,7 @@ defmodule GitOps.MixProject do
     [
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:mix_test_interactive, "~> 4.0", only: :dev, runtime: false},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:excoveralls, "~> 0.6", only: :test},
       {:git_cli, "~> 0.2"},
