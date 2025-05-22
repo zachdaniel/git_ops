@@ -35,3 +35,9 @@ config :git_ops,
   manage_mix_version?: true,
   manage_readme_version: true,
   version_tag_prefix: "v"
+
+if Mix.env() == :dev do
+  config :mix_test_interactive,
+    clear: true,
+    task: "interactive_tasks"
+end

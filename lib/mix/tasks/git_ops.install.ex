@@ -65,21 +65,24 @@ if !Application.compile_env(:git_ops, :no_igniter?) && Code.ensure_loaded?(Ignit
 
       igniter
       |> Igniter.Project.Config.configure_new(
-        "dev.exs",
+        "config.exs",
         :git_ops,
         [:mix_project],
         {:code, Sourceror.parse_string!("Mix.Project.get!()")}
       )
-      |> Igniter.Project.Config.configure_new("dev.exs", :git_ops, [:types],
+      |> Igniter.Project.Config.configure_new("config.exs", :git_ops, [:types],
         types: [tidbit: [hidden?: true], important: [header: "Important Changes"]]
       )
-      |> Igniter.Project.Config.configure_new("dev.exs", :git_ops, [:version_tag_prefix], "v")
+      |> Igniter.Project.Config.configure_new("config.exs", :git_ops, [:version_tag_prefix], "v")
       |> then(fn igniter ->
-        igniter =
-          if manage_mix? do
-            Igniter.Project.MixProject.update(igniter, :project, [:version], fn zipper ->
-              version = zipper.node
+        if manage_mix? do
+          Igniter.Project.MixProject.update(igniter, :project, [:version], fn zipper ->
+            version_attribute_exists? =
+              zipper
+              |> Sourceror.Zipper.top()
+              |> Igniter.Code.Module.move_to_attribute_definition(:version) == :error
 
+            if version_attribute_exists? do
               zipper
               |> Igniter.Code.Common.replace_code("@version")
               |> Sourceror.Zipper.top()
@@ -89,28 +92,29 @@ if !Application.compile_env(:git_ops, :no_igniter?) && Code.ensure_loaded?(Ignit
                 __cursor__()
               end
               """)
-              |> Igniter.Code.Common.add_code("@version \"#{version}\"", placement: :before)
-            end)
-          else
-            igniter
-          end
-
-        igniter
-        |> Igniter.Project.Config.configure(
-          "dev.exs",
-          :git_ops,
-          [:manage_mix_version?],
-          manage_mix?
-        )
+              |> Igniter.Code.Common.add_code("@version \"#{zipper.node}\"", placement: :before)
+            else
+              zipper
+            end
+          end)
+        else
+          igniter
+        end
       end)
       |> Igniter.Project.Config.configure(
-        "dev.exs",
+        "config.exs",
+        :git_ops,
+        [:manage_mix_version?],
+        manage_mix?
+      )
+      |> Igniter.Project.Config.configure(
+        "config.exs",
         :git_ops,
         [:manage_readme_version],
         manage_readme?
       )
       |> Igniter.Project.Config.configure_new(
-        "dev.exs",
+        "config.exs",
         :git_ops,
         [:mix_project],
         Sourceror.parse_string!("Mix.Project.get!()")

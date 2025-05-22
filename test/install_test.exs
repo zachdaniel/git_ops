@@ -18,15 +18,12 @@ defmodule GitOps.Mix.Tasks.Test.InstallTest do
       |> test_project()
       |> Igniter.compose_task("git_ops.install", [])
       |> assert_has_patch("config/config.exs", """
-        2 + |import_config "\#{config_env()}.exs"
-      """)
-      |> assert_has_patch("config/dev.exs", """
-      3 |config :git_ops,
-      4 |  mix_project: Mix.Project.get!(),
-      5 |  types: [types: [tidbit: [hidden?: true], important: [header: "Important Changes"]]],
-      6 |  version_tag_prefix: "v",
-      7 |  manage_mix_verions?: true,
-      8 |  manage_readme_version: true
+      3 + |config :git_ops,
+      4 + |  mix_project: Mix.Project.get!(),
+      5 + |  types: [types: [tidbit: [hidden?: true], important: [header: "Important Changes"]]],
+      6 + |  version_tag_prefix: "v",
+      7 + |  manage_mix_version?: true,
+      8 + |  manage_readme_version: true
       """)
     end
 
@@ -34,12 +31,12 @@ defmodule GitOps.Mix.Tasks.Test.InstallTest do
       [app_name: :my_app, files: %{}]
       |> test_project()
       |> Igniter.compose_task("git_ops.install", ["--no-manage-readme", "--no-manage-mix"])
-      |> assert_has_patch("config/dev.exs", """
+      |> assert_has_patch("config/config.exs", """
       3 |config :git_ops,
       4 |  mix_project: Mix.Project.get!(),
       5 |  types: [types: [tidbit: [hidden?: true], important: [header: "Important Changes"]]],
       6 |  version_tag_prefix: "v",
-      7 |  manage_mix_verions?: false,
+      7 |  manage_mix_version?: false,
       8 |  manage_readme_version: false
       """)
     end
@@ -58,6 +55,46 @@ defmodule GitOps.Mix.Tasks.Test.InstallTest do
       7    - |      version: "0.1.0",
          8 + |      version: @version,
       """)
+    end
+
+    test "skips project version patch if exists" do
+      mix = """
+      defmodule Elixir.MyApp.MixProject do
+        use Mix.Project
+
+        @version "0.1.0"
+        def project do
+          [
+            app: :my_app,
+            version: @version,
+            elixir: "~> 1.17",
+            start_permanent: Mix.env() == :prod,
+            deps: deps()
+          ]
+        end
+
+        # Run "mix help compile.app" to learn about applications.
+        def application do
+          [
+            extra_applications: [:logger]
+          ]
+        end
+
+        # Run "mix help deps" to learn about dependencies.
+        defp deps do
+          [
+            # {:dep_from_hexpm, "~> 0.3.0"},
+            # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+          ]
+        end
+      end
+      """
+
+      [app_name: :my_app, files: %{"mix.exs" => mix}]
+      |> test_project()
+      # |> dbg(structs: false)
+      |> Igniter.compose_task("git_ops.install", [])
+      |> assert_unchanged("mix.exs")
     end
   end
 end
