@@ -9,7 +9,7 @@ defmodule GitOps.GitHub do
   """
   def batch_find_users_by_emails(emails) when is_list(emails) do
     unique_emails = Enum.uniq(emails)
-    
+
     unique_emails
     |> Task.async_stream(&fetch_user_from_api/1, timeout: 30_000, max_concurrency: 5)
     |> Enum.zip(unique_emails)
@@ -23,41 +23,39 @@ defmodule GitOps.GitHub do
   Returns {:error, reason} if not found or if there's an error.
   """
   def fetch_user_from_api(email) do
-    url = ~c"https://api.github.com/search/users?q=#{email}%20in:email&per_page=2"
+    Application.ensure_all_started(:req)
 
-    headers = [
-      {~c"accept", ~c"application/vnd.github.v3+json"},
-      {~c"user-agent", ~c"Elixir.GitOps"},
-      {~c"X-GitHub-Api-Version", ~c"2022-11-28"}
-    ]
+    if email do
+      headers = %{
+        "accept" => "application/vnd.github.v3+json",
+        "user-agent" => "Elixir.GitOps",
+        "X-GitHub-Api-Version" => "2022-11-28"
+      }
 
-    case :httpc.request(:get, {url, headers}, [], body_format: :binary) do
-      {:ok, {{_, 200, _}, _response_headers, body}} ->
-        case Jason.decode(body) do
-          {:ok, %{"items" => [first_user | _]}} ->
-            {:ok,
-             %{
-               username: first_user["login"],
-               id: first_user["id"],
-               url: first_user["html_url"]
-             }}
+      case Req.get("https://api.github.com/search/users",
+             headers: headers,
+             params: [q: "#{email} in:email", per_page: 2]
+           ) do
+        {:ok, %Req.Response{status: 200, body: %{"items" => [first_user | _]}}} ->
+          {:ok,
+           %{
+             username: first_user["login"],
+             id: first_user["id"],
+             url: first_user["html_url"]
+           }}
 
-          {:ok, %{"items" => []}} ->
-            {:error, "No user found with email #{email}"}
+        {:ok, %Req.Response{status: 200, body: %{"items" => []}}} ->
+          {:error, "No user found with email #{email}"}
 
-          {:error, decode_error} ->
-            {:error, "Failed to decode GitHub API response: #{inspect(decode_error)}"}
-        end
+        {:ok, %Req.Response{status: status, body: body}} ->
+          {:error, "GitHub API request failed with status #{status}: #{inspect(body)}"}
 
-      {:ok, {{_, status, _}, _response_headers, body}} ->
-        {:error, "GitHub API request failed with status #{status}: #{inspect(body)}"}
-
-      {:error, reason} ->
-        {:error, "Error making GitHub API request: #{inspect(reason)}"}
+        {:error, reason} ->
+          {:error, "Error making GitHub API request: #{inspect(reason)}"}
+      end
     end
   rescue
     error ->
       {:error, "Error making GitHub API request: #{inspect(error)}"}
   end
-
 end

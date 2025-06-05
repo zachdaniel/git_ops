@@ -100,14 +100,14 @@ defmodule Mix.Tasks.GitOps.Release do
       get_commit_messages(repo, prefix, tags, from_rc?, opts)
 
     # Batch lookup GitHub handles if enabled
-    github_lookup_map = 
+    github_lookup_map =
       if Config.github_handle_lookup?() do
-        emails = 
+        emails =
           commit_authors
           |> Enum.map(fn {_name, email} -> email end)
           |> Enum.reject(&is_nil/1)
           |> Enum.uniq()
-        
+
         GitOps.GitHub.batch_find_users_by_emails(emails)
       else
         nil
@@ -319,15 +319,15 @@ defmodule Mix.Tasks.GitOps.Release do
   end
 
   defp enrich_commits_with_github_usernames(commits, nil), do: commits
-  
+
   defp enrich_commits_with_github_usernames(commits, github_lookup_map) do
     Enum.map(commits, fn commit ->
-      github_username = 
+      github_username =
         case Map.get(github_lookup_map, commit.author_email) do
           {:ok, user} -> user.username
           _ -> nil
         end
-      
+
       Map.put(commit, :github_username, github_username)
     end)
   end

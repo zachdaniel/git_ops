@@ -28,7 +28,8 @@ defmodule GitOps.Test.CommitTest do
     end
 
     test "formats standard GitHub noreply email" do
-      assert Commit.format_author("John Doe", "johndoe@users.noreply.github.com", nil) == "johndoe"
+      assert Commit.format_author("John Doe", "johndoe@users.noreply.github.com", nil) ==
+               "johndoe"
     end
 
     test "formats regular name by removing spaces" do
@@ -42,7 +43,14 @@ defmodule GitOps.Test.CommitTest do
     end
 
     test "uses GitHub username when provided" do
-      assert Commit.format_author("John Doe", "john@example.com", "johndoe") == "@johndoe"
+      assert Commit.format_author("John Doe", "john@example.com", %{username: "johndoe"}) ==
+               "@johndoe"
+
+      assert Commit.format_author("John Doe", "john@example.com", %{
+               username: "johndoe",
+               url: "a@b.com"
+             }) ==
+               "[@johndoe](a@b.com)"
     end
 
     test "falls back when no GitHub username" do
@@ -114,7 +122,7 @@ defmodule GitOps.Test.CommitTest do
       message: "add new feature",
       author_name: "John Doe",
       author_email: "johndoe@users.noreply.github.com",
-      github_username: nil
+      github_user_data: nil
     }
 
     assert Commit.format(commit) == "* add new feature by johndoe"
@@ -126,7 +134,9 @@ defmodule GitOps.Test.CommitTest do
       message: "add new feature",
       author_name: "John Doe",
       author_email: "john.doe@example.com",
-      github_username: "johndoe"
+      github_user_data: %{
+        username: "johndoe"
+      }
     }
 
     assert Commit.format(commit) == "* add new feature by @johndoe"

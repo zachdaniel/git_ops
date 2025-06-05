@@ -9,7 +9,17 @@ defmodule GitOps.Commit do
   """
   import NimbleParsec
 
-  defstruct [:type, :scope, :message, :body, :footer, :breaking?, :author_name, :author_email, :github_username]
+  defstruct [
+    :type,
+    :scope,
+    :message,
+    :body,
+    :footer,
+    :breaking?,
+    :author_name,
+    :author_email,
+    :github_user_data
+  ]
 
   @type t :: %__MODULE__{}
 
@@ -70,7 +80,7 @@ defmodule GitOps.Commit do
       breaking?: breaking?,
       author_name: author_name,
       author_email: author_email,
-      github_username: github_username
+      github_user_data: github_user_data
     } = commit
 
     scope = Enum.join(scopes || [], ",")
@@ -94,7 +104,7 @@ defmodule GitOps.Commit do
         ""
       end
 
-    author_text = format_author(author_name, author_email, github_username)
+    author_text = format_author(author_name, author_email, github_user_data)
 
     if author_text != "" do
       "* #{scope_text}#{message}#{body_text}#{footer_text} by #{author_text}"
@@ -109,13 +119,18 @@ defmodule GitOps.Commit do
   If the email is a GitHub noreply email, extracts the username.
   Otherwise, just uses the author name.
   """
+  def format_author(_name, _email, %{username: username, url: url})
+      when is_binary(username) and is_binary(url) do
+    "[@#{username}](#{url})"
+  end
+
+  def format_author(_name, _email, %{username: username}) when is_binary(username) do
+    "@#{username}"
+  end
+
   def format_author(nil, _, _), do: ""
   def format_author(_, nil, _), do: ""
-  def format_author(name, email, nil), do: format_author_fallback(name, email)
-
-  def format_author(_name, _email, github_username) when is_binary(github_username) do
-    "@#{github_username}"
-  end
+  def format_author(name, email, _), do: format_author_fallback(name, email)
 
   # Fallback to existing logic for handling author information
   defp format_author_fallback(name, email) do
