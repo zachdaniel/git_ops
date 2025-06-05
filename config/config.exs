@@ -32,6 +32,7 @@ config :git_ops,
   changelog_file: "CHANGELOG.md",
   repository_url: "https://github.com/zachdaniel/git_ops",
   types: [],
+  github_handle_lookup?: true,
   manage_mix_version?: true,
   manage_readme_version: true,
   version_tag_prefix: "v"
