@@ -322,13 +322,13 @@ defmodule Mix.Tasks.GitOps.Release do
 
   defp enrich_commits_with_github_usernames(commits, github_lookup_map) do
     Enum.map(commits, fn commit ->
-      github_username =
+      github_user_data =
         case Map.get(github_lookup_map, commit.author_email) do
-          {:ok, user} -> user.username
+          {:ok, user_data} -> user_data
           _ -> nil
         end
 
-      Map.put(commit, :github_username, github_username)
+      Map.put(commit, :github_user_data, github_user_data)
     end)
   end
 
