@@ -71,7 +71,14 @@ if !Application.compile_env(:git_ops, :no_igniter?) && Code.ensure_loaded?(Ignit
         {:code, Sourceror.parse_string!("Mix.Project.get!()")}
       )
       |> Igniter.Project.Config.configure_new("config.exs", :git_ops, [:types],
-        types: [tidbit: [hidden?: true], important: [header: "Important Changes"]]
+        tidbit: [hidden?: true],
+        important: [header: "Important Changes"]
+      )
+      |> Igniter.Project.Config.configure_new(
+        "config.exs",
+        :git_ops,
+        [:github_handle_lookup?],
+        true
       )
       |> Igniter.Project.Config.configure_new("config.exs", :git_ops, [:version_tag_prefix], "v")
       |> then(fn igniter ->

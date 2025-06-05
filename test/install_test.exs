@@ -18,12 +18,13 @@ defmodule GitOps.Mix.Tasks.Test.InstallTest do
       |> test_project()
       |> Igniter.compose_task("git_ops.install", [])
       |> assert_has_patch("config/config.exs", """
-      3 + |config :git_ops,
-      4 + |  mix_project: Mix.Project.get!(),
-      5 + |  types: [types: [tidbit: [hidden?: true], important: [header: "Important Changes"]]],
-      6 + |  version_tag_prefix: "v",
-      7 + |  manage_mix_version?: true,
-      8 + |  manage_readme_version: true
+      + |config :git_ops,
+      + |  mix_project: Mix.Project.get!(),
+      + |  types: [tidbit: [hidden?: true], important: [header: "Important Changes"]],
+      + |  github_handle_lookup?: true,
+      + |  version_tag_prefix: "v",
+      + |  manage_mix_version?: true,
+      + |  manage_readme_version: true
       """)
     end
 
@@ -32,12 +33,13 @@ defmodule GitOps.Mix.Tasks.Test.InstallTest do
       |> test_project()
       |> Igniter.compose_task("git_ops.install", ["--no-manage-readme", "--no-manage-mix"])
       |> assert_has_patch("config/config.exs", """
-      3 |config :git_ops,
-      4 |  mix_project: Mix.Project.get!(),
-      5 |  types: [types: [tidbit: [hidden?: true], important: [header: "Important Changes"]]],
-      6 |  version_tag_prefix: "v",
-      7 |  manage_mix_version?: false,
-      8 |  manage_readme_version: false
+      |config :git_ops,
+      |  mix_project: Mix.Project.get!(),
+      |  types: [tidbit: [hidden?: true], important: [header: "Important Changes"]],
+      |  github_handle_lookup?: true,
+      |  version_tag_prefix: "v",
+      |  manage_mix_version?: false,
+      |  manage_readme_version: false
       """)
     end
 
