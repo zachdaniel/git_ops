@@ -5,6 +5,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.8.0](https://github.com/zachdaniel/git_ops/compare/v2.7.3...v2.8.0) (2025-06-05)
+
+
+
+
+### Features:
+
+* Store commit authors in changelog (#74) by Abhishek Tripathi
+
+* lookup user by email on github to find correct @ names when enabled by Abhishek Tripathi
+
+### Improvements:
+
+* set new github handle lookup option in installers by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v2.7.3](https://github.com/zachdaniel/git_ops/compare/v2.7.2...v2.7.3) (2025-05-22)
 
 
