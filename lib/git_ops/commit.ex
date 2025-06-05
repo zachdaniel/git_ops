@@ -9,9 +9,7 @@ defmodule GitOps.Commit do
   """
   import NimbleParsec
 
-  alias GitOps.{Config, GitHub}
-
-  defstruct [:type, :scope, :message, :body, :footer, :breaking?, :author_name, :author_email]
+  defstruct [:type, :scope, :message, :body, :footer, :breaking?, :author_name, :author_email, :github_username]
 
   @type t :: %__MODULE__{}
 
@@ -71,7 +69,8 @@ defmodule GitOps.Commit do
       footer: footer,
       breaking?: breaking?,
       author_name: author_name,
-      author_email: author_email
+      author_email: author_email,
+      github_username: github_username
     } = commit
 
     scope = Enum.join(scopes || [], ",")
@@ -95,7 +94,7 @@ defmodule GitOps.Commit do
         ""
       end
 
-    author_text = format_author(author_name, author_email)
+    author_text = format_author(author_name, author_email, github_username)
 
     if author_text != "" do
       "* #{scope_text}#{message}#{body_text}#{footer_text} by #{author_text}"
@@ -106,29 +105,16 @@ defmodule GitOps.Commit do
 
   @doc """
   Formats the author information as a GitHub username.
-  If GitHub handle lookup is enabled, tries to find the user via GitHub API.
+  If a GitHub username is provided, uses that with @ prefix.
   If the email is a GitHub noreply email, extracts the username.
   Otherwise, just uses the author name.
   """
-  def format_author(nil, _), do: ""
-  def format_author(_, nil), do: ""
+  def format_author(nil, _, _), do: ""
+  def format_author(_, nil, _), do: ""
+  def format_author(name, email, nil), do: format_author_fallback(name, email)
 
-  def format_author(name, email) do
-    cond do
-      # Try GitHub API lookup if enabled
-      Config.github_handle_lookup?() ->
-        case GitHub.find_user_by_email(email) do
-          {:ok, user} ->
-            "@#{user.username}"
-
-          {:error, _error} ->
-            format_author_fallback(name, email)
-        end
-
-      # Otherwise use fallback
-      true ->
-        format_author_fallback(name, email)
-    end
+  def format_author(_name, _email, github_username) when is_binary(github_username) do
+    "@#{github_username}"
   end
 
   # Fallback to existing logic for handling author information

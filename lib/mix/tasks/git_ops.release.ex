@@ -99,6 +99,20 @@ defmodule Mix.Tasks.GitOps.Release do
     {commit_messages_for_version, commit_messages_for_changelog, commit_authors} =
       get_commit_messages(repo, prefix, tags, from_rc?, opts)
 
+    # Batch lookup GitHub handles if enabled
+    github_lookup_map = 
+      if Config.github_handle_lookup?() do
+        emails = 
+          commit_authors
+          |> Enum.map(fn {_name, email} -> email end)
+          |> Enum.reject(&is_nil/1)
+          |> Enum.uniq()
+        
+        GitOps.GitHub.batch_find_users_by_emails(emails)
+      else
+        nil
+      end
+
     log_for_version? = !opts[:initial]
 
     commits_for_version =
@@ -112,14 +126,15 @@ defmodule Mix.Tasks.GitOps.Release do
       )
 
     commits_for_changelog =
-      parse_commits(
-        commit_messages_for_changelog,
+      commit_messages_for_changelog
+      |> parse_commits(
         commit_authors,
         config_types,
         allowed_tags,
         allow_untagged?,
         false
       )
+      |> enrich_commits_with_github_usernames(github_lookup_map)
 
     prefixed_new_version =
       if opts[:initial] do
@@ -301,6 +316,20 @@ defmodule Mix.Tasks.GitOps.Release do
 
         []
     end
+  end
+
+  defp enrich_commits_with_github_usernames(commits, nil), do: commits
+  
+  defp enrich_commits_with_github_usernames(commits, github_lookup_map) do
+    Enum.map(commits, fn commit ->
+      github_username = 
+        case Map.get(github_lookup_map, commit.author_email) do
+          {:ok, user} -> user.username
+          _ -> nil
+        end
+      
+      Map.put(commit, :github_username, github_username)
+    end)
   end
 
   defp commits_with_allowed_tags(commits, :any, _), do: commits

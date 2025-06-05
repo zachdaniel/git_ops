@@ -3,35 +3,18 @@ defmodule GitOps.GitHub do
   GitHub API integration for looking up user information.
   """
 
-  # alias GitOps.Config
-
-  @cache_key_prefix "git_ops:github_user:"
-
   @doc """
-  Find a GitHub user by their email address.
-  Returns {:ok, user} if found, where user contains :username, :id, and :url.
-  Returns {:error, reason} if not found or if there's an error.
-
-  Results are cached in persistent_term to avoid repeated API calls.
+  Batch find GitHub users by their email addresses.
+  Returns a map of %{email => {:ok, user_info} | {:error, reason}}
   """
-  def find_user_by_email(email) do
-    cache_key = @cache_key_prefix <> email
-
-    case :persistent_term.get(cache_key, :not_found) do
-      :not_found ->
-        # Not in cache, fetch from API
-        case fetch_user_from_api(email) do
-          {:ok, _user} = result ->
-            :persistent_term.put(cache_key, result)
-            result
-
-          error ->
-            error
-        end
-
-      cached_result ->
-        cached_result
-    end
+  def batch_find_users_by_emails(emails) when is_list(emails) do
+    unique_emails = Enum.uniq(emails)
+    
+    unique_emails
+    |> Task.async_stream(&fetch_user_from_api/1, timeout: 30_000, max_concurrency: 5)
+    |> Enum.zip(unique_emails)
+    |> Enum.map(fn {{:ok, result}, email} -> {email, result} end)
+    |> Map.new()
   end
 
   @doc """
@@ -77,14 +60,4 @@ defmodule GitOps.GitHub do
       {:error, "Error making GitHub API request: #{inspect(error)}"}
   end
 
-  @doc """
-  Clear all cached GitHub user information.
-  """
-  def clear_cache do
-    :persistent_term.get()
-    |> Enum.filter(fn {key, _} ->
-      is_binary(key) and String.starts_with?(key, @cache_key_prefix)
-    end)
-    |> Enum.each(fn {key, _} -> :persistent_term.erase(key) end)
-  end
 end

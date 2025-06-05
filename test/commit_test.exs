@@ -21,24 +21,32 @@ defmodule GitOps.Test.CommitTest do
     commits
   end
 
-  describe "format_author/2" do
+  describe "format_author/3" do
     test "formats GitHub noreply email with ID" do
-      assert Commit.format_author("John Doe", "12345678+johndoe@users.noreply.github.com") ==
-               "@johndoe"
+      assert Commit.format_author("John Doe", "12345678+johndoe@users.noreply.github.com", nil) ==
+               "johndoe"
     end
 
     test "formats standard GitHub noreply email" do
-      assert Commit.format_author("John Doe", "johndoe@users.noreply.github.com") == "@johndoe"
+      assert Commit.format_author("John Doe", "johndoe@users.noreply.github.com", nil) == "johndoe"
     end
 
     test "formats regular name by removing spaces" do
-      assert Commit.format_author("John Doe", "john.doe@example.com") == "@JohnDoe"
+      assert Commit.format_author("John Doe", "john.doe@example.com", nil) == "John Doe"
     end
 
     test "returns empty string for nil values" do
-      assert Commit.format_author(nil, "email@example.com") == ""
-      assert Commit.format_author("Name", nil) == ""
-      assert Commit.format_author(nil, nil) == ""
+      assert Commit.format_author(nil, "email@example.com", nil) == ""
+      assert Commit.format_author("Name", nil, nil) == ""
+      assert Commit.format_author(nil, nil, nil) == ""
+    end
+
+    test "uses GitHub username when provided" do
+      assert Commit.format_author("John Doe", "john@example.com", "johndoe") == "@johndoe"
+    end
+
+    test "falls back when no GitHub username" do
+      assert Commit.format_author("John Doe", "john@example.com", nil) == "John Doe"
     end
   end
 
@@ -105,7 +113,20 @@ defmodule GitOps.Test.CommitTest do
       type: "feat",
       message: "add new feature",
       author_name: "John Doe",
-      author_email: "johndoe@users.noreply.github.com"
+      author_email: "johndoe@users.noreply.github.com",
+      github_username: nil
+    }
+
+    assert Commit.format(commit) == "* add new feature by johndoe"
+  end
+
+  test "includes GitHub username when available" do
+    commit = %Commit{
+      type: "feat",
+      message: "add new feature",
+      author_name: "John Doe",
+      author_email: "john.doe@example.com",
+      github_username: "johndoe"
     }
 
     assert Commit.format(commit) == "* add new feature by @johndoe"
