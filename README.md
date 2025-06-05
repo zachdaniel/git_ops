@@ -69,6 +69,11 @@ end
 config :git_ops,
   mix_project: Mix.Project.get!(),
   changelog_file: "CHANGELOG.md",
+  
+  # if set to true, this uses git user.email to lookup user on github and insert the handle in release notes
+  # otherwise it uses the author name as provided in the commit
+  github_handle_lookup?: true,
+  
   repository_url: "https://github.com/my_user/my_repo",
   types: [
     # Makes an allowed commit type called `tidbit` that is not

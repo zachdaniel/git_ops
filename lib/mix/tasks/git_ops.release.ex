@@ -96,14 +96,29 @@ defmodule Mix.Tasks.GitOps.Release do
     allow_untagged? = Config.allow_untagged?()
     from_rc? = Version.parse!(current_version).pre != []
 
-    {commit_messages_for_version, commit_messages_for_changelog} =
+    {commit_messages_for_version, commit_messages_for_changelog, commit_authors} =
       get_commit_messages(repo, prefix, tags, from_rc?, opts)
+
+    # Batch lookup GitHub handles if enabled
+    github_lookup_map = 
+      if Config.github_handle_lookup?() do
+        emails = 
+          commit_authors
+          |> Enum.map(fn {_name, email} -> email end)
+          |> Enum.reject(&is_nil/1)
+          |> Enum.uniq()
+        
+        GitOps.GitHub.batch_find_users_by_emails(emails)
+      else
+        nil
+      end
 
     log_for_version? = !opts[:initial]
 
     commits_for_version =
       parse_commits(
         commit_messages_for_version,
+        commit_authors,
         config_types,
         allowed_tags,
         allow_untagged?,
@@ -111,13 +126,15 @@ defmodule Mix.Tasks.GitOps.Release do
       )
 
     commits_for_changelog =
-      parse_commits(
-        commit_messages_for_changelog,
+      commit_messages_for_changelog
+      |> parse_commits(
+        commit_authors,
         config_types,
         allowed_tags,
         allow_untagged?,
         false
       )
+      |> enrich_commits_with_github_usernames(github_lookup_map)
 
     prefixed_new_version =
       if opts[:initial] do
@@ -167,7 +184,8 @@ defmodule Mix.Tasks.GitOps.Release do
   defp get_commit_messages(repo, prefix, tags, _from_rc?, opts) do
     if opts[:initial] do
       commits = Git.get_initial_commits!(repo)
-      {commits, commits}
+      authors = Git.get_initial_commit_authors!(repo)
+      {commits, commits, authors}
     else
       tag =
         if opts[:rc] do
@@ -177,15 +195,17 @@ defmodule Mix.Tasks.GitOps.Release do
         end
 
       commits_for_version = Git.commit_messages_since_tag(repo, tag)
+      authors = Git.commit_authors_since_tag(repo, tag)
 
       last_version_after = GitOps.Version.last_version_greater_than(tags, tag, prefix)
 
       if last_version_after && !opts[:rc] do
         commit_messages_for_changelog = Git.commit_messages_since_tag(repo, last_version_after)
+        changelog_authors = Git.commit_authors_since_tag(repo, last_version_after)
 
-        {commits_for_version, commit_messages_for_changelog}
+        {commits_for_version, commit_messages_for_changelog, changelog_authors}
       else
-        {commits_for_version, commits_for_version}
+        {commits_for_version, commits_for_version, authors}
       end
     end
   end
@@ -276,12 +296,16 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp parse_commits(messages, config_types, allowed_tags, allow_untagged?, log?) do
-    Enum.flat_map(messages, &parse_commit(&1, config_types, allowed_tags, allow_untagged?, log?))
+  defp parse_commits(messages, authors, config_types, allowed_tags, allow_untagged?, log?) do
+    messages
+    |> Enum.zip(authors)
+    |> Enum.flat_map(fn {message, author} ->
+      parse_commit(message, author, config_types, allowed_tags, allow_untagged?, log?)
+    end)
   end
 
-  defp parse_commit(text, config_types, allowed_tags, allow_untagged?, log?) do
-    case Commit.parse(text) do
+  defp parse_commit(text, author, config_types, allowed_tags, allow_untagged?, log?) do
+    case Commit.parse(text, author) do
       {:ok, commits} ->
         commits
         |> commits_with_allowed_tags(allowed_tags, allow_untagged?)
@@ -292,6 +316,20 @@ defmodule Mix.Tasks.GitOps.Release do
 
         []
     end
+  end
+
+  defp enrich_commits_with_github_usernames(commits, nil), do: commits
+  
+  defp enrich_commits_with_github_usernames(commits, github_lookup_map) do
+    Enum.map(commits, fn commit ->
+      github_username = 
+        case Map.get(github_lookup_map, commit.author_email) do
+          {:ok, user} -> user.username
+          _ -> nil
+        end
+      
+      Map.put(commit, :github_username, github_username)
+    end)
   end
 
   defp commits_with_allowed_tags(commits, :any, _), do: commits

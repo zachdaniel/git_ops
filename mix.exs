@@ -73,7 +73,8 @@ defmodule GitOps.MixProject do
       {:excoveralls, "~> 0.6", only: :test},
       {:git_cli, "~> 0.2"},
       {:igniter, "~> 0.5 and >= 0.5.27", optional: true},
-      {:nimble_parsec, "~> 1.0"}
+      {:nimble_parsec, "~> 1.0"},
+      {:req, "~> 0.5"}
     ]
   end
 end
