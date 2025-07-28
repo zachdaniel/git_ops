@@ -5,6 +5,13 @@ defmodule GitOps.Git do
 
   @default_githooks_path ".git/hooks"
 
+  @type commit_info :: %{
+          hash: String.t(),
+          message: String.t(),
+          author_name: String.t(),
+          author_email: String.t()
+        }
+
   @spec init!(String.t()) :: Git.Repository.t()
   def init!(repo_path) do
     Git.init!(repo_path)
@@ -25,32 +32,7 @@ defmodule GitOps.Git do
     Git.tag!(repo, current_version)
   end
 
-  @spec get_initial_commits!(Git.Repository.t()) :: [String.t()]
-  def get_initial_commits!(repo) do
-    messages =
-      repo
-      |> Git.log!(["--format=%B--gitops--"])
-      |> String.split("--gitops--")
-      |> Enum.map(&String.trim/1)
-      |> Enum.reject(&Kernel.==(&1, ""))
-
-    ["chore(GitOps): Add changelog using git_ops." | messages]
-  end
-
-  @spec get_commit_hashes(Git.Repository.t(), String.t() | :all) :: [String.t()]
-  def get_commit_hashes(repo, since_tag \\ :all) do
-    log_args =
-      case since_tag do
-        :all -> ["--format=%H--gitops--"]
-        tag -> ["#{tag}..HEAD", "--format=%H--gitops--"]
-      end
-
-    repo
-    |> Git.log!(log_args)
-    |> String.split("--gitops--")
-    |> Enum.map(&String.trim/1)
-    |> Enum.reject(&Kernel.==(&1, ""))
-  end
+  def initial_commit_message, do: "chore(GitOps): Add changelog using git_ops."
 
   @spec tags(Git.Repository.t()) :: [String.t()]
   def tags(repo) do
@@ -73,43 +55,44 @@ defmodule GitOps.Git do
     end
   end
 
-  @spec commit_messages_since_tag(Git.Repository.t(), String.t()) :: [String.t()]
-  def commit_messages_since_tag(repo, tag) do
+  @spec get_commit_info(Git.Repository.t(), String.t() | :all) :: [commit_info()]
+  def get_commit_info(repo, since_tag \\ :all) do
+    format = "--format=%H--hash--%B--message--%an--author--%ae--gitops--"
+
+    log_args =
+      case since_tag do
+        :all -> [format]
+        tag -> ["#{tag}..HEAD", format]
+      end
+
     repo
-    |> Git.log!(["#{tag}..HEAD", "--format=%B--gitops--"])
-    |> String.split("--gitops--")
-    |> Enum.map(&String.trim/1)
-    |> Enum.reject(&Kernel.==(&1, ""))
+    |> Git.log!(log_args)
+    |> parse_git_log()
   end
 
-  @spec commit_authors_since_tag(Git.Repository.t(), String.t()) :: [{String.t(), String.t()}]
-  def commit_authors_since_tag(repo, tag) do
-    repo
-    |> Git.log!(["#{tag}..HEAD", "--format=%an--author--%ae--gitops--"])
+  @spec parse_git_log(String.t()) :: [commit_info()]
+  def parse_git_log(git_log_output) do
+    git_log_output
     |> String.split("--gitops--")
     |> Enum.map(&String.trim/1)
     |> Enum.reject(&Kernel.==(&1, ""))
-    |> Enum.map(fn author_string ->
-      case String.split(author_string, "--author--") do
-        [name, email] -> {name, email}
-        _ -> {nil, nil}
-      end
-    end)
+    |> Enum.map(&parse_commit_entry/1)
+    |> Enum.reject(&is_nil/1)
   end
 
-  @spec get_initial_commit_authors!(Git.Repository.t()) :: [{String.t(), String.t()}]
-  def get_initial_commit_authors!(repo) do
-    repo
-    |> Git.log!(["--format=%an--author--%ae--gitops--"])
-    |> String.split("--gitops--")
-    |> Enum.map(&String.trim/1)
-    |> Enum.reject(&Kernel.==(&1, ""))
-    |> Enum.map(fn author_string ->
-      case String.split(author_string, "--author--") do
-        [name, email] -> {name, email}
-        _ -> {nil, nil}
-      end
-    end)
+  defp parse_commit_entry(commit_string) do
+    with [hash, rest] <- String.split(commit_string, "--hash--", parts: 2),
+         [message, author_part] <- String.split(rest, "--message--", parts: 2),
+         [name, email] <- String.split(author_part, "--author--") do
+      %{
+        hash: String.trim(hash),
+        message: String.trim(message),
+        author_name: String.trim(name),
+        author_email: String.trim(email)
+      }
+    else
+      _ -> nil
+    end
   end
 
   @spec hooks_path(Git.Repository.t()) :: String.t() | no_return

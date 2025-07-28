@@ -178,9 +178,14 @@ defmodule Mix.Tasks.GitOps.Release do
 
   defp get_commit_messages(repo, prefix, tags, _from_rc?, opts) do
     if opts[:initial] do
-      commits = Git.get_initial_commits!(repo)
-      authors = Git.get_initial_commit_authors!(repo)
-      hashes = Git.get_commit_hashes(repo)
+      commit_info = Git.get_commit_info(repo, :all)
+
+      commits = [
+        Git.initial_commit_message() | Enum.map(commit_info, & &1.message)
+      ]
+
+      authors = Enum.map(commit_info, &{&1.author_name, &1.author_email})
+      hashes = Enum.map(commit_info, & &1.hash)
       {commits, commits, authors, hashes}
     else
       tag =
@@ -190,15 +195,18 @@ defmodule Mix.Tasks.GitOps.Release do
           GitOps.Version.last_valid_non_rc_version(tags, prefix)
         end
 
-      commits_for_version = Git.commit_messages_since_tag(repo, tag)
-      authors = Git.commit_authors_since_tag(repo, tag)
-      hashes = Git.get_commit_hashes(repo, tag)
+      commit_info = Git.get_commit_info(repo, tag)
+      commits_for_version = Enum.map(commit_info, & &1.message)
+      authors = Enum.map(commit_info, &{&1.author_name, &1.author_email})
+      hashes = Enum.map(commit_info, & &1.hash)
 
       last_version_after = GitOps.Version.last_version_greater_than(tags, tag, prefix)
 
       if last_version_after && !opts[:rc] do
-        commit_messages_for_changelog = Git.commit_messages_since_tag(repo, last_version_after)
-        changelog_authors = Git.commit_authors_since_tag(repo, last_version_after)
+        changelog_commit_info = Git.get_commit_info(repo, last_version_after)
+        commit_messages_for_changelog = Enum.map(changelog_commit_info, & &1.message)
+        changelog_authors = Enum.map(changelog_commit_info, &{&1.author_name, &1.author_email})
+        hashes = Enum.map(changelog_commit_info, & &1.hash)
 
         {commits_for_version, commit_messages_for_changelog, changelog_authors, hashes}
       else
