@@ -12,6 +12,7 @@ defmodule GitOps.Test.ConfigTest do
     Application.put_env(:git_ops, :types, custom: [header: "Custom"], docs: [hidden?: false])
     Application.put_env(:git_ops, :tags, allowed: ["tag_1", "tag_2"], allow_untagged?: false)
     Application.put_env(:git_ops, :version_tag_prefix, "v")
+    Application.put_env(:git_ops, :github_api_base_url, "https://api.company.github.com")
   end
 
   test "mix_project returns correctly" do
@@ -114,6 +115,12 @@ defmodule GitOps.Test.ConfigTest do
 
   test "custom prefixes returns correctly" do
     assert Config.prefix() == "v"
+  end
+
+  test "Github API base url returns correctly" do
+    assert Config.github_api_base_url() == "https://api.company.github.com"
+    Application.delete_env(:git_ops, :github_api_base_url)
+    assert Config.github_api_base_url() == "https://api.github.com"
   end
 end
 

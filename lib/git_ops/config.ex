@@ -69,6 +69,12 @@ defmodule GitOps.Config do
   """
   def github_handle_lookup?, do: truthy?(Application.get_env(:git_ops, :github_handle_lookup?))
 
+  @doc """
+  Returns the base URL for the GitHub API. Override this if you are using a self-hosted GitHub instance.
+  """
+  def github_api_base_url,
+    do: Application.get_env(:git_ops, :github_api_base_url) || "https://api.github.com"
+
   def manage_readme_version do
     case Application.get_env(:git_ops, :manage_readme_version) do
       true ->

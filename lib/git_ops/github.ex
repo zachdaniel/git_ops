@@ -37,7 +37,7 @@ defmodule GitOps.GitHub do
     Application.ensure_all_started(:req)
 
     if email do
-      case Req.get("https://api.github.com/search/users",
+      case Req.get("#{GitOps.Config.github_api_base_url()}/search/users",
              headers: github_headers(),
              params: [q: "#{email} in:email", per_page: 2]
            ) do
@@ -69,7 +69,7 @@ defmodule GitOps.GitHub do
 
   def get_pull_request_from_commit(hash) do
     case Req.get(
-           "https://api.github.com/repos/#{repo_owner_and_name()}/commits/#{hash}/pulls",
+           "#{GitOps.Config.github_api_base_url()}/repos/#{repo_owner_and_name()}/commits/#{hash}/pulls",
            headers: github_headers()
          ) do
       {:ok, %Req.Response{status: 200, body: [first_pr | _]}} ->
