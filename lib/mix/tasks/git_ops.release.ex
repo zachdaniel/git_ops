@@ -96,19 +96,12 @@ defmodule Mix.Tasks.GitOps.Release do
     allow_untagged? = Config.allow_untagged?()
     from_rc? = Version.parse!(current_version).pre != []
 
-    {commit_messages_for_version, commit_messages_for_changelog, commit_authors} =
+    {commit_messages_for_version, commit_messages_for_changelog, commit_authors, hashes} =
       get_commit_messages(repo, prefix, tags, from_rc?, opts)
 
-    # Batch lookup GitHub handles if enabled
-    github_lookup_map =
+    github_info =
       if Config.github_handle_lookup?() do
-        emails =
-          commit_authors
-          |> Enum.map(fn {_name, email} -> email end)
-          |> Enum.reject(&is_nil/1)
-          |> Enum.uniq()
-
-        GitOps.GitHub.batch_find_users_by_emails(emails)
+        fetch_github_information(commit_authors, hashes)
       else
         nil
       end
@@ -119,6 +112,7 @@ defmodule Mix.Tasks.GitOps.Release do
       parse_commits(
         commit_messages_for_version,
         commit_authors,
+        hashes,
         config_types,
         allowed_tags,
         allow_untagged?,
@@ -129,12 +123,13 @@ defmodule Mix.Tasks.GitOps.Release do
       commit_messages_for_changelog
       |> parse_commits(
         commit_authors,
+        hashes,
         config_types,
         allowed_tags,
         allow_untagged?,
         false
       )
-      |> enrich_commits_with_github_usernames(github_lookup_map)
+      |> enrich_commits_with_github_information(github_info)
 
     prefixed_new_version =
       if opts[:initial] do
@@ -185,7 +180,8 @@ defmodule Mix.Tasks.GitOps.Release do
     if opts[:initial] do
       commits = Git.get_initial_commits!(repo)
       authors = Git.get_initial_commit_authors!(repo)
-      {commits, commits, authors}
+      hashes = Git.get_commit_hashes(repo)
+      {commits, commits, authors, hashes}
     else
       tag =
         if opts[:rc] do
@@ -196,6 +192,7 @@ defmodule Mix.Tasks.GitOps.Release do
 
       commits_for_version = Git.commit_messages_since_tag(repo, tag)
       authors = Git.commit_authors_since_tag(repo, tag)
+      hashes = Git.get_commit_hashes(repo, tag)
 
       last_version_after = GitOps.Version.last_version_greater_than(tags, tag, prefix)
 
@@ -203,9 +200,9 @@ defmodule Mix.Tasks.GitOps.Release do
         commit_messages_for_changelog = Git.commit_messages_since_tag(repo, last_version_after)
         changelog_authors = Git.commit_authors_since_tag(repo, last_version_after)
 
-        {commits_for_version, commit_messages_for_changelog, changelog_authors}
+        {commits_for_version, commit_messages_for_changelog, changelog_authors, hashes}
       else
-        {commits_for_version, commits_for_version, authors}
+        {commits_for_version, commits_for_version, authors, hashes}
       end
     end
   end
@@ -296,16 +293,16 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp parse_commits(messages, authors, config_types, allowed_tags, allow_untagged?, log?) do
-    messages
-    |> Enum.zip(authors)
-    |> Enum.flat_map(fn {message, author} ->
-      parse_commit(message, author, config_types, allowed_tags, allow_untagged?, log?)
+  defp parse_commits(messages, authors, hashes, config_types, allowed_tags, allow_untagged?, log?) do
+    [messages, authors, hashes]
+    |> Enum.zip()
+    |> Enum.flat_map(fn {message, author, hash} ->
+      parse_commit(message, author, hash, config_types, allowed_tags, allow_untagged?, log?)
     end)
   end
 
-  defp parse_commit(text, author, config_types, allowed_tags, allow_untagged?, log?) do
-    case Commit.parse(text, author) do
+  defp parse_commit(text, author, hash, config_types, allowed_tags, allow_untagged?, log?) do
+    case Commit.parse(%{text: text, author_info: author, hash: hash}) do
       {:ok, commits} ->
         commits
         |> commits_with_allowed_tags(allowed_tags, allow_untagged?)
@@ -318,17 +315,38 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp enrich_commits_with_github_usernames(commits, nil), do: commits
+  @spec fetch_github_information(list(), list()) :: {authors :: map(), prs :: map()} | nil
+  defp fetch_github_information(commit_authors, commit_hashes) do
+    github_lookup_map = fetch_github_emails(commit_authors)
+    pr_lookup_map = GitOps.GitHub.batch_pull_requests_from_commits(commit_hashes)
+    {github_lookup_map, pr_lookup_map}
+  end
 
-  defp enrich_commits_with_github_usernames(commits, github_lookup_map) do
+  defp fetch_github_emails(commit_authors) do
+    commit_authors
+    |> Enum.map(fn {_name, email} -> email end)
+    |> Enum.reject(&is_nil/1)
+    |> GitOps.GitHub.batch_find_users_by_emails()
+  end
+
+  defp enrich_commits_with_github_information(commits, nil), do: commits
+
+  defp enrich_commits_with_github_information(commits, {author_lookup, pr_lookup}) do
     Enum.map(commits, fn commit ->
       github_user_data =
-        case Map.get(github_lookup_map, commit.author_email) do
+        case Map.get(author_lookup, commit.author_email) do
           {:ok, user_data} -> user_data
           _ -> nil
         end
 
+      pr_info =
+        case Map.get(pr_lookup, commit.hash) do
+          {:ok, pr_info} -> pr_info
+          _ -> nil
+        end
+
       Map.put(commit, :github_user_data, github_user_data)
+      |> Map.put(:pr_info, pr_info)
     end)
   end
 

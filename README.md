@@ -19,7 +19,6 @@ Roadmap (in no particular order):
 - Automatically parse issue numbers and github mentions into the correct format, linking the issue
 - A task to build a compliant commit
 - Validation of commits
-- Automatically link to the PR that merged a given commit in the changelog
 - A hundred other things I forgot to write down while writing the initial version
 
 Important addendums:
@@ -73,6 +72,7 @@ config :git_ops,
   # if set to true, this uses git user.email to lookup user on github and insert the handle in release notes
   # otherwise it uses the author name as provided in the commit
   github_handle_lookup?: true,
+  github_api_base_url: "https://api.github.com",
   
   repository_url: "https://github.com/my_user/my_repo",
   types: [

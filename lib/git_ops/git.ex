@@ -37,6 +37,21 @@ defmodule GitOps.Git do
     ["chore(GitOps): Add changelog using git_ops." | messages]
   end
 
+  @spec get_commit_hashes(Git.Repository.t(), String.t() | :all) :: [String.t()]
+  def get_commit_hashes(repo, since_tag \\ :all) do
+    log_args =
+      case since_tag do
+        :all -> ["--format=%H--gitops--"]
+        tag -> ["#{tag}..HEAD", "--format=%H--gitops--"]
+      end
+
+    repo
+    |> Git.log!(log_args)
+    |> String.split("--gitops--")
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&Kernel.==(&1, ""))
+  end
+
   @spec tags(Git.Repository.t()) :: [String.t()]
   def tags(repo) do
     tags =
