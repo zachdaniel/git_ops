@@ -17,6 +17,17 @@ defmodule GitOps.GitHub do
     |> Map.new()
   end
 
+  def batch_pull_requests_from_commits(hashes) when is_list(hashes) do
+    hashes
+    |> Task.async_stream(&get_pull_request_from_commit/1,
+      timeout: 30_000,
+      max_concurrency: 5
+    )
+    |> Enum.zip(hashes)
+    |> Enum.map(fn {{:ok, result}, hash} -> {hash, result} end)
+    |> Map.new()
+  end
+
   @doc """
   Find a GitHub user by their email address.
   Returns {:ok, user} if found, where user contains :username, :id, and :url.
@@ -26,14 +37,8 @@ defmodule GitOps.GitHub do
     Application.ensure_all_started(:req)
 
     if email do
-      headers = %{
-        "accept" => "application/vnd.github.v3+json",
-        "user-agent" => "Elixir.GitOps",
-        "X-GitHub-Api-Version" => "2022-11-28"
-      }
-
-      case Req.get("https://api.github.com/search/users",
-             headers: headers,
+      case Req.get("#{GitOps.Config.github_api_base_url()}/search/users",
+             headers: github_headers(),
              params: [q: "#{email} in:email", per_page: 2]
            ) do
         {:ok, %Req.Response{status: 200, body: %{"items" => [first_user | _]}}} ->
@@ -57,5 +62,42 @@ defmodule GitOps.GitHub do
   rescue
     error ->
       {:error, "Error making GitHub API request: #{inspect(error)}"}
+  end
+
+  @spec get_pull_request_from_commit(String.t()) ::
+          {:ok, %{number: integer(), url: String.t()} | nil} | {:error, String.t()}
+
+  def get_pull_request_from_commit(hash) do
+    case Req.get(
+           "#{GitOps.Config.github_api_base_url()}/repos/#{repo_owner_and_name()}/commits/#{hash}/pulls",
+           headers: github_headers()
+         ) do
+      {:ok, %Req.Response{status: 200, body: [first_pr | _]}} ->
+        {:ok, %{number: first_pr["number"], url: first_pr["html_url"]}}
+
+      {:ok, %Req.Response{status: 200, body: []}} ->
+        {:ok, nil}
+
+      {:ok, %Req.Response{status: status, body: body}} ->
+        {:error, "GitHub API request failed with status #{status}: #{inspect(body)}"}
+
+      {:error, reason} ->
+        {:error, "Error making GitHub API request: #{inspect(reason)}"}
+    end
+  end
+
+  defp repo_owner_and_name() do
+    GitOps.Config.repository_url()
+    |> String.split("/")
+    |> Enum.take(-2)
+    |> Enum.join("/")
+  end
+
+  defp github_headers do
+    %{
+      "accept" => "application/vnd.github.v3+json",
+      "user-agent" => "Elixir.GitOps",
+      "X-GitHub-Api-Version" => "2022-11-28"
+    }
   end
 end

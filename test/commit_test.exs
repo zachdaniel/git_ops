@@ -150,4 +150,31 @@ defmodule GitOps.Test.CommitTest do
 
     assert Commit.format(commit) == "* add new feature"
   end
+
+  test "formats commit with PR information" do
+    commit = %Commit{
+      type: "feat",
+      message: "add new feature",
+      pr_info: %{number: 123, url: "https://github.com/johndoe/repo/pull/123"}
+    }
+
+    assert Commit.format(commit) ==
+             "* add new feature [(#123)](https://github.com/johndoe/repo/pull/123)"
+  end
+
+  test "formats commit with PR information and author information" do
+    commit = %Commit{
+      type: "feat",
+      message: "add new feature",
+      author_name: "John Doe",
+      author_email: "john.doe@example.com",
+      github_user_data: %{
+        username: "johndoe"
+      },
+      pr_info: %{number: 123, url: "https://github.com/johndoe/repo/pull/123"}
+    }
+
+    assert Commit.format(commit) ==
+             "* add new feature by @johndoe [(#123)](https://github.com/johndoe/repo/pull/123)"
+  end
 end

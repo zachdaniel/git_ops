@@ -62,11 +62,18 @@ defmodule GitOps.Config do
   def manage_mix_version?, do: truthy?(Application.get_env(:git_ops, :manage_mix_version?))
 
   @doc """
-  Returns whether GitHub handle lookup is enabled for contributors.
-  When enabled, the system will attempt to find GitHub usernames for commit authors.
+  Returns whether GitHub integrations are enabled.
+
+  When enabled, the system will attempt to find GitHub usernames for commit authors and pull request information.
   When disabled or if lookup fails, it will use the author's name directly.
   """
   def github_handle_lookup?, do: truthy?(Application.get_env(:git_ops, :github_handle_lookup?))
+
+  @doc """
+  Returns the base URL for the GitHub API. Override this if you are using a self-hosted GitHub instance.
+  """
+  def github_api_base_url,
+    do: Application.get_env(:git_ops, :github_api_base_url) || "https://api.github.com"
 
   def manage_readme_version do
     case Application.get_env(:git_ops, :manage_readme_version) do

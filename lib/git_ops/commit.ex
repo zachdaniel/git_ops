@@ -18,7 +18,9 @@ defmodule GitOps.Commit do
     :breaking?,
     :author_name,
     :author_email,
-    :github_user_data
+    :github_user_data,
+    :hash,
+    :pr_info
   ]
 
   @type t :: %__MODULE__{}
@@ -80,7 +82,8 @@ defmodule GitOps.Commit do
       breaking?: breaking?,
       author_name: author_name,
       author_email: author_email,
-      github_user_data: github_user_data
+      github_user_data: github_user_data,
+      pr_info: pr_info
     } = commit
 
     scope = Enum.join(scopes || [], ",")
@@ -104,13 +107,13 @@ defmodule GitOps.Commit do
         ""
       end
 
-    author_text = format_author(author_name, author_email, github_user_data)
+    base_changelog_entry = "* #{scope_text}#{message}#{body_text}#{footer_text}"
 
-    if author_text != "" do
-      "* #{scope_text}#{message}#{body_text}#{footer_text} by #{author_text}"
-    else
-      "* #{scope_text}#{message}#{body_text}#{footer_text}"
-    end
+    author = format_author(author_name, author_email, github_user_data)
+    author_text = if author != "", do: " by #{author}", else: ""
+    pr_link = if pr_info, do: " [(##{pr_info.number})](#{pr_info.url})", else: ""
+
+    base_changelog_entry <> author_text <> pr_link
   end
 
   @doc """
@@ -153,7 +156,8 @@ defmodule GitOps.Commit do
     end
   end
 
-  def parse(text, author_info \\ nil) do
+  def parse(%{text: text, author_info: author_info, hash: hash} = commit_opts)
+      when is_map(commit_opts) do
     case commits(text) do
       {:ok, [], _, _, _, _} ->
         :error
@@ -182,7 +186,8 @@ defmodule GitOps.Commit do
               footer: footer,
               breaking?: breaking?(result[:breaking?], body, footer),
               author_name: author_name,
-              author_email: author_email
+              author_email: author_email,
+              hash: hash
             }
           end)
 
@@ -191,6 +196,10 @@ defmodule GitOps.Commit do
   rescue
     _ ->
       :error
+  end
+
+  def parse(text, author_info \\ nil) when is_binary(text) do
+    parse(%{text: text, author_info: author_info, hash: nil})
   end
 
   def breaking?(%GitOps.Commit{breaking?: breaking?}), do: breaking?
