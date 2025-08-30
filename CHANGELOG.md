@@ -5,6 +5,23 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.9.0](https://github.com/zachdaniel/git_ops/compare/v2.8.0...v2.9.0) (2025-08-30)
+
+
+
+
+### Features:
+
+* pr links in changelog (#76) by Tyler Southmayd [(#76)](https://github.com/zachdaniel/git_ops/pull/76)
+
+* link to github pull requests in changelog by Tyler Southmayd [(#76)](https://github.com/zachdaniel/git_ops/pull/76)
+
+* gh-enterprise: support overriding the github api url by Tyler Southmayd [(#76)](https://github.com/zachdaniel/git_ops/pull/76)
+
+### Performance Improvements:
+
+* git: batch all git.log calls together with a format string by Tyler Southmayd [(#76)](https://github.com/zachdaniel/git_ops/pull/76)
+
 ## [v2.8.0](https://github.com/zachdaniel/git_ops/compare/v2.7.3...v2.8.0) (2025-06-05)
 
 
