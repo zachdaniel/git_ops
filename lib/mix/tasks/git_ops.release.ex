@@ -162,8 +162,15 @@ defmodule Mix.Tasks.GitOps.Release do
 
     create_and_display_changes(current_version, new_version, changelog_changes, opts)
 
+    new_parsed = Version.parse!(new_version)
+    upgrading_from_rc? = from_rc? && new_parsed.pre == []
+
     cond do
       opts[:dry_run] ->
+        :ok
+
+      upgrading_from_rc? ->
+        confirm_rc_upgrade(repo, changelog_path, prefixed_new_version, changelog_changes)
         :ok
 
       opts[:yes] ->
@@ -270,6 +277,37 @@ defmodule Mix.Tasks.GitOps.Release do
     Git.tag!(repo, ["-a", new_version, "-m", "release #{new_version}\n\n" <> new_message])
 
     Mix.shell().info("Don't forget to push with tags:\n\n    git push --follow-tags")
+  end
+
+  defp confirm_rc_upgrade(repo, changelog_path, new_version, new_message) do
+    message = """
+    You are releasing #{new_version}, which is a stable release from a release candidate.
+
+    Are you sure you want to proceed?
+
+    Instructions will be printed for committing and tagging if you choose no.
+    """
+
+    if Mix.shell().yes?(message) do
+      tag(repo, changelog_path, new_version, new_message)
+    else
+      Mix.shell().info("""
+      If you want to do it on your own, make sure you tag the release with:
+
+      If you want to include your release notes in the tag message, use
+
+          git commit -am "chore: release version #{new_version}"
+          git tag -a #{new_version}
+
+      And replace the contents with your release notes (make sure to escape any # with \#)
+
+      Otherwise, use:
+
+          git commit -am "chore: release version #{new_version}"
+          git tag -a #{new_version} -m "release #{new_version}"
+          git push --follow-tags
+      """)
+    end
   end
 
   defp confirm_and_tag(repo, changelog_path, new_version, new_message) do
