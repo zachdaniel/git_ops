@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.9.1](https://github.com/zachdaniel/git_ops/compare/v2.9.0...v2.9.1) (2026-02-10)
+
+
+
+
+### Improvements:
+
+* require extra confirmation when upgrading from release candidate to stable by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v2.9.0](https://github.com/zachdaniel/git_ops/compare/v2.8.0...v2.9.0) (2025-08-30)
 
 
