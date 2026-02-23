@@ -50,4 +50,19 @@ defmodule GitOps.Test.GitTest do
       assert result == []
     end
   end
+
+  describe "tag_exists?/2" do
+    setup do
+      repo = Git.init!(".")
+      %{repo: repo}
+    end
+
+    test "returns true for a tag that exists locally", %{repo: repo} do
+      assert Git.tag_exists?(repo, "0.1.0")
+    end
+
+    test "returns false for a tag that does not exist locally", %{repo: repo} do
+      refute Git.tag_exists?(repo, "v999.999.999-nonexistent")
+    end
+  end
 end
