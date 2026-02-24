@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.9.2](https://github.com/zachdaniel/git_ops/compare/v2.9.1...v2.9.2) (2026-02-24)
+
+
+
+
+### Bug Fixes:
+
+* abort release when previous version tag is not fetched locally (#78) by James Harton [(#78)](https://github.com/zachdaniel/git_ops/pull/78)
+
 ## [v2.9.1](https://github.com/zachdaniel/git_ops/compare/v2.9.0...v2.9.1) (2026-02-10)
 
 
