@@ -202,6 +202,15 @@ defmodule Mix.Tasks.GitOps.Release do
           GitOps.Version.last_valid_non_rc_version(tags, prefix)
         end
 
+      unless Git.tag_exists?(repo, tag) do
+        Mix.raise("""
+        The tag #{tag} was found in the tag list but does not exist locally.
+        This can happen when tags have not been fetched from the remote.
+
+        Run `git fetch --tags` and try again.
+        """)
+      end
+
       commit_info = Git.get_commit_info(repo, tag)
       commits_for_version = Enum.map(commit_info, & &1.message)
       authors = Enum.map(commit_info, &{&1.author_name, &1.author_email})

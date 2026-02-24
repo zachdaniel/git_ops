@@ -55,6 +55,14 @@ defmodule GitOps.Git do
     end
   end
 
+  @spec tag_exists?(Git.Repository.t(), String.t()) :: boolean()
+  def tag_exists?(repo, tag) do
+    case Git.rev_parse(repo, ["--verify", "refs/tags/#{tag}"]) do
+      {:ok, _} -> true
+      {:error, _} -> false
+    end
+  end
+
   @spec get_commit_info(Git.Repository.t(), String.t() | :all) :: [commit_info()]
   def get_commit_info(repo, since_tag \\ :all) do
     format = "--format=%H--hash--%B--message--%an--author--%ae--gitops--"
