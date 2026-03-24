@@ -22,6 +22,18 @@ defmodule GitOps.Test.VersionReplaceTest do
     """
   end
 
+  def mix_contents(version) do
+    """
+    defmodule MyApp.MixProject do
+      @version "#{version}"
+
+      def project do
+        [version: @version]
+      end
+    end
+    """
+  end
+
   def package_json_contents(version) do
     """
     {
@@ -32,54 +44,49 @@ defmodule GitOps.Test.VersionReplaceTest do
 
   setup do
     readme = "TEST_README.md"
+    mix_file = "TEST_MIX.exs"
+    package_json = "package.json"
     version = "0.1.1"
 
-    readme_contents = readme_contents(version)
-
-    File.write!(readme, readme_contents)
-
-    package_json = "package.json"
+    File.write!(readme, readme_contents(version))
+    File.write!(mix_file, mix_contents(version))
     File.write!(package_json, package_json_contents(version))
 
     on_exit(fn ->
       File.rm!(readme)
+      File.rm!(mix_file)
       File.rm!(package_json)
     end)
 
-    %{readme: readme, package_json: package_json, version: version}
+    %{readme: readme, mix_file: mix_file, package_json: package_json, version: version}
   end
 
-  test "that README gets written to properly", context do
-    readme = context.readme
-    version = context.version
-    new_version = "1.0.0"
-
-    VersionReplace.update_readme(readme, version, new_version)
-
-    assert File.read!(readme) == readme_contents(new_version)
+  test "string-style replacement updates README properly", context do
+    managed_file = {context.readme, fn v -> ", \"~> #{v}\"" end, fn v -> ", \"~> #{v}\"" end}
+    VersionReplace.update_managed_file(managed_file, context.version, "1.0.0")
+    assert File.read!(context.readme) == readme_contents("1.0.0")
   end
 
-  test "that README changes are not written with dry_run", context do
-    readme = context.readme
-    version = context.version
-    new_version = "1.0.0"
+  test "mix-style replacement updates version attribute", context do
+    managed_file =
+      {context.mix_file, fn v -> "@version \"#{v}\"" end, fn v -> "@version \"#{v}\"" end}
 
-    VersionReplace.update_readme(readme, version, new_version, dry_run: true)
-
-    assert File.read!(readme) == readme_contents(version)
+    VersionReplace.update_managed_file(managed_file, context.version, "1.0.0")
+    assert File.read!(context.mix_file) == mix_contents("1.0.0")
   end
 
-  test "custom replace/pattern", context do
-    readme = context.package_json
-    version = context.version
-    new_version = "1.0.0"
+  test "changes are not written with dry_run", context do
+    managed_file = {context.readme, fn v -> ", \"~> #{v}\"" end, fn v -> ", \"~> #{v}\"" end}
+    VersionReplace.update_managed_file(managed_file, context.version, "1.0.0", dry_run: true)
+    assert File.read!(context.readme) == readme_contents(context.version)
+  end
 
-    VersionReplace.update_readme(
-      {readme, fn v -> "\"version\": \"#{v}\"" end, fn v -> "\"version\": \"#{v}\"" end},
-      version,
-      new_version
-    )
+  test "custom replace/pattern functions", context do
+    managed_file =
+      {context.package_json, fn v -> "\"version\": \"#{v}\"" end,
+       fn v -> "\"version\": \"#{v}\"" end}
 
-    assert File.read!(readme) == package_json_contents(new_version)
+    VersionReplace.update_managed_file(managed_file, context.version, "1.0.0")
+    assert File.read!(context.package_json) == package_json_contents("1.0.0")
   end
 end

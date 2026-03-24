@@ -118,6 +118,48 @@ defmodule GitOps.Config do
 
   def prefix, do: Application.get_env(:git_ops, :version_tag_prefix) || ""
 
+  def managed_files do
+    explicit = Application.get_env(:git_ops, :managed_files, [])
+
+    mix_version_files =
+      if manage_mix_version?() do
+        source = mix_project().module_info()[:compile][:source] |> to_string()
+        [{source, :mix}]
+      else
+        []
+      end
+
+    readme_files =
+      case manage_readme_version() do
+        false ->
+          []
+
+        readme_config ->
+          readme_config
+          |> List.wrap()
+          |> Enum.map(fn
+            {_path, _replace, _pattern} = tuple -> tuple
+            path when is_binary(path) -> {path, :string}
+          end)
+      end
+
+    (mix_version_files ++ readme_files ++ explicit)
+    |> Enum.map(&desugar_managed_file/1)
+  end
+
+  defp desugar_managed_file({path, :mix}) do
+    {path, fn v -> "@version \"#{v}\"" end, fn v -> "@version \"#{v}\"" end}
+  end
+
+  defp desugar_managed_file({path, :string}) do
+    {path, fn v -> ", \"~> #{v}\"" end, fn v -> ", \"~> #{v}\"" end}
+  end
+
+  defp desugar_managed_file({_path, replace, pattern} = tuple)
+       when is_function(replace, 1) and is_function(pattern, 1) do
+    tuple
+  end
+
   defp truthy?(nil), do: false
   defp truthy?(false), do: false
   defp truthy?(_), do: true
