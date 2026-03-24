@@ -39,7 +39,7 @@ defmodule GitOps.GitHub do
     if email do
       case Req.get("#{GitOps.Config.github_api_base_url()}/search/users",
              headers: github_headers(),
-             params: [q: "#{email} in:email", per_page: 2]
+             params: [q: "#{email} in:email type:user", per_page: 2]
            ) do
         {:ok, %Req.Response{status: 200, body: %{"items" => [first_user | _]}}} ->
           {:ok,
