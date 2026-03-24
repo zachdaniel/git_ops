@@ -99,6 +99,12 @@ config :git_ops,
   # Instructs the tool to manage the version in your README.md
   # Pass in `true` to use `"README.md"` or a string to customize
   manage_readme_version: "README.md",
+  # Manage an arbitrary list of files during release.
+  # See "Managing additional files" below for details.
+  managed_files: [
+    {"apps/my_app/mix.exs", :mix},
+    {"README.md", :string}
+  ],
   version_tag_prefix: "v"
 ```
 
@@ -136,6 +142,33 @@ Most project readmes have a line like this that would ideally remain up to date:
 You can keep that number up to date via `manage_readme_version`, which accepts
 `true` for `README.md` or a string pointing to some other path relative to your
 project root.
+
+## Managing additional files
+
+For projects that need to update version strings in multiple files (e.g. poncho
+apps with several `mix.exs` files), use the `managed_files` option:
+
+```elixir
+config :git_ops,
+  managed_files: [
+    {"apps/my_app/mix.exs", :mix},
+    {"apps/my_other_app/mix.exs", :mix},
+    {"README.md", :string},
+    {"package.json", fn v -> "\"version\": \"#{v}\"" end, fn v -> "\"version\": \"#{v}\"" end}
+  ]
+```
+
+Each entry is a tuple describing a file and how to find/replace the version
+string within it:
+
+- `{path, :mix}` — replaces `@version "x.y.z"` (same pattern as `manage_mix_version?`)
+- `{path, :string}` — replaces `"~> x.y.z"` (same pattern as `manage_readme_version`)
+- `{path, replace_fn, pattern_fn}` — custom functions that each take a version
+  string and return the text to find/replace
+
+The `managed_files` list is merged with any files contributed by
+`manage_mix_version?` and `manage_readme_version`, so you can use all three
+options together or migrate to `managed_files` entirely.
 
 ## Using this with open source projects
 

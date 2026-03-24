@@ -233,40 +233,26 @@ defmodule Mix.Tasks.GitOps.Release do
 
   defp create_and_display_changes(current_version, new_version, changelog_changes, opts) do
     changelog_file = Config.changelog_file()
-    mix_project_module = Config.mix_project()
-    readme = Config.manage_readme_version()
 
     Mix.shell().info("Your new version is: #{new_version}\n")
 
-    mix_project_changes =
-      if Config.manage_mix_version?() do
-        VersionReplace.update_mix_project(
-          mix_project_module,
-          current_version,
-          new_version,
-          opts
-        )
-      end
-
-    readme_changes =
-      readme
-      |> List.wrap()
-      |> Enum.reject(&(&1 == false))
-      |> Enum.map(fn readme ->
-        {readme, VersionReplace.update_readme(readme, current_version, new_version, opts)}
+    managed_file_changes =
+      Config.managed_files()
+      |> Enum.map(fn {path, _replace, _pattern} = managed_file ->
+        {path,
+         VersionReplace.update_managed_file(managed_file, current_version, new_version, opts)}
       end)
 
     if opts[:dry_run] do
       "Below are the contents of files that will change.\n"
       |> append_changes_to_message(changelog_file, changelog_changes)
-      |> add_readme_changes(readme_changes)
-      |> append_changes_to_message(mix_project_module, mix_project_changes)
+      |> add_managed_file_changes(managed_file_changes)
       |> Mix.shell().info()
     end
   end
 
-  defp add_readme_changes(message, readme_changes) do
-    Enum.reduce(readme_changes, message, fn {file, changes}, message ->
+  defp add_managed_file_changes(message, managed_file_changes) do
+    Enum.reduce(managed_file_changes, message, fn {file, changes}, message ->
       append_changes_to_message(message, file, changes)
     end)
   end
