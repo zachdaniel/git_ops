@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.9.3](https://github.com/zachdaniel/git_ops/compare/v2.9.2...v2.9.3) (2026-03-24)
+
+
+
+
+### Bug Fixes:
+
+* GitHub: exclude organisations from user search response (#80) by [@jimsynz](https://github.com/jimsynz) [(#80)](https://github.com/zachdaniel/git_ops/pull/80)
+
 ## [v2.9.2](https://github.com/zachdaniel/git_ops/compare/v2.9.1...v2.9.2) (2026-02-24)
 
 
