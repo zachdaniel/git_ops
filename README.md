@@ -3,10 +3,7 @@
 [![Hex pm](http://img.shields.io/hexpm/v/git_ops.svg?style=flat)](https://hex.pm/packages/git_ops)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/git_ops/)
 [![Total Download](https://img.shields.io/hexpm/dt/git_ops.svg)](https://hex.pm/packages/git_ops)
-[![License](https://img.shields.io/hexpm/l/git_ops.svg)](https://github.com/zachdaniel/git_opts/blob/master/LICENSE)
-[![Build Status](https://travis-ci.com/zachdaniel/git_ops.svg?branch=master)](https://travis-ci.com/zachdaniel/git_ops)
-[![Inline docs](http://inch-ci.org/github/zachdaniel/git_ops.svg?branch=master)](http://inch-ci.org/github/zachdaniel/git_ops)
-[![Coverage Status](https://coveralls.io/repos/github/zachdaniel/git_ops/badge.svg?branch=master)](https://coveralls.io/github/zachdaniel/git_ops?branch=master)
+[![License](https://img.shields.io/hexpm/l/git_ops.svg)](https://github.com/zachdaniel/git_ops/blob/master/LICENSE)
 
 A small tool to help generate changelogs from conventional commit messages.
 For more information, see [conventional
