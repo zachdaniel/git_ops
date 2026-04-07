@@ -17,6 +17,7 @@ defmodule GitOps.Mix.Tasks.Test.ReleaseTest do
       Application.put_env(:git_ops, :manage_readme_version, true)
       Application.put_env(:git_ops, :types, custom: [header: "Custom"], docs: [hidden?: false])
       Application.put_env(:git_ops, :version_tag_prefix, "v")
+      Application.put_env(:git_ops, :github_handle_lookup?, false)
 
       on_exit(fn -> File.rm!(changelog) end)
 
@@ -40,6 +41,7 @@ defmodule GitOps.Mix.Tasks.Test.ReleaseTest do
       Application.put_env(:git_ops, :changelog_file, changelog)
       Application.put_env(:git_ops, :manage_readme_version, true)
       Application.put_env(:git_ops, :types, custom: [header: "Custom"], docs: [hidden?: false])
+      Application.put_env(:git_ops, :github_handle_lookup?, false)
 
       on_exit(fn -> File.rm!(changelog) end)
 
@@ -64,6 +66,7 @@ defmodule GitOps.Mix.Tasks.Test.ReleaseTest do
       Application.put_env(:git_ops, :manage_readme_version, true)
       Application.put_env(:git_ops, :types, custom: [header: "Custom"], docs: [hidden?: false])
       Application.put_env(:git_ops, :version_tag_prefix, "")
+      Application.put_env(:git_ops, :github_handle_lookup?, false)
 
       on_exit(fn -> File.rm!(changelog) end)
 

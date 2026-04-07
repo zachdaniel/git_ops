@@ -96,7 +96,7 @@ defmodule GitOps.Commit do
       end
 
     footer_text =
-      if breaking? && String.starts_with?(body || "", "BREAKING CHANGE:") do
+      if breaking? && footer && String.starts_with?(body || "", "BREAKING CHANGE:") do
         "\n\n" <> footer
       end
 
@@ -221,13 +221,16 @@ defmodule GitOps.Commit do
   end
 
   defp build_commit(parsed, body_lines, author_info, hash) do
-    remaining =
+    body =
       body_lines
       |> Enum.map(&String.trim/1)
       |> Enum.reject(&(&1 == ""))
+      |> Enum.join("\n\n")
+      |> case do
+        "" -> nil
+        text -> text
+      end
 
-    body = Enum.at(remaining, 0)
-    footer = Enum.at(remaining, 1)
     {author_name, author_email} = author_info || {nil, nil}
 
     %__MODULE__{
@@ -235,8 +238,8 @@ defmodule GitOps.Commit do
       scope: scopes(parsed[:scope]),
       message: Enum.at(parsed[:message], 0),
       body: body,
-      footer: footer,
-      breaking?: breaking?(parsed[:breaking?], body, footer),
+      footer: nil,
+      breaking?: breaking?(parsed[:breaking?], body, nil),
       author_name: author_name,
       author_email: author_email,
       hash: hash
@@ -248,6 +251,5 @@ defmodule GitOps.Commit do
 
   defp breaking?(breaking, _, _) when not is_nil(breaking), do: true
   defp breaking?(_, "BREAKING CHANGE:" <> _, _), do: true
-  defp breaking?(_, _, "BREAKING CHANGE:" <> _), do: true
   defp breaking?(_, _, _), do: false
 end

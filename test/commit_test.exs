@@ -105,13 +105,13 @@ defmodule GitOps.Test.CommitTest do
     assert [
              %Commit{
                message: "fixed a bug",
-               body: "some text about it",
-               footer: "some even more data about it"
+               body: "some text about it\n\nsome even more data about it",
+               footer: nil
              },
              %Commit{
                message: "improved a thing",
-               body: "some other text about it",
-               footer: "some even more text about it"
+               body: "some other text about it\n\nsome even more text about it",
+               footer: nil
              }
            ] = parse_many!(text)
   end
@@ -215,8 +215,9 @@ defmodule GitOps.Test.CommitTest do
 
       assert %Commit{
                message: "resolve memory leak",
-               body: "The connection pool was not being drained on shutdown.",
-               footer: "This caused OOM errors in production."
+               body:
+                 "The connection pool was not being drained on shutdown.\n\nThis caused OOM errors in production.",
+               footer: nil
              } = parse_one!(text)
     end
 
@@ -231,7 +232,8 @@ defmodule GitOps.Test.CommitTest do
 
       commit = parse_one!(text)
       assert commit.breaking?
-      assert commit.body == "BREAKING CHANGE: The v1 API has been removed."
+      assert commit.body ==
+               "BREAKING CHANGE: The v1 API has been removed.\n\nUsers must migrate to v2."
     end
 
     test "non-conventional first line returns error" do
