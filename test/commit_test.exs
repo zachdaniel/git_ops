@@ -177,4 +177,71 @@ defmodule GitOps.Test.CommitTest do
     assert Commit.format(commit) ==
              "* add new feature by @johndoe [(#123)](https://github.com/johndoe/repo/pull/123)"
   end
+
+  describe "multi-line commit messages" do
+    test "dependabot-style commit with complex body parses successfully" do
+      text = """
+      chore(deps): bump foo from 1.0 to 2.0
+
+      Bumps [foo](https://github.com/foo/foo) from 1.0 to 2.0.
+      - [Release notes](https://github.com/foo/foo/releases)
+      - [Changelog](https://github.com/foo/foo/blob/main/CHANGELOG.md)
+
+      ---
+      updated-dependencies:
+      - dependency-name: foo
+        dependency-type: direct:production
+        update-type: version-update:semver-minor
+      ...
+
+      Signed-off-by: dependabot[bot] <support@github.com>
+      """
+
+      {:ok, [first | _]} = Commit.parse(text)
+
+      assert first.type == "chore"
+      assert first.scope == ["deps"]
+      assert first.message == "bump foo from 1.0 to 2.0"
+    end
+
+    test "body and footer are extracted from non-commit lines" do
+      text = """
+      fix: resolve memory leak
+
+      The connection pool was not being drained on shutdown.
+
+      This caused OOM errors in production.
+      """
+
+      assert %Commit{
+               message: "resolve memory leak",
+               body: "The connection pool was not being drained on shutdown.",
+               footer: "This caused OOM errors in production."
+             } = parse_one!(text)
+    end
+
+    test "BREAKING CHANGE in body is still detected" do
+      text = """
+      feat!: remove deprecated API
+
+      BREAKING CHANGE: The v1 API has been removed.
+
+      Users must migrate to v2.
+      """
+
+      commit = parse_one!(text)
+      assert commit.breaking?
+      assert commit.body == "BREAKING CHANGE: The v1 API has been removed."
+    end
+
+    test "non-conventional first line returns error" do
+      text = """
+      Bump actions/checkout from 3 to 4
+
+      Bumps [actions/checkout](https://github.com/actions/checkout) from 3 to 4.
+      """
+
+      assert :error = Commit.parse(text)
+    end
+  end
 end

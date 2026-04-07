@@ -158,37 +158,20 @@ defmodule GitOps.Commit do
 
   def parse(%{text: text, author_info: author_info, hash: hash} = commit_opts)
       when is_map(commit_opts) do
-    case commits(text) do
-      {:ok, [], _, _, _, _} ->
+    lines = String.split(text, "\n")
+    first_line = lines |> List.first("") |> String.trim()
+    rest_lines = Enum.drop(lines, 1)
+
+    case try_parse_line(first_line) do
+      :error ->
         :error
 
-      {:ok, results, _remaining, _state, _dunno, _also_dunno} ->
+      {:ok, first_parsed} ->
+        commits_with_bodies = partition_lines(first_parsed, rest_lines)
+
         commits =
-          Enum.map(results, fn {:commit, result} ->
-            remaining_lines =
-              result[:body]
-              |> Enum.map_join("\n", &String.trim/1)
-              # Remove multiple newlines
-              |> String.split("\n")
-              |> Enum.map(&String.trim/1)
-              |> Enum.reject(&Kernel.==(&1, ""))
-
-            body = Enum.at(remaining_lines, 0)
-            footer = Enum.at(remaining_lines, 1)
-
-            {author_name, author_email} = author_info || {nil, nil}
-
-            %__MODULE__{
-              type: Enum.at(result[:type], 0),
-              scope: scopes(result[:scope]),
-              message: Enum.at(result[:message], 0),
-              body: body,
-              footer: footer,
-              breaking?: breaking?(result[:breaking?], body, footer),
-              author_name: author_name,
-              author_email: author_email,
-              hash: hash
-            }
+          Enum.map(commits_with_bodies, fn {parsed, body_lines} ->
+            build_commit(parsed, body_lines, author_info, hash)
           end)
 
         {:ok, commits}
@@ -210,6 +193,54 @@ defmodule GitOps.Commit do
 
   def fix?(%GitOps.Commit{type: type}) do
     String.downcase(type) == "fix" || String.downcase(type) == "improvement"
+  end
+
+  defp try_parse_line(line) do
+    case commits(line) do
+      {:ok, [{:commit, result} | _], _, _, _, _} -> {:ok, result}
+      _ -> :error
+    end
+  end
+
+  defp partition_lines(first_parsed, lines) do
+    {completed, current_parsed, current_body} =
+      Enum.reduce(lines, {[], first_parsed, []}, fn line,
+                                                    {completed, current_parsed, current_body} ->
+        case try_parse_line(String.trim(line)) do
+          {:ok, new_parsed} ->
+            finalized = {current_parsed, Enum.reverse(current_body)}
+            {[finalized | completed], new_parsed, []}
+
+          :error ->
+            {completed, current_parsed, [line | current_body]}
+        end
+      end)
+
+    final = {current_parsed, Enum.reverse(current_body)}
+    Enum.reverse([final | completed])
+  end
+
+  defp build_commit(parsed, body_lines, author_info, hash) do
+    remaining =
+      body_lines
+      |> Enum.map(&String.trim/1)
+      |> Enum.reject(&(&1 == ""))
+
+    body = Enum.at(remaining, 0)
+    footer = Enum.at(remaining, 1)
+    {author_name, author_email} = author_info || {nil, nil}
+
+    %__MODULE__{
+      type: Enum.at(parsed[:type], 0),
+      scope: scopes(parsed[:scope]),
+      message: Enum.at(parsed[:message], 0),
+      body: body,
+      footer: footer,
+      breaking?: breaking?(parsed[:breaking?], body, footer),
+      author_name: author_name,
+      author_email: author_email,
+      hash: hash
+    }
   end
 
   defp scopes([value]) when is_bitstring(value), do: String.split(value, ",")
