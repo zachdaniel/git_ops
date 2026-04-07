@@ -24,3 +24,4 @@ git_ops-*.tar
 
 /.elixir_ls/
 /.elixir-tools/
+.claude
