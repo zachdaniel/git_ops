@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.10.0](https://github.com/zachdaniel/git_ops/compare/v2.9.3...v2.10.0) (2026-04-12)
+
+
+
+
+### Features:
+
+* add `managed_files` config for updating arbitrary files on release (#81) by [@jimsynz](https://github.com/jimsynz) [(#81)](https://github.com/zachdaniel/git_ops/pull/81)
+
+### Bug Fixes:
+
+* parse multi-line commit messages without errors (#83) by [@jimsynz](https://github.com/jimsynz) [(#83)](https://github.com/zachdaniel/git_ops/pull/83)
+
 ## [v2.9.3](https://github.com/zachdaniel/git_ops/compare/v2.9.2...v2.9.3) (2026-03-24)
 
 
