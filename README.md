@@ -102,8 +102,93 @@ config :git_ops,
     {"apps/my_app/mix.exs", :mix},
     {"README.md", :string}
   ],
-  version_tag_prefix: "v"
+  version_tag_prefix: "v",
+  # Where the current version is read from:
+  # :mix (default) reads the configured mix_project's version,
+  # :tags reads the last valid version tag, and
+  # {:file, path, regex} reads the regex's first capture group from path.
+  # :tags and {:file, ...} need no mix project, enabling non-Elixir projects.
+  version_source: :mix
 ```
+
+## Configuration with `git_ops.json`
+
+A `git_ops.json` file at the repository root takes precedence over the
+application environment, and is how repositories without a mix project — or
+with more than one package — configure git_ops. With a config file the
+current version is read from tags by default (`version_source: "tags"`), so
+no mix project is required.
+
+```json
+{
+  "repository_url": "https://github.com/my_user/my_repo",
+  "types": {"docs": {"hidden": true}, "important": {"header": "Important Changes"}},
+  "version_tag_prefix": "v",
+  "managed_files": [{"path": "package.json", "type": "json"}]
+}
+```
+
+`managed_files` entries take a `type` (`"mix"`, `"json"` for a
+`"version": "..."` field, `"raw"` for a file whose whole content is the
+version, or `"string"`) or a custom `"pattern"` template in which
+`{version}` is replaced.
+
+### Monorepos
+
+A `packages` map releases each package independently: commits are attributed
+to the deepest package whose path contains them, each package gets its own
+`<name>-v`-prefixed tags and its own `CHANGELOG.md`, and one
+`mix git_ops.release` run releases everything that changed, as one commit
+with one tag per released package.
+
+```json
+{
+  "repository_url": "https://github.com/my_user/my_repo",
+  "first_parent": true,
+  "packages": {
+    "my_app": {"managed_files": [{"path": "mix.exs", "type": "mix"}]},
+    "web": {
+      "managed_files": [{"path": "package.json", "type": "json"}],
+      "exclude_paths": ["docs"],
+      "patch_on_any_change": true
+    },
+    "web/shared": {"managed_files": [{"path": "package.json", "type": "json"}]}
+  },
+  "linked_packages": [["web", "web/shared"]]
+}
+```
+
+Per-package options: `name` (defaults to the directory basename),
+`version_tag_prefix` (defaults to `<name>-v`), `changelog_file`,
+`version_source`, `managed_files` (paths are package-relative),
+`exclude_paths` (package-relative paths whose commits don't count),
+`patch_on_any_change` (release a patch for any conventional commit, not just
+fixes and features), and `pr_group` (see below). `linked_packages` groups
+always release together at the same version. `first_parent` restricts commit
+collection to the first parent of merges, so only merge/squash commits on
+the branch itself count.
+
+### Releasing through pull requests
+
+`"release_strategy": "pull_request"` turns `mix git_ops.release` into a
+proposal step: instead of committing and tagging, it pushes a
+`git-ops/release/<name>` branch containing the changelog and version-file
+updates (the working tree is never touched) and opens or updates a pull
+request, authenticated by the `GITHUB_TOKEN` environment variable. Packages
+sharing a `pr_group` share one branch and pull request; every other package
+gets its own. A top-level `pr_labels` list is applied to each pull request
+when it is first created.
+
+Merging a release pull request is the release. `mix git_ops.tag_merged` —
+run on every push to the base branch — reconciles the rest: any package
+whose version file holds a version with no matching tag gets tagged at the
+commit that set it, the tag is pushed, and a GitHub release is created from
+its changelog entry. Both tasks are idempotent, so a run that dies partway
+is repaired by the next one.
+
+`mix git_ops.release --dry-run --output some/dir` writes each would-be pull
+request's body and file contents under `some/dir` without pushing anything —
+useful for reviewing what a config change does to the release plan.
 
 Getting started:
 

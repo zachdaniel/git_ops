@@ -46,6 +46,18 @@ defmodule GitOps.Test.ConfigTest do
     Config.mix_project_check(initial: true)
   end
 
+  test "version_source defaults to :mix" do
+    assert Config.version_source() == :mix
+  end
+
+  test "mix_project_check ignores the mix project when version_source is not :mix" do
+    Application.put_env(:git_ops, :mix_project, InvalidProject)
+    Application.put_env(:git_ops, :version_source, :tags)
+    on_exit(fn -> Application.delete_env(:git_ops, :version_source) end)
+
+    Config.mix_project_check(initial: true)
+  end
+
   test "mix_project_check succeeds on valid project" do
     changelog = "CUSTOM_CHANGELOG.md"
 

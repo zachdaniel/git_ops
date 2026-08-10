@@ -232,6 +232,7 @@ defmodule GitOps.Test.CommitTest do
 
       commit = parse_one!(text)
       assert commit.breaking?
+
       assert commit.body ==
                "BREAKING CHANGE: The v1 API has been removed.\n\nUsers must migrate to v2."
     end

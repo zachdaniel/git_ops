@@ -10,7 +10,24 @@ defmodule GitOps.Changelog do
   def write(path, commits, last_version, current_version, opts \\ []) do
     original_file_contents = File.read!(path)
 
-    [head | rest] = String.split(original_file_contents, "<!-- changelog -->")
+    {new_contents, entry} =
+      render(original_file_contents, commits, last_version, current_version, opts)
+
+    if !opts[:dry_run] do
+      File.write!(path, new_contents)
+    end
+
+    entry
+  end
+
+  @doc """
+  The updated changelog contents and the new entry, without touching the
+  filesystem.
+  """
+  @spec render(String.t(), [Commit.t()], String.t(), String.t(), Keyword.t()) ::
+          {String.t(), String.t()}
+  def render(original_file_contents, commits, last_version, current_version, opts \\ []) do
+    {head, rest, insert_marker?} = split_at_insertion_point(original_file_contents)
 
     config_types = Config.types()
 
@@ -49,7 +66,8 @@ defmodule GitOps.Changelog do
     version_header =
       if repository_url do
         trimmed_url = String.trim_trailing(repository_url, "/")
-        compare_link = compare_link(trimmed_url, last_version, current_version)
+        prefix = opts[:prefix] || Config.prefix()
+        compare_link = compare_link(trimmed_url, prefix, last_version, current_version)
 
         ["## [", current_version, "](", compare_link, ") ", date]
       else
@@ -65,51 +83,74 @@ defmodule GitOps.Changelog do
         contents_to_insert
       ])
 
+    separator = if insert_marker?, do: "\n\n<!-- changelog -->\n\n", else: "\n\n"
+
     new_contents =
       IO.iodata_to_binary([
         String.trim(head),
-        "\n\n<!-- changelog -->\n\n",
+        separator,
         new_message,
         rest
       ])
 
-    if !opts[:dry_run] do
-      File.write!(path, new_contents)
-    end
-
-    String.trim(new_message)
+    {new_contents, String.trim(new_message)}
   end
 
-  @spec initialize(String.t(), Keyword.t()) :: :ok
-  def initialize(path, opts \\ []) do
-    contents = """
+  @spec initial_contents() :: String.t()
+  def initial_contents do
+    String.trim_leading("""
     # Change Log
 
     All notable changes to this project will be documented in this file.
     See [Conventional Commits](Https://conventionalcommits.org) for commit guidelines.
 
     <!-- changelog -->
-    """
+    """)
+  end
 
+  @spec initialize(String.t(), Keyword.t()) :: :ok
+  def initialize(path, opts \\ []) do
     if File.exists?(path) do
       raise "\nFile already exists: #{path}. Please remove it to initialize."
     end
 
     if !opts[:dry_run] do
-      File.write!(path, String.trim_leading(contents))
+      File.write!(path, initial_contents())
     end
 
     :ok
   end
 
-  defp compare_link(url, last_version, current_version) do
+  # Without a `<!-- changelog -->` marker, insert before the first version
+  # header so changelogs that predate git_ops keep their entries in order.
+  defp split_at_insertion_point(contents) do
+    case String.split(contents, "<!-- changelog -->") do
+      [_] ->
+        case Regex.run(~r/^#+ \[?v?\d/m, contents, return: :index) do
+          [{index, _}] ->
+            {binary_part(contents, 0, index),
+             ["\n\n", binary_part(contents, index, byte_size(contents) - index)], false}
+
+          nil ->
+            {contents, "", false}
+        end
+
+      [head | rest] ->
+        {head, rest, true}
+    end
+  end
+
+  defp compare_link(url, prefix, last_version, current_version) do
     [
       url,
       "/compare/",
-      Config.prefix(),
-      last_version,
+      prefixed(prefix, last_version),
       "...",
-      current_version
+      prefixed(prefix, current_version)
     ]
+  end
+
+  defp prefixed(prefix, version) do
+    if String.starts_with?(version, prefix), do: version, else: prefix <> version
   end
 end

@@ -19,7 +19,7 @@ defmodule Mix.Tasks.GitOps.Release do
   ## Switches:
 
   * `--initial` - Creates the first changelog, and sets the version to whatever the
-    configured mix project's version is.
+    configured `version_source` currently reports (the mix project's version by default).
 
   * `--pre-release` - Sets this release to be a pre release, using the configured
     string as the pre release identifier. This is a manual process, and results in
@@ -55,6 +55,9 @@ defmodule Mix.Tasks.GitOps.Release do
 
   * `--dry-run` - Allow users to run release process and view changes without committing and tagging
 
+  * `--output` - A directory to write proposed release contents into (pull request bodies and
+    updated files). Useful with `--dry-run` to inspect what a release would do.
+
   * `--yes` - Don't prompt for confirmation, just perform release.  Useful for your CI run.
 
   * `--override` - Provide an explicit version override
@@ -64,6 +67,7 @@ defmodule Mix.Tasks.GitOps.Release do
   alias GitOps.Commit
   alias GitOps.Config
   alias GitOps.Git
+  alias GitOps.Package
   alias GitOps.VersionReplace
 
   @doc false
@@ -72,13 +76,142 @@ defmodule Mix.Tasks.GitOps.Release do
 
     Config.mix_project_check(opts)
 
-    mix_project_module = Config.mix_project()
-    mix_project = mix_project_module.project()
+    case {Config.release_strategy(), Config.packages()} do
+      {:pull_request, packages} -> run_pull_request(packages, opts)
+      {:commit, [%Package{root?: true} = package]} -> run_single(package, opts)
+      {:commit, packages} -> run_packages(packages, opts)
+    end
+  end
 
+  defp run_pull_request(packages, opts) do
+    reject_unsupported_switches(packages, opts)
+
+    repo = Git.init!(Config.repository_path())
+
+    plans =
+      packages
+      |> Enum.map(&plan_package(repo, &1, packages, opts))
+      |> Enum.reject(&is_nil/1)
+      |> apply_linked_packages(repo, packages, opts)
+
+    if Enum.empty?(plans) do
+      Mix.shell().info("No packages have releasable changes.")
+    else
+      base_branch = Git.current_branch!(repo)
+
+      plans
+      |> Enum.group_by(fn plan -> plan.package.pr_group || plan.package.name || "release" end)
+      |> Enum.sort_by(fn {name, _} -> name end)
+      |> Enum.each(fn {name, unit_plans} ->
+        propose_unit(repo, name, unit_plans, base_branch, opts)
+      end)
+    end
+  end
+
+  defp propose_unit(repo, name, plans, base_branch, opts) do
+    branch = "git-ops/release/#{name}"
+    {plans, files} = render_unit(repo, plans, opts)
+
+    title =
+      case plans do
+        [plan] -> "chore: release #{plan.package.name || name} #{plan.new_version}"
+        _ -> "chore: release #{name}"
+      end
+
+    body =
+      "Merging this pull request releases:\n\n" <>
+        Enum.map_join(plans, "\n\n", fn plan ->
+          "**#{plan.package.name || name}**\n\n#{plan.entry}"
+        end)
+
+    Enum.each(plans, fn plan ->
+      Mix.shell().info("#{plan.package.name || name}: #{plan.current} -> #{plan.new_version}")
+    end)
+
+    if output = opts[:output] do
+      dir = Path.join(output, name)
+      File.mkdir_p!(dir)
+      File.write!(Path.join(dir, "PR_BODY.md"), body)
+
+      Enum.each(files, fn {path, contents} ->
+        File.write!(Path.join(dir, String.replace(path, "/", "__")), contents)
+      end)
+    end
+
+    if opts[:dry_run] do
+      Mix.shell().info("Dry run: would push #{branch} and open a pull request.\n")
+    else
+      sha = Git.commit_tree!(repo, "HEAD", files, title)
+      Git.push!(repo, sha, "refs/heads/#{branch}")
+
+      case GitOps.GitHub.upsert_pull_request(branch, base_branch, title, body, Config.pr_labels()) do
+        {:ok, url} -> Mix.shell().info("Pull request: #{url}\n")
+        {:error, error} -> Mix.raise("Could not open pull request for #{branch}: #{error}")
+      end
+    end
+  end
+
+  defp render_unit(repo, plans, opts) do
+    Enum.map_reduce(plans, %{}, fn plan, files ->
+      package = plan.package
+
+      existing_changelog =
+        case Git.show(repo, "HEAD", package.changelog_file) do
+          {:ok, contents} -> contents
+          :error -> Changelog.initial_contents()
+        end
+
+      {changelog_contents, entry} =
+        Changelog.render(
+          existing_changelog,
+          plan.commits,
+          plan.current,
+          plan.new_version,
+          Keyword.put(opts, :prefix, package.prefix)
+        )
+
+      files = Map.put(files, package.changelog_file, changelog_contents)
+
+      files =
+        Enum.reduce(package.managed_files, files, fn {path, _, _} = managed_file, files ->
+          with {:ok, contents} <- Git.show(repo, "HEAD", path),
+               {:ok, new_contents} <-
+                 VersionReplace.render(managed_file, contents, plan.current, plan.new_version) do
+            Map.put(files, path, new_contents)
+          else
+            _ ->
+              Mix.shell().error(
+                "#{package.name}: could not update version #{plan.current} in #{path}, skipping"
+              )
+
+              files
+          end
+        end)
+
+      {%{plan | entry: entry}, files}
+    end)
+  end
+
+  defp reject_unsupported_switches(packages, opts) do
+    unsupported =
+      if Config.release_strategy() == :pull_request || length(packages) > 1 do
+        [:rc, :pre_release, :build, :override, :initial]
+      else
+        []
+      end
+
+    Enum.each(unsupported, fn switch ->
+      if opts[switch] do
+        Mix.raise(
+          "--#{switch} is not supported with multiple packages or the pull_request strategy"
+        )
+      end
+    end)
+  end
+
+  defp run_single(package, opts) do
     changelog_file = Config.changelog_file()
     changelog_path = Path.expand(changelog_file)
-
-    current_version = String.trim(mix_project[:version])
 
     repo_path = Config.repository_path()
     repo = Git.init!(repo_path)
@@ -91,13 +224,20 @@ defmodule Mix.Tasks.GitOps.Release do
 
     prefix = Config.prefix()
 
+    current_version = current_version(tags, prefix, opts)
+
     config_types = Config.types()
     allowed_tags = Config.allowed_tags()
     allow_untagged? = Config.allow_untagged?()
     from_rc? = Version.parse!(current_version).pre != []
 
+    log_opts = [
+      paths: Enum.map(package.exclude_paths, &":^#{&1}"),
+      first_parent: Config.first_parent?()
+    ]
+
     {commit_messages_for_version, commit_messages_for_changelog, commit_authors, hashes} =
-      get_commit_messages(repo, prefix, tags, from_rc?, opts)
+      get_commit_messages(repo, prefix, tags, from_rc?, opts, log_opts)
 
     github_info =
       if Config.github_handle_lookup?() do
@@ -133,7 +273,7 @@ defmodule Mix.Tasks.GitOps.Release do
 
     prefixed_new_version =
       if opts[:initial] do
-        prefix <> mix_project[:version]
+        prefix <> current_version
       else
         GitOps.Version.determine_new_version(
           current_version,
@@ -183,9 +323,304 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp get_commit_messages(repo, prefix, tags, _from_rc?, opts) do
+  defp run_packages(packages, opts) do
+    reject_unsupported_switches(packages, opts)
+
+    repo = Git.init!(Config.repository_path())
+
+    plans =
+      packages
+      |> Enum.map(&plan_package(repo, &1, packages, opts))
+      |> Enum.reject(&is_nil/1)
+      |> apply_linked_packages(repo, packages, opts)
+
+    if Enum.empty?(plans) do
+      Mix.shell().info("No packages have releasable changes.")
+    else
+      {plans, changed_files} =
+        Enum.map_reduce(plans, [], fn plan, files ->
+          {plan, plan_files} = write_plan(plan, opts)
+          {plan, files ++ plan_files}
+        end)
+
+      Enum.each(plans, fn plan ->
+        Mix.shell().info("#{plan.package.name}: #{plan.current} -> #{plan.new_version}")
+      end)
+
+      cond do
+        opts[:dry_run] ->
+          :ok
+
+        opts[:yes] || Mix.shell().yes?("\nShall we commit and tag?") ->
+          commit_and_tag(repo, plans, changed_files)
+
+        true ->
+          Mix.shell().info("Aborted. Files were updated but not committed.")
+      end
+    end
+  end
+
+  defp plan_package(repo, package, packages, opts) do
+    tags = Git.tags(repo, package.prefix)
+    last_tag = GitOps.Version.last_valid_non_rc_version(tags, package.prefix)
+    current = package_current_version(package, tags)
+
+    if current == nil do
+      Mix.shell().error(
+        "#{package.name}: no current version found. Tag an initial version, e.g. " <>
+          "`git tag #{package.prefix}0.1.0`, or configure a version_source. Skipping."
+      )
+
+      nil
+    else
+      commits = package_commits(repo, package, packages, last_tag, opts)
+
+      bump? =
+        Enum.any?(commits, &(Commit.breaking?(&1) || Commit.feature?(&1) || Commit.fix?(&1)))
+
+      releasable? = commits != [] && (bump? || package.patch_on_any_change? || opts[:force_patch])
+
+      if releasable? do
+        effective_opts = if bump?, do: opts, else: Keyword.put(opts, :force_patch, true)
+
+        prefixed_new_version =
+          GitOps.Version.determine_new_version(
+            current,
+            package.prefix,
+            commits,
+            last_tag,
+            effective_opts
+          )
+
+        %{
+          package: package,
+          current: current,
+          new_version: String.trim_leading(prefixed_new_version, package.prefix),
+          prefixed_new_version: prefixed_new_version,
+          commits: commits,
+          entry: nil
+        }
+      end
+    end
+  end
+
+  defp package_current_version(package, tags) do
+    case package.version_source do
+      :mix ->
+        String.trim(Config.mix_project().project()[:version])
+
+      :tags ->
+        case GitOps.Version.last_valid_version(tags, package.prefix) do
+          nil -> nil
+          tag -> String.trim_leading(tag, package.prefix)
+        end
+
+      {:file, path, pattern} ->
+        case Regex.run(pattern, File.read!(path)) do
+          [_, version | _] ->
+            version
+
+          _ ->
+            Mix.raise("version_source file #{path} did not match the configured version pattern")
+        end
+    end
+  end
+
+  defp package_commits(repo, package, packages, last_tag, _opts) do
+    commit_info =
+      Git.get_commit_info(repo, last_tag || :all,
+        paths: package_paths(package, packages),
+        first_parent: Config.first_parent?()
+      )
+
+    messages = Enum.map(commit_info, & &1.message)
+    authors = Enum.map(commit_info, &{&1.author_name, &1.author_email})
+    hashes = Enum.map(commit_info, & &1.hash)
+
+    parse_commits(
+      messages,
+      authors,
+      hashes,
+      Config.types(),
+      Config.allowed_tags(),
+      Config.allow_untagged?(),
+      false
+    )
+  end
+
+  # A commit belongs to the deepest package containing it, so a package's
+  # pathspec excludes every package nested inside it.
+  defp package_paths(package, packages) do
+    nested =
+      for other <- packages,
+          other.path != package.path,
+          package.path == "." || String.starts_with?(other.path, package.path <> "/"),
+          do: other.path
+
+    excludes = package.exclude_paths ++ nested
+
+    [package.path | Enum.map(excludes, &":^#{&1}")]
+  end
+
+  defp apply_linked_packages(plans, repo, packages, opts) do
+    Enum.reduce(Config.linked_packages(), plans, fn group, plans ->
+      group_plans = Enum.filter(plans, &(&1.package.path in group))
+
+      if Enum.empty?(group_plans) do
+        plans
+      else
+        target =
+          group_plans
+          |> Enum.map(& &1.new_version)
+          |> Enum.max_by(&Version.parse!/1, Version)
+
+        planned_paths = Enum.map(group_plans, & &1.package.path)
+
+        synced =
+          for package <- packages,
+              package.path in group,
+              package.path not in planned_paths,
+              current = package_current_version(package, Git.tags(repo, package.prefix)),
+              current != nil,
+              current != target,
+              do: sync_plan(package, current, target, opts)
+
+        Enum.map(plans, fn plan ->
+          if plan.package.path in group do
+            %{
+              plan
+              | new_version: target,
+                prefixed_new_version: plan.package.prefix <> target
+            }
+          else
+            plan
+          end
+        end) ++ synced
+      end
+    end)
+  end
+
+  defp sync_plan(package, current, target, _opts) do
+    commit = %Commit{
+      type: "chore",
+      message: "synchronize linked package versions",
+      breaking?: false
+    }
+
+    %{
+      package: package,
+      current: current,
+      new_version: target,
+      prefixed_new_version: package.prefix <> target,
+      commits: [commit],
+      entry: nil
+    }
+  end
+
+  defp write_plan(plan, opts) do
+    package = plan.package
+    changelog = package.changelog_file
+
+    if !File.exists?(changelog) && !opts[:dry_run] do
+      Changelog.initialize(changelog, opts)
+    end
+
+    entry =
+      if File.exists?(changelog) do
+        Changelog.write(
+          changelog,
+          plan.commits,
+          plan.current,
+          plan.new_version,
+          Keyword.put(opts, :prefix, package.prefix)
+        )
+      else
+        ""
+      end
+
+    managed =
+      Enum.flat_map(package.managed_files, fn {path, _, _} = managed_file ->
+        case VersionReplace.update_managed_file(
+               managed_file,
+               plan.current,
+               plan.new_version,
+               opts
+             ) do
+          {:error, :bad_replace} ->
+            Mix.shell().error(
+              "#{package.name}: could not find version #{plan.current} in #{path}, skipping"
+            )
+
+            []
+
+          _ ->
+            [path]
+        end
+      end)
+
+    {%{plan | entry: entry}, [changelog | managed]}
+  end
+
+  defp commit_and_tag(repo, plans, changed_files) do
+    Git.add!(repo, changed_files)
+    Git.commit!(repo, ["-m", packages_commit_message(plans)])
+
+    Enum.each(plans, fn plan ->
+      Git.tag!(repo, [
+        "-a",
+        plan.prefixed_new_version,
+        "-m",
+        "release #{plan.prefixed_new_version}\n\n" <> release_notes(plan.entry)
+      ])
+    end)
+
+    Mix.shell().info("Don't forget to push with tags:\n\n    git push --follow-tags")
+  end
+
+  defp packages_commit_message([plan]) do
+    "chore: release version #{plan.prefixed_new_version}"
+  end
+
+  defp packages_commit_message(plans) do
+    "chore: release " <> Enum.map_join(plans, ", ", &"#{&1.package.name} #{&1.new_version}")
+  end
+
+  defp current_version(tags, prefix, opts) do
+    case Config.version_source() do
+      :mix ->
+        String.trim(Config.mix_project().project()[:version])
+
+      :tags ->
+        case GitOps.Version.last_valid_version(tags, prefix) do
+          nil ->
+            opts[:override] ||
+              Mix.raise("""
+              version_source is :tags, but no valid version tag was found#{prefix_note(prefix)}.
+
+              Use `--override` to set the version explicitly.
+              """)
+
+          tag ->
+            String.trim_leading(tag, prefix)
+        end
+
+      {:file, path, %Regex{} = pattern} ->
+        case Regex.run(pattern, File.read!(path)) do
+          [_, version | _] ->
+            version
+
+          _ ->
+            Mix.raise("version_source file #{path} did not match the configured version pattern")
+        end
+    end
+  end
+
+  defp prefix_note(""), do: ""
+  defp prefix_note(prefix), do: " (with prefix #{inspect(prefix)})"
+
+  defp get_commit_messages(repo, prefix, tags, _from_rc?, opts, log_opts) do
     if opts[:initial] do
-      commit_info = Git.get_commit_info(repo, :all)
+      commit_info = Git.get_commit_info(repo, :all, log_opts)
 
       commits = [
         Git.initial_commit_message() | Enum.map(commit_info, & &1.message)
@@ -211,7 +646,7 @@ defmodule Mix.Tasks.GitOps.Release do
         """)
       end
 
-      commit_info = Git.get_commit_info(repo, tag)
+      commit_info = Git.get_commit_info(repo, tag, log_opts)
       commits_for_version = Enum.map(commit_info, & &1.message)
       authors = Enum.map(commit_info, &{&1.author_name, &1.author_email})
       hashes = Enum.map(commit_info, & &1.hash)
@@ -219,7 +654,7 @@ defmodule Mix.Tasks.GitOps.Release do
       last_version_after = GitOps.Version.last_version_greater_than(tags, tag, prefix)
 
       if last_version_after && !opts[:rc] do
-        changelog_commit_info = Git.get_commit_info(repo, last_version_after)
+        changelog_commit_info = Git.get_commit_info(repo, last_version_after, log_opts)
         commit_messages_for_changelog = Enum.map(changelog_commit_info, & &1.message)
         changelog_authors = Enum.map(changelog_commit_info, &{&1.author_name, &1.author_email})
         hashes = Enum.map(changelog_commit_info, & &1.hash)
@@ -261,58 +696,45 @@ defmodule Mix.Tasks.GitOps.Release do
     Git.add!(repo, [changelog_path])
     Git.commit!(repo, ["-am", "chore: release version #{new_version}"])
 
-    new_message =
-      new_message
-      |> String.replace(~r/^#+/m, "")
-      |> String.split("\n")
-      |> Enum.map(&String.trim/1)
-      |> Enum.reject(&(&1 == ""))
-      |> Enum.join("\n")
-
-    Git.tag!(repo, ["-a", new_version, "-m", "release #{new_version}\n\n" <> new_message])
+    Git.tag!(repo, [
+      "-a",
+      new_version,
+      "-m",
+      "release #{new_version}\n\n" <> release_notes(new_message)
+    ])
 
     Mix.shell().info("Don't forget to push with tags:\n\n    git push --follow-tags")
   end
 
+  defp release_notes(changelog_entry) do
+    changelog_entry
+    |> String.replace(~r/^#+/m, "")
+    |> String.split("\n")
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.join("\n")
+  end
+
   defp confirm_rc_upgrade(repo, changelog_path, new_version, new_message) do
-    message = """
+    confirm_tag(repo, changelog_path, new_version, new_message, """
     You are releasing #{new_version}, which is a stable release from a release candidate.
 
     Are you sure you want to proceed?
 
     Instructions will be printed for committing and tagging if you choose no.
-    """
-
-    if Mix.shell().yes?(message) do
-      tag(repo, changelog_path, new_version, new_message)
-    else
-      Mix.shell().info("""
-      If you want to do it on your own, make sure you tag the release with:
-
-      If you want to include your release notes in the tag message, use
-
-          git commit -am "chore: release version #{new_version}"
-          git tag -a #{new_version}
-
-      And replace the contents with your release notes (make sure to escape any # with \#)
-
-      Otherwise, use:
-
-          git commit -am "chore: release version #{new_version}"
-          git tag -a #{new_version} -m "release #{new_version}"
-          git push --follow-tags
-      """)
-    end
+    """)
   end
 
   defp confirm_and_tag(repo, changelog_path, new_version, new_message) do
-    message = """
+    confirm_tag(repo, changelog_path, new_version, new_message, """
     Shall we commit and tag?
 
     Instructions will be printed for committing and tagging if you choose no.
-    """
+    """)
+  end
 
-    if Mix.shell().yes?(message) do
+  defp confirm_tag(repo, changelog_path, new_version, new_message, prompt) do
+    if Mix.shell().yes?(prompt) do
       tag(repo, changelog_path, new_version, new_message)
     else
       Mix.shell().info("""
@@ -386,7 +808,8 @@ defmodule Mix.Tasks.GitOps.Release do
           _ -> nil
         end
 
-      Map.put(commit, :github_user_data, github_user_data)
+      commit
+      |> Map.put(:github_user_data, github_user_data)
       |> Map.put(:pr_info, pr_info)
     end)
   end
@@ -442,7 +865,8 @@ defmodule Mix.Tasks.GitOps.Release do
           rc: :boolean,
           dry_run: :boolean,
           yes: :boolean,
-          override: :string
+          override: :string,
+          output: :string
         ],
         aliases: [
           i: :initial,

@@ -86,6 +86,100 @@ defmodule GitOps.GitHub do
     end
   end
 
+  @doc """
+  Create or update the open pull request for `branch`, returning its URL.
+
+  `labels` are applied when the pull request is first created.
+  """
+  @spec upsert_pull_request(String.t(), String.t(), String.t(), String.t(), [String.t()]) ::
+          {:ok, String.t()} | {:error, String.t()}
+  def upsert_pull_request(branch, base, title, body, labels \\ []) do
+    Application.ensure_all_started(:req)
+    repo = repo_owner_and_name()
+    owner = repo |> String.split("/") |> hd()
+
+    with {:ok, existing} <- find_open_pull_request(repo, owner, branch) do
+      case existing do
+        nil ->
+          create_pull_request(repo, %{base: base, head: branch, title: title, body: body}, labels)
+
+        number ->
+          patch("/repos/#{repo}/pulls/#{number}", %{title: title, body: body})
+      end
+    end
+  end
+
+  defp create_pull_request(repo, payload, labels) do
+    case request(:post, "/repos/#{repo}/pulls", json: payload) do
+      {:ok, %Req.Response{status: 201, body: body}} ->
+        if labels != [] do
+          request(:post, "/repos/#{repo}/issues/#{body["number"]}/labels",
+            json: %{labels: labels}
+          )
+        end
+
+        {:ok, body["html_url"]}
+
+      other ->
+        request_error(other)
+    end
+  end
+
+  @doc """
+  Create a GitHub release for an existing tag, returning its URL.
+  """
+  @spec create_release(String.t(), String.t(), String.t()) ::
+          {:ok, String.t()} | {:error, String.t()}
+  def create_release(tag, name, notes) do
+    Application.ensure_all_started(:req)
+
+    post("/repos/#{repo_owner_and_name()}/releases", %{tag_name: tag, name: name, body: notes})
+  end
+
+  defp find_open_pull_request(repo, owner, branch) do
+    case request(:get, "/repos/#{repo}/pulls",
+           params: [head: "#{owner}:#{branch}", state: "open", per_page: 1]
+         ) do
+      {:ok, %Req.Response{status: 200, body: [pr | _]}} -> {:ok, pr["number"]}
+      {:ok, %Req.Response{status: 200, body: []}} -> {:ok, nil}
+      other -> request_error(other)
+    end
+  end
+
+  defp post(path, payload) do
+    case request(:post, path, json: payload) do
+      {:ok, %Req.Response{status: status, body: body}} when status in [200, 201] ->
+        {:ok, body["html_url"]}
+
+      other ->
+        request_error(other)
+    end
+  end
+
+  defp patch(path, payload) do
+    case request(:patch, path, json: payload) do
+      {:ok, %Req.Response{status: 200, body: body}} -> {:ok, body["html_url"]}
+      other -> request_error(other)
+    end
+  end
+
+  defp request(method, path, opts) do
+    Req.request(
+      [
+        method: method,
+        url: GitOps.Config.github_api_base_url() <> path,
+        headers: github_headers()
+      ] ++
+        opts ++ Application.get_env(:git_ops, :req_options, [])
+    )
+  end
+
+  defp request_error({:ok, %Req.Response{status: status, body: body}}),
+    do: {:error, "GitHub API request failed with status #{status}: #{inspect(body)}"}
+
+  defp request_error({:error, reason}),
+    do: {:error, "Error making GitHub API request: #{inspect(reason)}"}
+
   defp repo_owner_and_name() do
     GitOps.Config.repository_url()
     |> String.split("/")
@@ -94,10 +188,15 @@ defmodule GitOps.GitHub do
   end
 
   defp github_headers do
-    %{
+    headers = %{
       "accept" => "application/vnd.github.v3+json",
       "user-agent" => "Elixir.GitOps",
       "X-GitHub-Api-Version" => "2022-11-28"
     }
+
+    case System.get_env("GITHUB_TOKEN") do
+      nil -> headers
+      token -> Map.put(headers, "authorization", "Bearer #{token}")
+    end
   end
 end

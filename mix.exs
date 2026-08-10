@@ -68,11 +68,13 @@ defmodule GitOps.MixProject do
     [
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
-      {:mix_test_interactive, "~> 4.0", only: :dev, runtime: false},
+      {:mix_test_interactive, "~> 5.1", only: :dev, runtime: false},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:excoveralls, "~> 0.6", only: :test},
       {:git_cli, "~> 0.2"},
       {:igniter, "~> 0.5 and >= 0.5.27", optional: true},
+      {:jason, "~> 1.0"},
+      {:plug, "~> 1.0", only: [:dev, :test]},
       {:nimble_parsec, "~> 1.0"},
       {:req, "~> 0.5"}
     ]
