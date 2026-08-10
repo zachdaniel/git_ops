@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.11.2](https://github.com/zachdaniel/git_ops/compare/v2.11.1...v2.11.2) (2026-08-10)
+
+
+
+
+### Improvements:
+
+* do each releasable unit async by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v2.11.1](https://github.com/zachdaniel/git_ops/compare/v2.11.0...v2.11.1) (2026-08-10)
 
 
