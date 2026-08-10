@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.11.0](https://github.com/zachdaniel/git_ops/compare/v2.10.0...v2.11.0) (2026-08-10)
+
+
+
+
+### Features:
+
+* support dependency paths by [@zachdaniel](https://github.com/zachdaniel)
+
+* support monorepos & json config by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v2.10.0](https://github.com/zachdaniel/git_ops/compare/v2.9.3...v2.10.0) (2026-04-12)
 
 
