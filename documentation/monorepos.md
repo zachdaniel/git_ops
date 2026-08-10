@@ -64,10 +64,12 @@ version), or `"string"` (`, "~> ..."`) — or a custom `"pattern"` template in
 which `{version}` is replaced.
 
 Top-level options: `repository_url`, `types` (changelog sections, e.g.
-`{"chore": {"header": "Chores", "hidden": false}}`), `first_parent`
-(count only first-parent commits, for squash/merge workflows),
-`linked_packages` (groups that always release together at the same
-version), `release_strategy` and `pr_labels` (see below).
+`{"chore": {"header": "Chores", "hidden": false}}`), `section_order`
+(changelog section order by type; defaults to features first, fixes next,
+chores last), `first_parent` (count only first-parent commits, for
+squash/merge workflows), `linked_packages` (groups that always release
+together at the same version), `release_strategy` and `pr_labels` (see
+below).
 
 ## Releasing
 

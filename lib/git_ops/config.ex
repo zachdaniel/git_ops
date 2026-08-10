@@ -242,6 +242,17 @@ defmodule GitOps.Config do
   @doc "Labels applied to release pull requests when they are created."
   def pr_labels, do: file_get("pr_labels") || []
 
+  @default_section_order ~w(feat improvement fix perf refactor style docs test ci chore build)
+
+  @doc """
+  The order changelog sections appear in. Types not listed sort after the
+  listed ones, alphabetically.
+  """
+  def section_order do
+    file_get("section_order") || Application.get_env(:git_ops, :section_order) ||
+      @default_section_order
+  end
+
   @doc """
   The pattern a version-bump commit must match for `mix git_ops.tag_merged`
   to tag it. Guards against a stray version-file edit in an ordinary commit

@@ -71,6 +71,36 @@ defmodule GitOps.Test.ChangelogTest do
     assert String.length(changes) > 0
   end
 
+  test "sections appear in section_order, not group order", context do
+    changelog = context.changelog
+
+    Changelog.initialize(changelog)
+
+    commits = [
+      %GitOps.Commit{message: "chore: tidy", type: "chore", breaking?: false},
+      %GitOps.Commit{message: "docs: explain", type: "docs", breaking?: false},
+      %GitOps.Commit{message: "fix: repair", type: "fix", breaking?: false},
+      %GitOps.Commit{message: "feat: shiny", type: "feat", breaking?: false}
+    ]
+
+    Application.put_env(:git_ops, :types,
+      chore: [header: "Other Changes", hidden?: false],
+      docs: [header: "Documentation", hidden?: false]
+    )
+
+    on_exit(fn -> Application.delete_env(:git_ops, :types) end)
+
+    changes = Changelog.write(changelog, commits, "0.1.0", "0.2.0")
+
+    positions =
+      for header <- ["Features", "Bug Fixes", "Documentation", "Other Changes"] do
+        {position, _} = :binary.match(changes, header)
+        {position, header}
+      end
+
+    assert positions == Enum.sort(positions)
+  end
+
   test "writing with dry_run produces changes that aren't written", context do
     changelog = context.changelog
 

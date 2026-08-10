@@ -43,14 +43,20 @@ defmodule GitOps.Changelog do
         ]
       end
 
+    section_order = Config.section_order()
+    section_rank = fn group -> Enum.find_index(section_order, &(&1 == group)) end
+
     contents_to_insert =
       commits
       |> Enum.reject(&Map.get(&1, :breaking?))
       |> Enum.group_by(fn commit ->
         String.downcase(commit.type)
       end)
-      |> Stream.filter(fn {group, _commits} ->
+      |> Enum.filter(fn {group, _commits} ->
         Map.has_key?(config_types, group) && !config_types[group][:hidden?]
+      end)
+      |> Enum.sort_by(fn {group, _commits} ->
+        {section_rank.(group) || length(section_order), group}
       end)
       |> Enum.map(fn {group, commits} ->
         formatted_commits = Enum.map_join(commits, "\n\n", &Commit.format/1)
