@@ -102,9 +102,13 @@ defmodule Mix.Tasks.GitOps.Release do
       plans
       |> Enum.group_by(fn plan -> plan.package.pr_group || plan.package.name || "release" end)
       |> Enum.sort_by(fn {name, _} -> name end)
-      |> Enum.each(fn {name, unit_plans} ->
-        propose_unit(repo, name, unit_plans, base_branch, opts)
-      end)
+      |> Task.async_stream(
+        fn {name, unit_plans} -> propose_unit(repo, name, unit_plans, base_branch, opts) end,
+        max_concurrency: 8,
+        ordered: false,
+        timeout: :infinity
+      )
+      |> Stream.run()
     end
   end
 

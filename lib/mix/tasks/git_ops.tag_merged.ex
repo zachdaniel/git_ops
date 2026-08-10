@@ -36,7 +36,12 @@ defmodule Mix.Tasks.GitOps.TagMerged do
     tagged =
       Config.packages()
       |> Enum.filter(& &1.version_file)
-      |> Enum.flat_map(&tag_package(repo, &1, remote_tags, opts))
+      |> Task.async_stream(&tag_package(repo, &1, remote_tags, opts),
+        max_concurrency: 8,
+        ordered: false,
+        timeout: :infinity
+      )
+      |> Enum.flat_map(fn {:ok, tags} -> tags end)
 
     if Enum.empty?(tagged) do
       Mix.shell().info("No untagged releases.")
