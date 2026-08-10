@@ -176,6 +176,20 @@ defmodule GitOps.Mix.Tasks.Test.PullRequestTest do
     refute_received {:github, "POST", "/repos/example/mono/releases"}
   end
 
+  test "tag_merged refuses versions set outside a release commit", %{
+    work: work,
+    origin: origin
+  } do
+    write!(work, "pkg_a/package.json", ~s({\n  "name": "a",\n  "version": "0.2.0"\n}\n))
+    git!(work, ["add", "."])
+    git!(work, ["commit", "-q", "-m", "feat: sneaky version bump"])
+    git!(work, ["push", "-q", "origin", "main"])
+
+    TagMerged.run([])
+
+    refute git!(origin, ["tag", "--list"]) =~ "pkg_a-v0.2.0"
+  end
+
   test "tag_merged dry run tags nothing", %{work: work, origin: origin} do
     write!(work, "pkg_a/package.json", ~s({\n  "name": "a",\n  "version": "0.2.0"\n}\n))
     git!(work, ["add", "."])

@@ -133,62 +133,14 @@ no mix project is required.
 version, or `"string"`) or a custom `"pattern"` template in which
 `{version}` is replaced.
 
-### Monorepos
+### Monorepos and pull-request releases
 
-A `packages` map releases each package independently: commits are attributed
-to the deepest package whose path contains them, each package gets its own
-`<name>-v`-prefixed tags and its own `CHANGELOG.md`, and one
-`mix git_ops.release` run releases everything that changed, as one commit
-with one tag per released package.
-
-```json
-{
-  "repository_url": "https://github.com/my_user/my_repo",
-  "first_parent": true,
-  "packages": {
-    "my_app": {"managed_files": [{"path": "mix.exs", "type": "mix"}]},
-    "web": {
-      "managed_files": [{"path": "package.json", "type": "json"}],
-      "exclude_paths": ["docs"],
-      "patch_on_any_change": true
-    },
-    "web/shared": {"managed_files": [{"path": "package.json", "type": "json"}]}
-  },
-  "linked_packages": [["web", "web/shared"]]
-}
-```
-
-Per-package options: `name` (defaults to the directory basename),
-`version_tag_prefix` (defaults to `<name>-v`), `changelog_file`,
-`version_source`, `managed_files` (paths are package-relative),
-`exclude_paths` (package-relative paths whose commits don't count),
-`patch_on_any_change` (release a patch for any conventional commit, not just
-fixes and features), and `pr_group` (see below). `linked_packages` groups
-always release together at the same version. `first_parent` restricts commit
-collection to the first parent of merges, so only merge/squash commits on
-the branch itself count.
-
-### Releasing through pull requests
-
-`"release_strategy": "pull_request"` turns `mix git_ops.release` into a
-proposal step: instead of committing and tagging, it pushes a
-`git-ops/release/<name>` branch containing the changelog and version-file
-updates (the working tree is never touched) and opens or updates a pull
-request, authenticated by the `GITHUB_TOKEN` environment variable. Packages
-sharing a `pr_group` share one branch and pull request; every other package
-gets its own. A top-level `pr_labels` list is applied to each pull request
-when it is first created.
-
-Merging a release pull request is the release. `mix git_ops.tag_merged` —
-run on every push to the base branch — reconciles the rest: any package
-whose version file holds a version with no matching tag gets tagged at the
-commit that set it, the tag is pushed, and a GitHub release is created from
-its changelog entry. Both tasks are idempotent, so a run that dies partway
-is repaired by the next one.
-
-`mix git_ops.release --dry-run --output some/dir` writes each would-be pull
-request's body and file contents under `some/dir` without pushing anything —
-useful for reviewing what a config change does to the release plan.
+A `packages` map in `git_ops.json` releases each directory independently —
+its own `<name>-v` tags, changelog, and managed files — and
+`"release_strategy": "pull_request"` proposes releases as pull requests
+whose merge is the release (with `mix git_ops.tag_merged` reconciling tags
+and GitHub releases afterwards). See the
+[Monorepos guide](documentation/monorepos.md).
 
 Getting started:
 

@@ -53,7 +53,8 @@ defmodule GitOps.MixProject do
       source_url: @source_url,
       source_ref: "v#{@version}",
       extras: [
-        "README.md"
+        "README.md",
+        "documentation/monorepos.md"
       ]
     ]
   end

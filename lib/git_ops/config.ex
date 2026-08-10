@@ -152,6 +152,7 @@ defmodule GitOps.Config do
       version_file: derive_version_file(config, path),
       managed_files: parse_managed_files(config["managed_files"], path),
       exclude_paths: Enum.map(config["exclude_paths"] || [], &Path.join(path, &1)),
+      depends_on: config["depends_on"] || [],
       patch_on_any_change?: config["patch_on_any_change"] || false
     }
   end
@@ -240,6 +241,18 @@ defmodule GitOps.Config do
 
   @doc "Labels applied to release pull requests when they are created."
   def pr_labels, do: file_get("pr_labels") || []
+
+  @doc """
+  The pattern a version-bump commit must match for `mix git_ops.tag_merged`
+  to tag it. Guards against a stray version-file edit in an ordinary commit
+  becoming a release.
+  """
+  def tag_merged_commit_pattern do
+    case file_get("tag_merged_commit_pattern") do
+      nil -> ~r/^chore(\(.+\))?: release/
+      pattern -> Regex.compile!(pattern)
+    end
+  end
 
   @doc """
   Where the current version is read from.

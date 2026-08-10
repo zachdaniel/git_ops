@@ -215,6 +215,14 @@ defmodule GitOps.Git do
   end
 
   @doc """
+  The subject line of a commit.
+  """
+  @spec commit_subject!(Git.Repository.t(), String.t()) :: String.t()
+  def commit_subject!(repo, sha) do
+    String.trim(cmd!(repo, ["log", "-1", "--format=%s", sha]))
+  end
+
+  @doc """
   First-parent commit SHAs of HEAD that touch `path`, newest first.
   """
   @spec commits_touching!(Git.Repository.t(), String.t(), pos_integer()) :: [String.t()]

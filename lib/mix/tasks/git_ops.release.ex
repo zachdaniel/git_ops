@@ -448,8 +448,8 @@ defmodule Mix.Tasks.GitOps.Release do
     )
   end
 
-  # A commit belongs to the deepest package containing it, so a package's
-  # pathspec excludes every package nested inside it.
+  # A commit belongs to the deepest package containing it, so the pathspec
+  # excludes nested packages; `depends_on` paths count verbatim.
   defp package_paths(package, packages) do
     nested =
       for other <- packages,
@@ -459,7 +459,7 @@ defmodule Mix.Tasks.GitOps.Release do
 
     excludes = package.exclude_paths ++ nested
 
-    [package.path | Enum.map(excludes, &":^#{&1}")]
+    [package.path | package.depends_on] ++ Enum.map(excludes, &":^#{&1}")
   end
 
   defp apply_linked_packages(plans, repo, packages, opts) do

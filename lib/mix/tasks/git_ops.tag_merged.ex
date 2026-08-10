@@ -69,30 +69,46 @@ defmodule Mix.Tasks.GitOps.TagMerged do
           version_at(repo, package, sha <> "^") != {:ok, version}
       end)
 
-    if sha do
-      notes = changelog_entry(repo, package, version)
+    cond do
+      sha == nil ->
+        Mix.shell().error(
+          "#{package.name}: version #{version} is untagged, but no commit setting it was " <>
+            "found in the last #{@version_file_search_depth} commits touching #{path}. Skipping."
+        )
 
-      Git.tag!(repo, ["-a", tag, sha, "-m", "release #{tag}\n\n#{notes}"])
-      Git.push!(repo, "refs/tags/#{tag}", "refs/tags/#{tag}")
-      Mix.shell().info("Tagged #{tag} at #{String.slice(sha, 0, 10)}.")
+        []
 
-      case GitOps.GitHub.create_release(tag, tag, notes) do
-        {:ok, url} ->
-          Mix.shell().info("Release: #{url}")
+      !Regex.match?(Config.tag_merged_commit_pattern(), Git.commit_subject!(repo, sha)) ->
+        Mix.shell().error(
+          "#{package.name}: version #{version} was set by " <>
+            "\"#{Git.commit_subject!(repo, sha)}\" (#{String.slice(sha, 0, 10)}), which does " <>
+            "not match tag_merged_commit_pattern. Not tagging — revert the version change or " <>
+            "release it with a matching commit."
+        )
 
-        {:error, error} ->
-          Mix.shell().error("Could not create the GitHub release for #{tag}: #{error}")
-      end
+        []
 
-      [tag]
-    else
-      Mix.shell().error(
-        "#{package.name}: version #{version} is untagged, but no commit setting it was found " <>
-          "in the last #{@version_file_search_depth} commits touching #{path}. Skipping."
-      )
-
-      []
+      true ->
+        create_tag_at(repo, package, version, tag, sha)
     end
+  end
+
+  defp create_tag_at(repo, package, version, tag, sha) do
+    notes = changelog_entry(repo, package, version)
+
+    Git.tag!(repo, ["-a", tag, sha, "-m", "release #{tag}\n\n#{notes}"])
+    Git.push!(repo, "refs/tags/#{tag}", "refs/tags/#{tag}")
+    Mix.shell().info("Tagged #{tag} at #{String.slice(sha, 0, 10)}.")
+
+    case GitOps.GitHub.create_release(tag, tag, notes) do
+      {:ok, url} ->
+        Mix.shell().info("Release: #{url}")
+
+      {:error, error} ->
+        Mix.shell().error("Could not create the GitHub release for #{tag}: #{error}")
+    end
+
+    [tag]
   end
 
   defp version_at(repo, package, ref) do

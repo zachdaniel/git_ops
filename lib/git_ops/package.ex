@@ -18,6 +18,7 @@ defmodule GitOps.Package do
     :version_file,
     managed_files: [],
     exclude_paths: [],
+    depends_on: [],
     patch_on_any_change?: false,
     root?: false
   ]
@@ -34,6 +35,7 @@ defmodule GitOps.Package do
           version_file: {String.t(), Regex.t()} | nil,
           managed_files: [{String.t(), (String.t() -> String.t()), (String.t() -> String.t())}],
           exclude_paths: [String.t()],
+          depends_on: [String.t()],
           patch_on_any_change?: boolean(),
           root?: boolean()
         }

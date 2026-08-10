@@ -14,7 +14,8 @@ defmodule GitOps.Mix.Tasks.Test.PackagesTest do
       },
       "pkg_b" => %{
         "managed_files" => [%{"path" => "version.txt", "type" => "raw"}],
-        "patch_on_any_change" => true
+        "patch_on_any_change" => true,
+        "depends_on" => ["shared"]
       },
       "pkg_a/nested" => %{
         "managed_files" => [%{"path" => "version.txt", "type" => "raw"}]
@@ -112,6 +113,20 @@ defmodule GitOps.Mix.Tasks.Test.PackagesTest do
     assert tags =~ "pkg_b-v0.2.0"
     assert File.read!(Path.join(dir, "pkg_b/version.txt")) == "0.2.0\n"
     assert File.read!(Path.join(dir, "pkg_b/CHANGELOG.md")) =~ "## [0.2.0]"
+  end
+
+  test "depends_on commits release the dependent with their changelog entries", %{dir: dir} do
+    commit!(dir, "shared/util.txt", "code\n", "feat: shared feature")
+
+    Release.run(["--yes"])
+
+    tags = git!(dir, ["tag", "--list"])
+    assert tags =~ "pkg_b-v0.2.0"
+    refute tags =~ "pkg_a-v0.2.0"
+
+    changelog = File.read!(Path.join(dir, "pkg_b/CHANGELOG.md"))
+    assert changelog =~ "## [0.2.0]"
+    assert changelog =~ "shared feature"
   end
 
   test "dry run changes nothing", %{dir: dir} do
