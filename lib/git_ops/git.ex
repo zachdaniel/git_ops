@@ -234,14 +234,6 @@ defmodule GitOps.Git do
   end
 
   @doc """
-  The tree hash of a commit.
-  """
-  @spec tree_of!(Git.Repository.t(), String.t()) :: String.t()
-  def tree_of!(repo, sha) do
-    String.trim(cmd!(repo, ["rev-parse", "#{sha}^{tree}"]))
-  end
-
-  @doc """
   The subject line of a commit.
   """
   @spec commit_subject!(Git.Repository.t(), String.t()) :: String.t()

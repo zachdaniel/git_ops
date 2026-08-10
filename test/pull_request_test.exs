@@ -125,7 +125,7 @@ defmodule GitOps.Mix.Tasks.Test.PullRequestTest do
     refute File.exists?(Path.join(work, "pkg_a/CHANGELOG.md"))
   end
 
-  test "a rerun with no new commits pushes nothing and calls no APIs", %{
+  test "a rerun with no new package commits pushes nothing and calls no APIs", %{
     work: work,
     origin: origin
   } do
@@ -137,6 +137,10 @@ defmodule GitOps.Mix.Tasks.Test.PullRequestTest do
 
     # Drain the first run's API traffic so the rerun's silence is provable.
     flush_github_messages()
+
+    # The branch's base moving must not count as a change.
+    commit!(work, "README.md", "docs\n", "docs: outside every package")
+    git!(work, ["push", "-q", "origin", "main"])
 
     Release.run([])
 
