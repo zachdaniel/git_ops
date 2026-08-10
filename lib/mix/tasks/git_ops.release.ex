@@ -142,11 +142,24 @@ defmodule Mix.Tasks.GitOps.Release do
       Mix.shell().info("Dry run: would push #{branch} and open a pull request.\n")
     else
       sha = Git.commit_tree!(repo, "HEAD", files, title)
-      Git.push!(repo, sha, "refs/heads/#{branch}")
 
-      case GitOps.GitHub.upsert_pull_request(branch, base_branch, title, body, Config.pr_labels()) do
-        {:ok, url} -> Mix.shell().info("Pull request: #{url}\n")
-        {:error, error} -> Mix.raise("Could not open pull request for #{branch}: #{error}")
+      # An identical tree means nothing changed for these packages: leave the
+      # branch alone rather than re-triggering its PR's whole check suite.
+      if Git.tree_of!(repo, sha) == Git.remote_branch_tree(repo, branch) do
+        Mix.shell().info("#{branch} is unchanged.\n")
+      else
+        Git.push!(repo, sha, "refs/heads/#{branch}")
+
+        case GitOps.GitHub.upsert_pull_request(
+               branch,
+               base_branch,
+               title,
+               body,
+               Config.pr_labels()
+             ) do
+          {:ok, url} -> Mix.shell().info("Pull request: #{url}\n")
+          {:error, error} -> Mix.raise("Could not open pull request for #{branch}: #{error}")
+        end
       end
     end
   end

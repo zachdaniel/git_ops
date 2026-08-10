@@ -215,6 +215,33 @@ defmodule GitOps.Git do
   end
 
   @doc """
+  The tree hash of the `origin` remote's `branch`, or `nil` when the branch
+  does not exist there.
+  """
+  @spec remote_branch_tree(Git.Repository.t(), String.t()) :: String.t() | nil
+  def remote_branch_tree(repo, branch) do
+    resolve = fn -> cmd(repo, ["rev-parse", "refs/remotes/origin/#{branch}^{tree}"]) end
+
+    with {:error, _} <- resolve.(),
+         {:ok, _} <-
+           cmd(repo, ["fetch", "origin", "+refs/heads/#{branch}:refs/remotes/origin/#{branch}"]),
+         {:error, _} <- resolve.() do
+      nil
+    else
+      {:ok, tree} -> String.trim(tree)
+      _ -> nil
+    end
+  end
+
+  @doc """
+  The tree hash of a commit.
+  """
+  @spec tree_of!(Git.Repository.t(), String.t()) :: String.t()
+  def tree_of!(repo, sha) do
+    String.trim(cmd!(repo, ["rev-parse", "#{sha}^{tree}"]))
+  end
+
+  @doc """
   The subject line of a commit.
   """
   @spec commit_subject!(Git.Repository.t(), String.t()) :: String.t()

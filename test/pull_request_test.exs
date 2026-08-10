@@ -125,6 +125,33 @@ defmodule GitOps.Mix.Tasks.Test.PullRequestTest do
     refute File.exists?(Path.join(work, "pkg_a/CHANGELOG.md"))
   end
 
+  test "a rerun with no new commits pushes nothing and calls no APIs", %{
+    work: work,
+    origin: origin
+  } do
+    commit!(work, "pkg_a/lib.js", "code\n", "feat: a feature")
+    stub_github(self())
+
+    Release.run([])
+    branch_sha = git!(origin, ["rev-parse", "refs/heads/git-ops/release/main"])
+
+    # Drain the first run's API traffic so the rerun's silence is provable.
+    flush_github_messages()
+
+    Release.run([])
+
+    assert git!(origin, ["rev-parse", "refs/heads/git-ops/release/main"]) == branch_sha
+    refute_received {:github, _, _}
+  end
+
+  defp flush_github_messages do
+    receive do
+      {:github, _, _} -> flush_github_messages()
+    after
+      0 -> :ok
+    end
+  end
+
   test "dry run with --output writes proposals without pushing", %{
     work: work,
     origin: origin
