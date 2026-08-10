@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.11.1](https://github.com/zachdaniel/git_ops/compare/v2.11.0...v2.11.1) (2026-08-10)
+
+
+
+
+### Bug Fixes:
+
+* don't push to unchanged release branches by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v2.11.0](https://github.com/zachdaniel/git_ops/compare/v2.10.0...v2.11.0) (2026-08-10)
 
 
