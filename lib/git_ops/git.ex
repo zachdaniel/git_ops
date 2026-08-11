@@ -234,6 +234,33 @@ defmodule GitOps.Git do
   end
 
   @doc """
+  The blob OID `contents` would hash to.
+  """
+  @spec blob_oid(Git.Repository.t(), String.t()) :: String.t()
+  def blob_oid(repo, contents) do
+    tmp = Path.join(System.tmp_dir!(), "git_ops_blob_#{System.unique_integer([:positive])}")
+    File.write!(tmp, contents)
+
+    try do
+      String.trim(cmd!(repo, ["hash-object", tmp]))
+    after
+      File.rm(tmp)
+    end
+  end
+
+  @doc """
+  The blob OID at `ref:path`, or `nil` when absent. Resolved from tree
+  objects alone, so it never fetches blobs on a partial clone.
+  """
+  @spec oid_at(Git.Repository.t(), String.t(), String.t()) :: String.t() | nil
+  def oid_at(repo, ref, path) do
+    case cmd(repo, ["rev-parse", "#{ref}:#{path}"]) do
+      {:ok, oid} -> String.trim(oid)
+      _ -> nil
+    end
+  end
+
+  @doc """
   The subject line of a commit.
   """
   @spec commit_subject!(Git.Repository.t(), String.t()) :: String.t()

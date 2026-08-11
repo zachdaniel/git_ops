@@ -167,10 +167,13 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
+  # Compares blob OIDs rather than contents: on a partial clone, reading a
+  # non-HEAD file's contents is a network roundtrip per file, while OIDs
+  # resolve from local tree objects.
   defp branch_current?(repo, branch, files) do
     Git.remote_branch_tree(repo, branch) != nil &&
       Enum.all?(files, fn {path, contents} ->
-        Git.show(repo, "origin/#{branch}", path) == {:ok, contents}
+        Git.oid_at(repo, "origin/#{branch}", path) == Git.blob_oid(repo, contents)
       end)
   end
 
