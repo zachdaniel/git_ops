@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.11.4](https://github.com/zachdaniel/git_ops/compare/v2.11.3...v2.11.4) (2026-08-13)
+
+
+
+
+### Bug Fixes:
+
+* handle utf8 in messages by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v2.11.3](https://github.com/zachdaniel/git_ops/compare/v2.11.2...v2.11.3) (2026-08-11)
 
 
