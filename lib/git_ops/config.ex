@@ -242,6 +242,17 @@ defmodule GitOps.Config do
   @doc "Labels applied to release pull requests when they are created."
   def pr_labels, do: file_get("pr_labels") || []
 
+  @doc """
+  Whether to close the open release pull request for a package that no longer
+  has releasable changes. Defaults to `false`.
+  """
+  def close_stale_pull_requests? do
+    truthy?(
+      file_get("close_stale_pull_requests") ||
+        Application.get_env(:git_ops, :close_stale_pull_requests?)
+    )
+  end
+
   @default_section_order ~w(feat improvement fix perf refactor style docs test ci chore build)
 
   @doc """
