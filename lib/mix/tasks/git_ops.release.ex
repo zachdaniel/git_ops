@@ -470,7 +470,7 @@ defmodule Mix.Tasks.GitOps.Release do
       Config.types(),
       Config.allowed_tags(),
       Config.allow_untagged?(),
-      false
+      :unparseable_only
     )
   end
 
@@ -790,19 +790,23 @@ defmodule Mix.Tasks.GitOps.Release do
     end)
   end
 
+  # :unparseable_only skips the unknown-type warnings, which body lines like
+  # `dependency-name: foo` trigger constantly in multi-line messages
   defp parse_commit(text, author, hash, config_types, allowed_tags, allow_untagged?, log?) do
     case Commit.parse(%{text: text, author_info: author, hash: hash}) do
       {:ok, commits} ->
         commits
         |> commits_with_allowed_tags(allowed_tags, allow_untagged?)
-        |> commits_with_type(config_types, text, log?)
+        |> commits_with_type(config_types, text, log? == true)
 
       _ ->
-        error_if_log("Unparseable commit: #{text}", log?)
+        error_if_log("Unparseable commit: #{first_line(text)}", log? != false)
 
         []
     end
   end
+
+  defp first_line(text), do: text |> String.split("\n", parts: 2) |> hd()
 
   @spec fetch_github_information(list(), list()) :: {authors :: map(), prs :: map()} | nil
   defp fetch_github_information(commit_authors, commit_hashes) do
@@ -863,7 +867,7 @@ defmodule Mix.Tasks.GitOps.Release do
       if Map.has_key?(config_types, String.downcase(commit.type)) do
         [commit]
       else
-        error_if_log("Commit with unknown type in: #{text}", log?)
+        error_if_log("Commit with unknown type in: #{first_line(text)}", log?)
 
         []
       end

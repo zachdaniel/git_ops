@@ -237,6 +237,45 @@ defmodule GitOps.Test.CommitTest do
                "BREAKING CHANGE: The v1 API has been removed.\n\nUsers must migrate to v2."
     end
 
+    @tag :regression
+    test "a body line starting with a multibyte character is kept as body" do
+      text = """
+      feat: provision contacts by the identifier we issue
+
+      Event delivery built its own one-field contact
+      — rather than passing the record it had already loaded.
+      """
+
+      assert %Commit{
+               type: "feat",
+               message: "provision contacts by the identifier we issue",
+               body:
+                 "Event delivery built its own one-field contact\n\n— rather than passing the record it had already loaded."
+             } = parse_one!(text)
+    end
+
+    @tag :regression
+    test "multibyte body lines do not break multi-commit squash parsing" do
+      text = """
+      feat: first change
+
+      — a dash-led body line
+
+      fix: second change
+
+      → an arrow-led body line
+      """
+
+      assert [
+               %Commit{type: "feat", body: "— a dash-led body line"},
+               %Commit{type: "fix", body: "→ an arrow-led body line"}
+             ] = parse_many!(text)
+    end
+
+    test "a first line starting with a multibyte character returns error" do
+      assert :error = Commit.parse("— not a commit at all")
+    end
+
     test "non-conventional first line returns error" do
       text = """
       Bump actions/checkout from 3 to 4

@@ -29,10 +29,11 @@ defmodule GitOps.Commit do
   whitespace = ignore(ascii_string([9, 32], min: 1))
 
   # 40/41 are `(` and `)`, but syntax highlighters don't like ?( and ?)
+  # utf8_string, not ascii_string: ascii_string raises on multibyte input
   type =
     optional(whitespace)
     |> optional(whitespace)
-    |> tag(ascii_string([not: ?:, not: ?!, not: 40, not: 41, not: 10, not: 32], min: 1), :type)
+    |> tag(utf8_string([not: ?:, not: ?!, not: 40, not: 41, not: 10, not: 32], min: 1), :type)
     |> optional(whitespace)
 
   scope =
@@ -44,7 +45,7 @@ defmodule GitOps.Commit do
 
   breaking_change_indicator = tag(ascii_char([?!]), :breaking?)
 
-  message = tag(optional(whitespace), ascii_string([not: ?\n], min: 1), :message)
+  message = tag(optional(whitespace), utf8_string([not: ?\n], min: 1), :message)
 
   commit =
     type
@@ -195,11 +196,15 @@ defmodule GitOps.Commit do
     String.downcase(type) == "fix" || String.downcase(type) == "improvement"
   end
 
+  # A line the parser can't even scan is body text, not a failed commit —
+  # raising here would discard the entire message it belongs to.
   defp try_parse_line(line) do
     case commits(line) do
       {:ok, [{:commit, result} | _], _, _, _, _} -> {:ok, result}
       _ -> :error
     end
+  rescue
+    _ -> :error
   end
 
   defp partition_lines(first_parsed, lines) do
