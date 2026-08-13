@@ -68,8 +68,8 @@ Top-level options: `repository_url`, `types` (changelog sections, e.g.
 (changelog section order by type; defaults to features first, fixes next,
 chores last), `first_parent` (count only first-parent commits, for
 squash/merge workflows), `linked_packages` (groups that always release
-together at the same version), `release_strategy` and `pr_labels` (see
-below).
+together at the same version), `release_strategy`, `pr_labels` and
+`close_stale_pull_requests` (see below).
 
 ## Releasing
 
@@ -87,7 +87,10 @@ phases, designed to run in CI on every push to the main branch:
    tree is never touched), force-pushes a `git-ops/release/<name>` branch,
    and opens or updates its pull request. Packages sharing a `pr_group`
    share one branch and PR; every other package gets its own. `pr_labels`
-   are applied when a PR is first created.
+   are applied when a PR is first created. With
+   `"close_stale_pull_requests": true`, a package with no releasable changes
+   also has its open release PR closed, which retires a proposal whose
+   release merged while an earlier run was still in flight.
 2. Merging a release PR *is* the release. `mix git_ops.tag_merged` then
    reconciles tags: any package whose version file holds a version with no
    matching tag gets tagged at the commit that set it, the tag is pushed,

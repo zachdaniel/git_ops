@@ -94,13 +94,15 @@ defmodule Mix.Tasks.GitOps.Release do
       |> Enum.reject(&is_nil/1)
       |> apply_linked_packages(repo, packages, opts)
 
+    close_stale_pull_requests(packages, plans, opts)
+
     if Enum.empty?(plans) do
       Mix.shell().info("No packages have releasable changes.")
     else
       base_branch = Git.current_branch!(repo)
 
       plans
-      |> Enum.group_by(fn plan -> plan.package.pr_group || plan.package.name || "release" end)
+      |> Enum.group_by(fn plan -> unit_name(plan.package) end)
       |> Enum.sort_by(fn {name, _} -> name end)
       |> Task.async_stream(
         fn {name, unit_plans} -> propose_unit(repo, name, unit_plans, base_branch, opts) end,
@@ -109,6 +111,51 @@ defmodule Mix.Tasks.GitOps.Release do
         timeout: :infinity
       )
       |> Stream.run()
+    end
+  end
+
+  defp unit_name(package), do: package.pr_group || package.name || "release"
+
+  @stale_pull_request_comment "Closing: this package has no releasable changes, so this release has either already shipped or been superseded."
+
+  # Nothing else retires a release pull request. A package drops out of the plan
+  # set once its changes are released, so an open pull request for a package with
+  # no plan describes a release that already happened - which is what a release
+  # merging while this task is mid-run produces.
+  defp close_stale_pull_requests(packages, plans, opts) do
+    if Config.close_stale_pull_requests?() do
+      live = MapSet.new(plans, &unit_name(&1.package))
+
+      packages
+      |> Enum.map(&unit_name/1)
+      |> Enum.uniq()
+      |> Enum.reject(&MapSet.member?(live, &1))
+      |> Enum.each(&close_stale_pull_request(&1, opts))
+    end
+  end
+
+  defp close_stale_pull_request(unit, opts) do
+    branch = "git-ops/release/#{unit}"
+
+    case GitOps.GitHub.open_pull_request_number(branch) do
+      {:ok, nil} ->
+        :ok
+
+      {:ok, number} ->
+        if opts[:dry_run] || opts[:output] do
+          Mix.shell().info("Dry run: would close ##{number}, #{unit} has no releasable changes.")
+        else
+          case GitOps.GitHub.close_pull_request(number, @stale_pull_request_comment) do
+            {:ok, _} ->
+              Mix.shell().info("Closed ##{number}: #{unit} has no releasable changes.")
+
+            {:error, error} ->
+              Mix.shell().error("Could not close ##{number} for #{branch}: #{error}")
+          end
+        end
+
+      {:error, error} ->
+        Mix.shell().error("Could not look up the pull request for #{branch}: #{error}")
     end
   end
 

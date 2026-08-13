@@ -156,6 +156,80 @@ defmodule GitOps.Mix.Tasks.Test.PullRequestTest do
     end
   end
 
+  test "closes the release pull request of a package with no releasable changes", %{work: work} do
+    enable_closing_stale_pull_requests!(work)
+    stub_stale_github(self())
+
+    Release.run([])
+
+    assert_received {:github, "POST", "/repos/example/mono/issues/7/comments"}
+    assert_received {:github, "PATCH", "/repos/example/mono/pulls/7"}
+  end
+
+  test "a dry run reports the stale pull request instead of closing it", %{work: work} do
+    enable_closing_stale_pull_requests!(work)
+    stub_stale_github(self())
+
+    Release.run(["--dry-run"])
+
+    refute_received {:github, "POST", "/repos/example/mono/issues/7/comments"}
+  end
+
+  test "a package with releasable changes keeps its pull request open", %{work: work} do
+    enable_closing_stale_pull_requests!(work)
+    commit!(work, "pkg_c/lib.txt", "text\n", "fix: c fix")
+    stub_stale_github(self())
+
+    Release.run([])
+
+    refute_received {:github, "POST", "/repos/example/mono/issues/7/comments"}
+  end
+
+  defp enable_closing_stale_pull_requests!(work) do
+    File.write!(
+      Path.join(work, "git_ops.json"),
+      Jason.encode!(Map.put(@config, "close_stale_pull_requests", true))
+    )
+
+    GitOps.Config.reload_file_config()
+  end
+
+  # pkg_c has an open release pull request; the pr_group branch has none. The
+  # comment POST is what distinguishes a close from an upsert, which PATCHes the
+  # same pull request to refresh its title and body.
+  defp stub_stale_github(test_pid) do
+    Req.Test.stub(GitOps.GitHub, fn conn ->
+      conn = Plug.Conn.fetch_query_params(conn)
+      send(test_pid, {:github, conn.method, conn.request_path})
+
+      case {conn.method, conn.request_path} do
+        {"GET", "/repos/example/mono/pulls"} ->
+          if conn.params["head"] == "example:git-ops/release/pkg_c" do
+            Req.Test.json(conn, [%{"number" => 7}])
+          else
+            Req.Test.json(conn, [])
+          end
+
+        {"POST", "/repos/example/mono/pulls"} ->
+          conn
+          |> Plug.Conn.put_status(201)
+          |> Req.Test.json(%{
+            "number" => 7,
+            "html_url" => "https://github.com/example/mono/pull/7"
+          })
+
+        {"POST", "/repos/example/mono/issues/7/comments"} ->
+          Req.Test.json(conn, %{})
+
+        {"POST", "/repos/example/mono/issues/7/labels"} ->
+          Req.Test.json(conn, [])
+
+        {"PATCH", "/repos/example/mono/pulls/7"} ->
+          Req.Test.json(conn, %{"html_url" => "https://github.com/example/mono/pull/7"})
+      end
+    end)
+  end
+
   test "dry run with --output writes proposals without pushing", %{
     work: work,
     origin: origin

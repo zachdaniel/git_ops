@@ -126,6 +126,35 @@ defmodule GitOps.GitHub do
   end
 
   @doc """
+  The number of the open pull request for `branch`, or `nil` when there is none.
+  """
+  @spec open_pull_request_number(String.t()) ::
+          {:ok, pos_integer() | nil} | {:error, String.t()}
+  def open_pull_request_number(branch) do
+    Application.ensure_all_started(:req)
+    repo = repo_owner_and_name()
+
+    find_open_pull_request(repo, repo |> String.split("/") |> hd(), branch)
+  end
+
+  @doc """
+  Close the open pull request numbered `number`, commenting `comment` on it
+  first when one is given.
+  """
+  @spec close_pull_request(pos_integer(), String.t() | nil) ::
+          {:ok, String.t()} | {:error, String.t()}
+  def close_pull_request(number, comment \\ nil) do
+    Application.ensure_all_started(:req)
+    repo = repo_owner_and_name()
+
+    if comment do
+      request(:post, "/repos/#{repo}/issues/#{number}/comments", json: %{body: comment})
+    end
+
+    patch("/repos/#{repo}/pulls/#{number}", %{state: "closed"})
+  end
+
+  @doc """
   Create a GitHub release for an existing tag, returning its URL.
   """
   @spec create_release(String.t(), String.t(), String.t()) ::
