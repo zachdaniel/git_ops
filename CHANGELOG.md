@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.12.0](https://github.com/zachdaniel/git_ops/compare/v2.11.4...v2.12.0) (2026-08-13)
+
+
+
+
+### Features:
+
+* close release pull requests for packages with no releasable changes (#84) by craig-wertz [(#84)](https://github.com/zachdaniel/git_ops/pull/84)
+
 ## [v2.11.4](https://github.com/zachdaniel/git_ops/compare/v2.11.3...v2.11.4) (2026-08-13)
 
 
