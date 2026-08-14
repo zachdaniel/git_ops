@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.12.1](https://github.com/zachdaniel/git_ops/compare/v2.12.0...v2.12.1) (2026-08-14)
+
+
+
+
+### Improvements:
+
+* support `solo_pr` option on packages by [@zachdaniel](https://github.com/zachdaniel)
+
+* restrict character names in groups by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v2.12.0](https://github.com/zachdaniel/git_ops/compare/v2.11.4...v2.12.0) (2026-08-13)
 
 
