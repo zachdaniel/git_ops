@@ -57,6 +57,7 @@ Per-package options:
 | `depends_on` | `[]` | repo-relative paths whose commits also count — shared code the package ships |
 | `patch_on_any_change` | `false` | release a patch for any conventional commit, not only fixes/features/breaking changes |
 | `pr_group` | none | pull-request grouping (see below) |
+| `solo_pr` | `false` | with `pr_group`: also keep a standalone release PR for this package (see below) |
 
 `managed_files` entries take a `type` — `"mix"` (`@version "..."`), `"json"`
 (a `"version": "..."` field), `"raw"` (the file's whole content is the
@@ -86,7 +87,16 @@ phases, designed to run in CI on every push to the main branch:
    and version-file updates into a commit using git plumbing (the working
    tree is never touched), force-pushes a `git-ops/release/<name>` branch,
    and opens or updates its pull request. Packages sharing a `pr_group`
-   share one branch and PR; every other package gets its own. `pr_labels`
+   share one branch and PR; every other package gets its own. Because a
+   `pr_group` becomes part of the branch name, it may only contain
+   letters, digits, `+`, `.`, `_`, `/`, and `-`. A grouped
+   package with `"solo_pr": true` additionally keeps its own standalone
+   PR: merging the group PR releases the whole group including it, while
+   merging the standalone PR releases only that package. Each PR's body
+   links to the other and says which packages the alternative releases;
+   whichever merges first, the next run updates or closes the remaining
+   one. (`solo_pr` without a `pr_group` changes nothing — such a package
+   already has its own PR.) `pr_labels`
    are applied when a PR is first created. With
    `"close_stale_pull_requests": true`, a package with no releasable changes
    also has its open release PR closed, which retires a proposal whose

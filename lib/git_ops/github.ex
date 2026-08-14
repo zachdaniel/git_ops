@@ -87,12 +87,13 @@ defmodule GitOps.GitHub do
   end
 
   @doc """
-  Create or update the open pull request for `branch`, returning its URL.
+  Create or update the open pull request for `branch`, returning its URL and
+  number.
 
   `labels` are applied when the pull request is first created.
   """
   @spec upsert_pull_request(String.t(), String.t(), String.t(), String.t(), [String.t()]) ::
-          {:ok, String.t()} | {:error, String.t()}
+          {:ok, %{url: String.t(), number: pos_integer()}} | {:error, String.t()}
   def upsert_pull_request(branch, base, title, body, labels \\ []) do
     Application.ensure_all_started(:req)
     repo = repo_owner_and_name()
@@ -104,7 +105,9 @@ defmodule GitOps.GitHub do
           create_pull_request(repo, %{base: base, head: branch, title: title, body: body}, labels)
 
         number ->
-          patch("/repos/#{repo}/pulls/#{number}", %{title: title, body: body})
+          with {:ok, url} <- patch("/repos/#{repo}/pulls/#{number}", %{title: title, body: body}) do
+            {:ok, %{url: url, number: number}}
+          end
       end
     end
   end
@@ -118,11 +121,22 @@ defmodule GitOps.GitHub do
           )
         end
 
-        {:ok, body["html_url"]}
+        {:ok, %{url: body["html_url"], number: body["number"]}}
 
       other ->
         request_error(other)
     end
+  end
+
+  @doc """
+  Replace the body of pull request `number`, returning its URL.
+  """
+  @spec update_pull_request_body(pos_integer(), String.t()) ::
+          {:ok, String.t()} | {:error, String.t()}
+  def update_pull_request_body(number, body) do
+    Application.ensure_all_started(:req)
+
+    patch("/repos/#{repo_owner_and_name()}/pulls/#{number}", %{body: body})
   end
 
   @doc """

@@ -151,6 +151,7 @@ defmodule GitOps.Mix.Tasks.Test.PullRequestTest do
   defp flush_github_messages do
     receive do
       {:github, _, _} -> flush_github_messages()
+      {:github, _, _, _} -> flush_github_messages()
     after
       0 -> :ok
     end
@@ -228,6 +229,165 @@ defmodule GitOps.Mix.Tasks.Test.PullRequestTest do
           Req.Test.json(conn, %{"html_url" => "https://github.com/example/mono/pull/7"})
       end
     end)
+  end
+
+  defp enable_solo_pr!(work, extra \\ %{}) do
+    config =
+      @config
+      |> put_in(["packages", "pkg_a", "solo_pr"], true)
+      |> Map.merge(extra)
+
+    File.write!(Path.join(work, "git_ops.json"), Jason.encode!(config))
+    GitOps.Config.reload_file_config()
+  end
+
+  # Assigns a stable number per head branch and records every request body,
+  # so the cross-linking PATCHes can be asserted on.
+  defp stub_solo_github(test_pid) do
+    numbers = %{"git-ops/release/main" => 10, "git-ops/release/pkg_a" => 11}
+
+    Req.Test.stub(GitOps.GitHub, fn conn ->
+      {:ok, raw_body, conn} = Plug.Conn.read_body(conn)
+      payload = if raw_body == "", do: %{}, else: Jason.decode!(raw_body)
+      send(test_pid, {:github, conn.method, conn.request_path, payload})
+
+      case {conn.method, conn.request_path} do
+        {"GET", "/repos/example/mono/pulls"} ->
+          Req.Test.json(conn, [])
+
+        {"POST", "/repos/example/mono/pulls"} ->
+          number = Map.fetch!(numbers, payload["head"])
+
+          conn
+          |> Plug.Conn.put_status(201)
+          |> Req.Test.json(%{
+            "number" => number,
+            "html_url" => "https://github.com/example/mono/pull/#{number}"
+          })
+
+        {"POST", "/repos/example/mono/issues/" <> _} ->
+          Req.Test.json(conn, [])
+
+        {"PATCH", "/repos/example/mono/pulls/" <> number} ->
+          Req.Test.json(conn, %{
+            "number" => String.to_integer(number),
+            "html_url" => "https://github.com/example/mono/pull/#{number}"
+          })
+      end
+    end)
+  end
+
+  test "maintains both the group PR and a standalone PR, cross-linked", %{
+    work: work,
+    origin: origin
+  } do
+    enable_solo_pr!(work)
+    commit!(work, "pkg_a/lib.js", "code\n", "feat: a feature")
+    commit!(work, "pkg_b/lib.txt", "text\n", "fix: b fix")
+    stub_solo_github(self())
+
+    Release.run([])
+
+    branches = git!(origin, ["branch", "--list"])
+    assert branches =~ "git-ops/release/main"
+    assert branches =~ "git-ops/release/pkg_a"
+    refute branches =~ "git-ops/release/pkg_b"
+
+    # Both branches carry pkg_a's release; only the group branch carries pkg_b.
+    assert git!(origin, ["show", "git-ops/release/main:pkg_a/package.json"]) =~
+             ~s("version": "0.2.0")
+
+    assert git!(origin, ["show", "git-ops/release/pkg_a:pkg_a/package.json"]) =~
+             ~s("version": "0.2.0")
+
+    assert git!(origin, ["show", "git-ops/release/main:pkg_b/version.txt"]) == "0.1.1\n"
+
+    # The solo branch is cut from HEAD, so pkg_b's file is present but not bumped.
+    assert git!(origin, ["show", "git-ops/release/pkg_a:pkg_b/version.txt"]) == "0.1.0\n"
+
+    # Creation bodies carry the notices with search-by-branch fallback links.
+    assert_received {:github, "POST", "/repos/example/mono/pulls",
+                     %{"head" => "git-ops/release/main", "body" => group_body}}
+
+    assert_received {:github, "POST", "/repos/example/mono/pulls",
+                     %{"head" => "git-ops/release/pkg_a", "body" => solo_body}}
+
+    assert group_body =~ "> [!NOTE]"
+    assert group_body =~ "standalone release pull"
+    assert group_body =~ "[`pkg_a`](https://github.com/example/mono/pulls?q="
+    assert group_body =~ "**pkg_b**"
+
+    assert solo_body =~ "> [!WARNING]"
+    assert solo_body =~ "`main` group pull request"
+    assert solo_body =~ "https://github.com/example/mono/pulls?q="
+    refute solo_body =~ "**pkg_b**"
+
+    # The second pass swaps the fallback links for direct PR links.
+    assert_received {:github, "PATCH", "/repos/example/mono/pulls/10",
+                     %{"body" => linked_group_body}}
+
+    assert_received {:github, "PATCH", "/repos/example/mono/pulls/11",
+                     %{"body" => linked_solo_body}}
+
+    assert linked_group_body =~ "[`pkg_a`](https://github.com/example/mono/pull/11)"
+    refute linked_group_body =~ "pulls?q="
+    assert linked_solo_body =~ "(https://github.com/example/mono/pull/10)"
+    refute linked_solo_body =~ "pulls?q="
+  end
+
+  test "a rerun with no new commits touches neither PR", %{work: work, origin: origin} do
+    enable_solo_pr!(work)
+    commit!(work, "pkg_a/lib.js", "code\n", "feat: a feature")
+    stub_solo_github(self())
+
+    Release.run([])
+    main_sha = git!(origin, ["rev-parse", "refs/heads/git-ops/release/main"])
+    solo_sha = git!(origin, ["rev-parse", "refs/heads/git-ops/release/pkg_a"])
+    flush_github_messages()
+
+    Release.run([])
+
+    assert git!(origin, ["rev-parse", "refs/heads/git-ops/release/main"]) == main_sha
+    assert git!(origin, ["rev-parse", "refs/heads/git-ops/release/pkg_a"]) == solo_sha
+    refute_received {:github, _, _, _}
+  end
+
+  test "closes the standalone PR of a released package too", %{work: work} do
+    enable_solo_pr!(work, %{"close_stale_pull_requests" => true})
+    stub_stale_github(self())
+
+    Release.run([])
+
+    # pkg_a has no releasable changes: both its group's PR and its standalone
+    # PR are looked up; only pkg_c's branch has one open (stubbed as #7).
+    assert_received {:github, "POST", "/repos/example/mono/issues/7/comments"}
+    assert_received {:github, "PATCH", "/repos/example/mono/pulls/7"}
+  end
+
+  test "--output writes both proposals, notices included", %{work: work} do
+    enable_solo_pr!(work)
+    commit!(work, "pkg_a/lib.js", "code\n", "feat: a feature")
+    out = Path.join(work, "proposals")
+
+    Release.run(["--dry-run", "--output", out])
+
+    group_body = File.read!(Path.join(out, "main/PR_BODY.md"))
+    solo_body = File.read!(Path.join(out, "pkg_a/PR_BODY.md"))
+
+    assert group_body =~ "> [!NOTE]"
+    assert solo_body =~ "> [!WARNING]"
+    assert solo_body =~ "a feature"
+    assert File.read!(Path.join(out, "pkg_a/pkg_a__package.json")) =~ ~s("version": "0.2.0")
+  end
+
+  test "a pr_group that cannot be a branch name is refused at parse time", %{work: work} do
+    config = put_in(@config, ["packages", "pkg_a", "pr_group"], "my group")
+    File.write!(Path.join(work, "git_ops.json"), Jason.encode!(config))
+    GitOps.Config.reload_file_config()
+
+    assert_raise RuntimeError, ~r/may only contain letters/, fn ->
+      Release.run(["--dry-run"])
+    end
   end
 
   test "dry run with --output writes proposals without pushing", %{

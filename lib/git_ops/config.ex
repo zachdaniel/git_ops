@@ -142,13 +142,25 @@ defmodule GitOps.Config do
   defp build_package(path, config) do
     name = config["name"] || Path.basename(path)
 
+    # pr_group becomes part of a branch name (git-ops/release/<group>), so it
+    # must be a valid git ref component. Refuse at parse time; a bad name
+    # would otherwise only fail at push time, deep into a release run.
+    pr_group = config["pr_group"]
+
+    if is_binary(pr_group) && !(pr_group =~ ~r"\A[A-Za-z0-9][A-Za-z0-9+._/-]*\z") do
+      raise "pr_group #{inspect(pr_group)} (package #{path}) is used in a branch name, " <>
+              "so it may only contain letters, digits, `+`, `.`, `_`, `/`, and `-`, " <>
+              "and must start with a letter or digit"
+    end
+
     %Package{
       path: path,
       name: name,
       prefix: config["version_tag_prefix"] || "#{name}-v",
       changelog_file: config["changelog_file"] || Path.join(path, "CHANGELOG.md"),
       version_source: parse_version_source(config["version_source"], path) || :tags,
-      pr_group: config["pr_group"],
+      pr_group: pr_group,
+      solo_pr?: config["solo_pr"] || false,
       version_file: derive_version_file(config, path),
       managed_files: parse_managed_files(config["managed_files"], path),
       exclude_paths: Enum.map(config["exclude_paths"] || [], &Path.join(path, &1)),

@@ -20,6 +20,7 @@ defmodule GitOps.Package do
     exclude_paths: [],
     depends_on: [],
     patch_on_any_change?: false,
+    solo_pr?: false,
     root?: false
   ]
 
@@ -37,6 +38,7 @@ defmodule GitOps.Package do
           exclude_paths: [String.t()],
           depends_on: [String.t()],
           patch_on_any_change?: boolean(),
+          solo_pr?: boolean(),
           root?: boolean()
         }
 end

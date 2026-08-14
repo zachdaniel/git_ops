@@ -101,20 +101,36 @@ defmodule Mix.Tasks.GitOps.Release do
     else
       base_branch = Git.current_branch!(repo)
 
-      plans
-      |> Enum.group_by(fn plan -> unit_name(plan.package) end)
-      |> Enum.sort_by(fn {name, _} -> name end)
-      |> Task.async_stream(
-        fn {name, unit_plans} -> propose_unit(repo, name, unit_plans, base_branch, opts) end,
-        max_concurrency: 8,
-        ordered: false,
-        timeout: :infinity
-      )
-      |> Stream.run()
+      results =
+        plans
+        |> Enum.flat_map(fn plan -> Enum.map(unit_keys(plan.package), &{&1, plan}) end)
+        |> Enum.group_by(fn {unit, _} -> unit end, fn {_, plan} -> plan end)
+        |> Enum.sort_by(fn {unit, _} -> unit end)
+        |> Task.async_stream(
+          fn {unit, unit_plans} -> propose_unit(repo, unit, unit_plans, base_branch, opts) end,
+          max_concurrency: 8,
+          ordered: false,
+          timeout: :infinity
+        )
+        |> Enum.map(fn {:ok, result} -> result end)
+
+      unless opts[:dry_run], do: cross_link_pull_requests(results)
     end
   end
 
-  defp unit_name(package), do: package.pr_group || package.name || "release"
+  # The units a package's release is proposed through. A grouped package with
+  # solo_pr appears twice — in its group's unit and in a standalone unit of its
+  # own — so both pull requests stay open at once; merging either releases the
+  # package and the next run retires it from whichever remains.
+  defp unit_keys(%Package{pr_group: group, solo_pr?: true, name: name})
+       when is_binary(group) and is_binary(name) and name != group do
+    [group, {:solo, name}]
+  end
+
+  defp unit_keys(package), do: [package.pr_group || package.name || "release"]
+
+  defp unit_display({:solo, name}), do: name
+  defp unit_display(name), do: name
 
   @stale_pull_request_comment "Closing: this package has no releasable changes, so this release has either already shipped or been superseded."
 
@@ -124,10 +140,10 @@ defmodule Mix.Tasks.GitOps.Release do
   # merging while this task is mid-run produces.
   defp close_stale_pull_requests(packages, plans, opts) do
     if Config.close_stale_pull_requests?() do
-      live = MapSet.new(plans, &unit_name(&1.package))
+      live = plans |> Enum.flat_map(&unit_keys(&1.package)) |> MapSet.new()
 
       packages
-      |> Enum.map(&unit_name/1)
+      |> Enum.flat_map(&unit_keys/1)
       |> Enum.uniq()
       |> Enum.reject(&MapSet.member?(live, &1))
       |> Enum.each(&close_stale_pull_request(&1, opts))
@@ -135,7 +151,8 @@ defmodule Mix.Tasks.GitOps.Release do
   end
 
   defp close_stale_pull_request(unit, opts) do
-    branch = "git-ops/release/#{unit}"
+    name = unit_display(unit)
+    branch = "git-ops/release/#{name}"
 
     case GitOps.GitHub.open_pull_request_number(branch) do
       {:ok, nil} ->
@@ -143,11 +160,11 @@ defmodule Mix.Tasks.GitOps.Release do
 
       {:ok, number} ->
         if opts[:dry_run] || opts[:output] do
-          Mix.shell().info("Dry run: would close ##{number}, #{unit} has no releasable changes.")
+          Mix.shell().info("Dry run: would close ##{number}, #{name} has no releasable changes.")
         else
           case GitOps.GitHub.close_pull_request(number, @stale_pull_request_comment) do
             {:ok, _} ->
-              Mix.shell().info("Closed ##{number}: #{unit} has no releasable changes.")
+              Mix.shell().info("Closed ##{number}: #{name} has no releasable changes.")
 
             {:error, error} ->
               Mix.shell().error("Could not close ##{number} for #{branch}: #{error}")
@@ -159,7 +176,8 @@ defmodule Mix.Tasks.GitOps.Release do
     end
   end
 
-  defp propose_unit(repo, name, plans, base_branch, opts) do
+  defp propose_unit(repo, unit, plans, base_branch, opts) do
+    name = unit_display(unit)
     branch = "git-ops/release/#{name}"
     {plans, files} = render_unit(repo, plans, opts)
 
@@ -170,7 +188,8 @@ defmodule Mix.Tasks.GitOps.Release do
       end
 
     body =
-      "Merging this pull request releases:\n\n" <>
+      cross_reference_notice(unit, plans) <>
+        "Merging this pull request releases:\n\n" <>
         Enum.map_join(plans, "\n\n", fn plan ->
           "**#{plan.package.name || name}**\n\n#{plan.entry}"
         end)
@@ -189,14 +208,20 @@ defmodule Mix.Tasks.GitOps.Release do
       end)
     end
 
-    if opts[:dry_run] do
-      Mix.shell().info("Dry run: would push #{branch} and open a pull request.\n")
-    else
+    result = %{unit: unit, plans: plans, body: body}
+
+    cond do
+      opts[:dry_run] ->
+        Mix.shell().info("Dry run: would push #{branch} and open a pull request.\n")
+        Map.put(result, :status, :dry_run)
+
       # Skip the force-push (and its PR-check fan-out) when the branch holds
       # these exact files; trees aren't comparable — the base moves per push.
-      if branch_current?(repo, branch, files) do
+      branch_current?(repo, branch, files) ->
         Mix.shell().info("#{branch} is unchanged.\n")
-      else
+        Map.put(result, :status, :current)
+
+      true ->
         sha = Git.commit_tree!(repo, "HEAD", files, title)
         Git.push!(repo, sha, "refs/heads/#{branch}")
 
@@ -207,10 +232,101 @@ defmodule Mix.Tasks.GitOps.Release do
                body,
                Config.pr_labels()
              ) do
-          {:ok, url} -> Mix.shell().info("Pull request: #{url}\n")
-          {:error, error} -> Mix.raise("Could not open pull request for #{branch}: #{error}")
+          {:ok, %{url: url, number: number}} ->
+            Mix.shell().info("Pull request: #{url}\n")
+            result |> Map.put(:status, :pushed) |> Map.merge(%{url: url, number: number})
+
+          {:error, error} ->
+            Mix.raise("Could not open pull request for #{branch}: #{error}")
+        end
+    end
+  end
+
+  # Bodies are composed before every pull request in the run exists, so a
+  # cross-reference initially links to a search for the counterpart's head
+  # branch; cross_link_pull_requests/1 swaps in direct links afterwards.
+  defp unit_link(unit) do
+    branch = "git-ops/release/#{unit_display(unit)}"
+    query = URI.encode_www_form("is:pr is:open head:#{branch}")
+    "#{Config.repository_url()}/pulls?q=#{query}"
+  end
+
+  defp cross_reference_notice({:solo, _name}, [plan]) do
+    group = plan.package.pr_group
+
+    "> [!WARNING]\n" <>
+      "> `#{plan.package.name}` is also part of the " <>
+      "[`#{group}` group pull request](#{unit_link(group)}), and merging that " <>
+      "releases it too. Merge this pull request to release only " <>
+      "`#{plan.package.name}`. Whichever merges first, the next release run " <>
+      "updates or closes the other.\n\n"
+  end
+
+  defp cross_reference_notice(group, plans) when is_binary(group) do
+    case solo_members(group, plans) do
+      [] ->
+        ""
+
+      members ->
+        links = Enum.map_join(members, ", ", &"[`#{&1}`](#{unit_link({:solo, &1})})")
+
+        "> [!NOTE]\n" <>
+          "> The following packages also have their own standalone release pull " <>
+          "requests: #{links}. Merging this pull request releases the whole " <>
+          "group; merging a standalone pull request releases only that package. " <>
+          "Whichever merges first, the next release run updates or closes the " <>
+          "rest.\n\n"
+    end
+  end
+
+  defp solo_members(group, plans) do
+    for plan <- plans,
+        plan.package.solo_pr? && plan.package.pr_group == group && plan.package.name != group,
+        do: plan.package.name
+  end
+
+  defp counterpart_units(%{unit: {:solo, _}, plans: [plan]}), do: [plan.package.pr_group]
+
+  defp counterpart_units(%{unit: group, plans: plans}) when is_binary(group),
+    do: Enum.map(solo_members(group, plans), &{:solo, &1})
+
+  defp cross_link_pull_requests(results) do
+    by_unit = Map.new(results, &{&1.unit, &1})
+
+    Enum.each(results, fn result ->
+      with %{status: :pushed} <- result,
+           [_ | _] = counterparts <- counterpart_units(result) do
+        body =
+          Enum.reduce(counterparts, result.body, fn counterpart, body ->
+            case pull_request_url(by_unit[counterpart], counterpart) do
+              nil -> body
+              url -> String.replace(body, unit_link(counterpart), url)
+            end
+          end)
+
+        if body != result.body do
+          case GitOps.GitHub.update_pull_request_body(result.number, body) do
+            {:ok, _} ->
+              :ok
+
+            {:error, error} ->
+              Mix.shell().error("Could not cross-link pull request ##{result.number}: #{error}")
+          end
         end
       end
+    end)
+  end
+
+  defp pull_request_url(%{status: :pushed, url: url}, _unit), do: url
+
+  # The counterpart's branch was already current, so its pull request wasn't
+  # touched this run and its number has to be looked up.
+  defp pull_request_url(_result, unit) do
+    branch = "git-ops/release/#{unit_display(unit)}"
+
+    case GitOps.GitHub.open_pull_request_number(branch) do
+      {:ok, number} when is_integer(number) -> "#{Config.repository_url()}/pull/#{number}"
+      _ -> nil
     end
   end
 
