@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.12.2](https://github.com/zachdaniel/git_ops/compare/v2.12.1...v2.12.2) (2026-08-23)
+
+
+
+
+### Bug Fixes:
+
+* don't fail on prefix stripping when prefix is empty by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v2.12.1](https://github.com/zachdaniel/git_ops/compare/v2.12.0...v2.12.1) (2026-08-14)
 
 
