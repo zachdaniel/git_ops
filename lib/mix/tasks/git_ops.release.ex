@@ -473,12 +473,7 @@ defmodule Mix.Tasks.GitOps.Release do
         )
       end
 
-    new_version =
-      if prefix != "" do
-        String.trim_leading(prefixed_new_version, prefix)
-      else
-        prefixed_new_version
-      end
+    new_version = trim_prefix(prefixed_new_version, prefix)
 
     changelog_changes =
       Changelog.write(
@@ -584,7 +579,7 @@ defmodule Mix.Tasks.GitOps.Release do
         %{
           package: package,
           current: current,
-          new_version: String.trim_leading(prefixed_new_version, package.prefix),
+          new_version: trim_prefix(prefixed_new_version, package.prefix),
           prefixed_new_version: prefixed_new_version,
           commits: commits,
           entry: nil
@@ -601,7 +596,7 @@ defmodule Mix.Tasks.GitOps.Release do
       :tags ->
         case GitOps.Version.last_valid_version(tags, package.prefix) do
           nil -> nil
-          tag -> String.trim_leading(tag, package.prefix)
+          tag -> trim_prefix(tag, package.prefix)
         end
 
       {:file, path, pattern} ->
@@ -790,7 +785,7 @@ defmodule Mix.Tasks.GitOps.Release do
               """)
 
           tag ->
-            String.trim_leading(tag, prefix)
+            trim_prefix(tag, prefix)
         end
 
       {:file, path, %Regex{} = pattern} ->
@@ -806,6 +801,9 @@ defmodule Mix.Tasks.GitOps.Release do
 
   defp prefix_note(""), do: ""
   defp prefix_note(prefix), do: " (with prefix #{inspect(prefix)})"
+
+  defp trim_prefix(string, prefix) when prefix in [nil, ""], do: string
+  defp trim_prefix(string, prefix), do: String.trim_leading(string, prefix)
 
   defp get_commit_messages(repo, prefix, tags, _from_rc?, opts, log_opts) do
     if opts[:initial] do

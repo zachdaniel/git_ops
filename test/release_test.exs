@@ -4,6 +4,8 @@ Mix.shell(Mix.Shell.Process)
 defmodule GitOps.Mix.Tasks.Test.ReleaseTest do
   use ExUnit.Case
 
+  import GitOps.Test.MonorepoFixture
+
   alias Mix.Tasks.GitOps.Release
 
   describe "with version_tag_prefix" do
@@ -127,6 +129,47 @@ defmodule GitOps.Mix.Tasks.Test.ReleaseTest do
       assert_raise Mix.Error, ~r/did not match the configured version pattern/, fn ->
         Release.run(["--dry-run", "--force-patch"])
       end
+    end
+  end
+
+  describe "with version_source :tags and an empty version_tag_prefix" do
+    setup do
+      dir =
+        Path.join(
+          System.tmp_dir!(),
+          "git_ops_empty_prefix_test_#{System.unique_integer([:positive])}"
+        )
+
+      isolate_in!(dir)
+      init_repo!(dir)
+
+      Application.put_env(:git_ops, :mix_project, nil)
+      Application.put_env(:git_ops, :repository_url, "repo/url.git")
+      Application.put_env(:git_ops, :manage_mix_version?, false)
+      Application.put_env(:git_ops, :changelog_file, "CHANGELOG.md")
+      Application.put_env(:git_ops, :manage_readme_version, false)
+      Application.put_env(:git_ops, :types, custom: [header: "Custom"], docs: [hidden?: false])
+      Application.put_env(:git_ops, :version_tag_prefix, "")
+      Application.put_env(:git_ops, :github_handle_lookup?, false)
+      Application.put_env(:git_ops, :version_source, :tags)
+
+      write!(dir, "CHANGELOG.md", "")
+      commit!(dir, "README.md", "readme\n", "chore: initial commit")
+      git!(dir, ["tag", "1.0.0"])
+
+      %{dir: dir}
+    end
+
+    test "uses the entire tag as the current version", %{dir: dir} do
+      commit!(dir, "lib.ex", "code\n", "feat: shiny feature")
+
+      Release.run(["--yes"])
+
+      assert git!(dir, ["tag", "--list"]) =~ "1.1.0"
+
+      changelog = File.read!(Path.join(dir, "CHANGELOG.md"))
+      assert changelog =~ "## [1.1.0]"
+      assert changelog =~ "shiny feature"
     end
   end
 
