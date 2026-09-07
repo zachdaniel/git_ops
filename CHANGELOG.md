@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.12.3](https://github.com/zachdaniel/git_ops/compare/v2.12.2...v2.12.3) (2026-09-07)
+
+
+
+
+### Bug Fixes:
+
+* avoid malicious changelog/version injection via interpolation by [@zachdaniel](https://github.com/zachdaniel)
+
+* only search on github when they have a plausible looking email by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v2.12.2](https://github.com/zachdaniel/git_ops/compare/v2.12.1...v2.12.2) (2026-08-23)
 
 
