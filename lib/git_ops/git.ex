@@ -87,12 +87,14 @@ defmodule GitOps.Git do
   """
   @spec get_commit_info(Git.Repository.t(), String.t() | :all, Keyword.t()) :: [commit_info()]
   def get_commit_info(repo, since_tag \\ :all, opts \\ []) do
-    format = "--format=%H--hash--%B--message--%an--author--%ae--gitops--"
+    # NUL (%x00) is used because it can't be in a commit message.
+    # this prevents someone doing funky things w/ commit logs
+    format = "--format=%H%x00%B%x00%an%x00%ae"
 
     log_args =
       case since_tag do
-        :all -> [format]
-        tag -> ["#{tag}..HEAD", format]
+        :all -> ["-z", format]
+        tag -> ["-z", "#{tag}..HEAD", format]
       end
 
     log_args = if opts[:first_parent], do: ["--first-parent" | log_args], else: log_args
@@ -111,26 +113,18 @@ defmodule GitOps.Git do
   @spec parse_git_log(String.t()) :: [commit_info()]
   def parse_git_log(git_log_output) do
     git_log_output
-    |> String.split("--gitops--")
-    |> Enum.map(&String.trim/1)
-    |> Enum.reject(&Kernel.==(&1, ""))
+    |> String.split(<<0>>)
+    |> Enum.chunk_every(4, 4, :discard)
     |> Enum.map(&parse_commit_entry/1)
-    |> Enum.reject(&is_nil/1)
   end
 
-  defp parse_commit_entry(commit_string) do
-    with [hash, rest] <- String.split(commit_string, "--hash--", parts: 2),
-         [message, author_part] <- String.split(rest, "--message--", parts: 2),
-         [name, email] <- String.split(author_part, "--author--") do
-      %{
-        hash: String.trim(hash),
-        message: String.trim(message),
-        author_name: String.trim(name),
-        author_email: String.trim(email)
-      }
-    else
-      _ -> nil
-    end
+  defp parse_commit_entry([hash, message, name, email]) do
+    %{
+      hash: String.trim(hash),
+      message: String.trim(message),
+      author_name: String.trim(name),
+      author_email: String.trim(email)
+    }
   end
 
   @doc """

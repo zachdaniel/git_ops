@@ -36,7 +36,7 @@ defmodule GitOps.GitHub do
   def fetch_user_from_api(email) do
     Application.ensure_all_started(:req)
 
-    if email do
+    if is_binary(email) and safe_search_email?(email) do
       case Req.get("#{GitOps.Config.github_api_base_url()}/search/users",
              headers: github_headers(),
              params: [q: "#{email} in:email type:user", per_page: 2]
@@ -58,10 +58,18 @@ defmodule GitOps.GitHub do
         {:error, reason} ->
           {:error, "Error making GitHub API request: #{inspect(reason)}"}
       end
+    else
+      {:error, "invalid or unsafe email for user lookup: #{inspect(email)}"}
     end
   rescue
     error ->
       {:error, "Error making GitHub API request: #{inspect(error)}"}
+  end
+
+  # Only search plausible looking emails to avoid attributing someone
+  # other than yourself in a release note
+  defp safe_search_email?(email) do
+    Regex.match?(~r/\A[^\s@]+@[^\s@]+\z/u, email)
   end
 
   @spec get_pull_request_from_commit(String.t()) ::
