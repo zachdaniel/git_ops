@@ -36,10 +36,24 @@ defmodule GitOps.Git do
 
   @spec tags(Git.Repository.t()) :: [String.t()]
   def tags(repo) do
-    tags =
+    # Walk only from tags reachable from HEAD. `rev-list --tags` would include
+    # tags on other branches, so a newer maintenance release (say v1.2.1 on a
+    # 1.x branch) would be picked as the previous version of a release on main.
+    merged_tags =
       repo
-      |> Git.rev_list!(["--tags"])
+      |> Git.tag!(["--merged", "HEAD", "--format=%(refname)"])
       |> String.split("\n", trim: true)
+
+    tags =
+      case merged_tags do
+        [] ->
+          []
+
+        merged_tags ->
+          repo
+          |> Git.rev_list!(merged_tags)
+          |> String.split("\n", trim: true)
+      end
 
     semver_tags =
       repo

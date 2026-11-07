@@ -92,6 +92,67 @@ defmodule GitOps.Test.GitTest do
     end
   end
 
+  describe "tags/1" do
+    setup do
+      repo_path =
+        Path.join(System.tmp_dir!(), "git_ops_tags_#{System.unique_integer([:positive])}")
+
+      File.mkdir_p!(repo_path)
+      on_exit(fn -> File.rm_rf!(repo_path) end)
+
+      git = fn args, env ->
+        {out, 0} = System.cmd("git", args, cd: repo_path, env: env, stderr_to_stdout: true)
+        String.trim(out)
+      end
+
+      commit = fn message, date ->
+        File.write!(Path.join(repo_path, "file.txt"), message)
+        git.(["add", "file.txt"], [])
+
+        git.(["commit", "--quiet", "-m", message], [
+          {"GIT_AUTHOR_DATE", date},
+          {"GIT_COMMITTER_DATE", date}
+        ])
+      end
+
+      git.(["init", "--quiet", "--initial-branch", "main"], [])
+      git.(["config", "user.name", "Test"], [])
+      git.(["config", "user.email", "test@example.com"], [])
+      git.(["config", "tag.gpgSign", "false"], [])
+
+      # main:  v1.0.0 ── v2.0.0-rc.0 ── (HEAD)
+      #          └── 1.x: v1.0.1, committed after v2.0.0-rc.0
+      commit.("chore: release version v1.0.0", "2026-01-01T00:00:00Z")
+      git.(["tag", "v1.0.0"], [])
+      git.(["branch", "1.x"], [])
+      commit.("chore: release version v2.0.0-rc.0", "2026-02-01T00:00:00Z")
+      git.(["tag", "-a", "v2.0.0-rc.0", "-m", "v2.0.0-rc.0"], [])
+      git.(["switch", "--quiet", "1.x"], [])
+      commit.("chore: release version v1.0.1", "2026-03-01T00:00:00Z")
+      git.(["tag", "v1.0.1"], [])
+      git.(["switch", "--quiet", "main"], [])
+      commit.("fix: something on main", "2026-04-01T00:00:00Z")
+
+      %{repo: Git.init!(repo_path), git: git}
+    end
+
+    test "ignores newer tags that are not reachable from HEAD", %{repo: repo} do
+      tags = Git.tags(repo)
+
+      refute "v1.0.1" in tags
+      assert GitOps.Version.last_valid_version(tags, "v") == "v2.0.0-rc.0"
+      assert GitOps.Version.last_valid_non_rc_version(tags, "v") == "v1.0.0"
+    end
+
+    test "uses the current branch's tags on a maintenance branch", %{repo: repo, git: git} do
+      git.(["switch", "--quiet", "1.x"], [])
+      tags = Git.tags(repo)
+
+      refute "v2.0.0-rc.0" in tags
+      assert GitOps.Version.last_valid_version(tags, "v") == "v1.0.1"
+    end
+  end
+
   describe "tag_exists?/2" do
     setup do
       repo = Git.init!(".")
