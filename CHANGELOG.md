@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v2.12.4](https://github.com/zachdaniel/git_ops/compare/v2.12.3...v2.12.4) (2026-11-07)
+
+
+
+
+### Bug Fixes:
+
+* only consider tags reachable from HEAD when finding the previous version by [@zachdaniel](https://github.com/zachdaniel)
+
 ## [v2.12.3](https://github.com/zachdaniel/git_ops/compare/v2.12.2...v2.12.3) (2026-09-07)
 
 
